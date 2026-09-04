@@ -90,6 +90,14 @@
                     <dt class="text-slate-500 dark:text-slate-400">Llega a</dt>
                     <dd class="text-right text-slate-900 dark:text-slate-100">{{ $recepcion->destinatario?->name ?? '—' }}</dd>
                 </div>
+                @if($recepcion->carpeta_sugerida_id)
+                    <div class="flex justify-between gap-3">
+                        <dt class="text-slate-500 dark:text-slate-400">Carpeta sugerida</dt>
+                        <dd class="text-right text-slate-900 dark:text-slate-100">
+                            {{ $recepcion->carpetaSugerida?->nombre ?? 'Carpeta eliminada' }}
+                        </dd>
+                    </div>
+                @endif
                 <div class="flex justify-between gap-3">
                     <dt class="text-slate-500 dark:text-slate-400">Estado</dt>
                     <dd class="text-right text-slate-900 dark:text-slate-100">{{ $recepcion->estado->etiqueta() }}</dd>

@@ -62,6 +62,16 @@ class User extends Authenticatable
             ->withTimestamps();
     }
 
+    public function carpetasLideradas(): BelongsToMany
+    {
+        return $this->belongsToMany(Carpeta::class, 'carpeta_lider')->withTimestamps();
+    }
+
+    public function lideraCarpeta(Carpeta $carpeta): bool
+    {
+        return $this->carpetasLideradas()->whereKey($carpeta->id)->exists();
+    }
+
     /** Rol del usuario dentro de una dependencia, o null si no pertenece a ella. */
     public function rolEn(Dependencia|int|null $dependencia): ?RolDependencia
     {
