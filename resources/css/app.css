@@ -1,0 +1,32 @@
+@import 'tailwindcss';
+
+/*
+ * Tailwind 4 solo atiende a prefers-color-scheme. Sin esta línea las clases
+ * dark: no harían nada cuando el usuario elige «oscuro» a mano: el tema lo
+ * manda la clase .dark en <html>, que pone el script del <head>.
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+}
+
+/*
+ * En escritorio el menú lateral se puede esconder. La preferencia vive en
+ * localStorage y se aplica en el <head>, antes de pintar, para que el sidebar
+ * no aparezca y desaparezca al cargar cada página.
+ *
+ * Por debajo de md el sidebar ya es un cajón deslizante, así que la regla se
+ * limita al mismo breakpoint que usan las variantes md: de las vistas.
+ */
+@media (width >= theme(--breakpoint-md)) {
+    .menu-oculto #menu-lateral {
+        display: none;
+    }
+}
