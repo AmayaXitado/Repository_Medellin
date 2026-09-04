@@ -25,4 +25,9 @@ class CarpetaPolicy
     {
         return $usuario->puedeAdministrarEn($carpeta->dependencia_id);
     }
+
+    public function reactivar(User $usuario, Carpeta $carpeta): bool
+    {
+        return $usuario->puedeAdministrarEn($carpeta->dependencia_id);
+    }
 }

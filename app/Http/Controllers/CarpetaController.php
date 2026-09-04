@@ -110,7 +110,26 @@ class CarpetaController extends Controller
             ->route('documentos.index', ['carpeta' => $carpeta->carpeta_id
                 ? $carpeta->padre?->uuid
                 : null])
-            ->with('exito', 'Carpeta inactivada.');
+            ->with('exito', 'Carpeta inactivada. Sigue visible para administración, que puede reactivarla.');
+    }
+
+    /** Vuelve a mostrarla a lectores y editores. Nada se había borrado. */
+    public function reactivar(Carpeta $carpeta): RedirectResponse
+    {
+        $this->authorize('reactivar', $carpeta);
+
+        $carpeta->update(['activa' => true]);
+
+        $this->auditor->registrar(
+            AccionAuditoria::CarpetaReactivada,
+            $carpeta,
+            "Reactivó la carpeta «{$carpeta->nombre}»",
+        );
+
+        // A diferencia de inactivar, aquí sí se entra en ella: ya se ve.
+        return redirect()
+            ->route('documentos.index', ['carpeta' => $carpeta->uuid])
+            ->with('exito', 'Carpeta reactivada.');
     }
 
     protected function autorizarEdicion(): void

@@ -5,13 +5,40 @@ use App\Http\Controllers\Admin\UsuarioController;
 use App\Http\Controllers\AuditoriaController;
 use App\Http\Controllers\Auth\PerfilController;
 use App\Http\Controllers\Auth\SesionController;
+use App\Http\Controllers\BandejaController;
 use App\Http\Controllers\CarpetaController;
 use App\Http\Controllers\DependenciaActualController;
 use App\Http\Controllers\DescargaController;
 use App\Http\Controllers\DocumentoController;
 use App\Http\Controllers\DocumentoEstadoController;
 use App\Http\Controllers\DocumentoVersionController;
+use App\Http\Controllers\EnvioPublicoController;
 use Illuminate\Support\Facades\Route;
+
+/*
+|--------------------------------------------------------------------------
+| Recepción externa — sin autenticación
+|--------------------------------------------------------------------------
+| La superficie más expuesta del sistema. Va deliberadamente fuera de los
+| grupos 'auth' y 'dependencia': quien entra por aquí no tiene cuenta ni
+| dependencia activa, y no debe ver nada más del repositorio.
+|
+| La restricción del token descarta basura en el enrutador, antes de tocar
+| la base de datos.
+*/
+
+Route::get('enviar/confirmacion', [EnvioPublicoController::class, 'confirmacion'])
+    ->name('envio.confirmacion');
+
+Route::get('enviar/{token}', [EnvioPublicoController::class, 'formulario'])
+    ->where('token', '[A-Za-z0-9]{48}')
+    ->middleware('throttle:envio-formulario')
+    ->name('envio.formulario');
+
+Route::post('enviar/{token}', [EnvioPublicoController::class, 'recibir'])
+    ->where('token', '[A-Za-z0-9]{48}')
+    ->middleware('throttle:envio-carga')
+    ->name('envio.recibir');
 
 /*
 |--------------------------------------------------------------------------
@@ -73,6 +100,21 @@ Route::middleware(['auth', 'usuario.activo', 'dependencia'])->group(function () 
     Route::put('carpetas/{carpeta}', [CarpetaController::class, 'update'])->name('carpetas.update');
     Route::patch('carpetas/{carpeta}/inactivar', [CarpetaController::class, 'inactivar'])
         ->name('carpetas.inactivar');
+    Route::patch('carpetas/{carpeta}/reactivar', [CarpetaController::class, 'reactivar'])
+        ->name('carpetas.reactivar');
+
+    /*
+    |----------------------------------------------------------------------
+    | Bandeja de entrada
+    |----------------------------------------------------------------------
+    | Lo que llegó por un enlace de carga y todavía no es un documento.
+    | Quién entra aquí lo decide RecepcionPolicy.
+    */
+
+    Route::get('bandeja', [BandejaController::class, 'index'])->name('bandeja.index');
+    Route::get('bandeja/{recepcion}', [BandejaController::class, 'show'])->name('bandeja.show');
+    Route::get('bandeja/{recepcion}/archivo', [BandejaController::class, 'previsualizar'])
+        ->name('bandeja.archivo');
 
     /*
     |----------------------------------------------------------------------

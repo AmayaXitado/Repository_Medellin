@@ -61,6 +61,16 @@
         ],
     ];
 
+    // Quién ve la bandeja lo decide RecepcionPolicy::viewAny, no el rol: así,
+    // cuando llegue el rol nuevo, este menú se mueve solo.
+    if (auth()->user()?->can('viewAny', App\Models\Recepcion::class)) {
+        $enlaces['bandeja.index'] = [
+            'texto' => 'Bandeja de entrada',
+            'icono' => 'M2.25 13.5h3.86a2.25 2.25 0 0 1 2.012 1.244l.256.512a2.25 2.25 0 0 0 2.013 1.244h3.218a2.25 2.25 0 0 0 2.013-1.244l.256-.512a2.25 2.25 0 0 1 2.013-1.244h3.859m-19.5.338V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18v-4.162c0-.224-.034-.447-.1-.661L19.24 5.338a2.25 2.25 0 0 0-2.15-1.588H6.911a2.25 2.25 0 0 0-2.15 1.588L2.35 13.177a2.25 2.25 0 0 0-.1.661Z',
+            'contador' => $recepcionesPendientes ?? 0,
+        ];
+    }
+
     if ($rolActual?->puedeAdministrar()) {
         $enlaces['admin.usuarios.index'] = [
             'texto' => 'Usuarios',
@@ -138,6 +148,14 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="{{ $enlace['icono'] }}"/>
                     </svg>
                     <span class="truncate">{{ $enlace['texto'] }}</span>
+
+                    {{-- El contador es lo que hace que la gente entre a mirar. --}}
+                    @if(($enlace['contador'] ?? 0) > 0)
+                        <span class="ml-auto shrink-0 rounded-full bg-sky-600 px-2 py-0.5 text-xs font-semibold text-white"
+                              aria-label="{{ $enlace['contador'] }} sin revisar">
+                            {{ $enlace['contador'] > 99 ? '99+' : $enlace['contador'] }}
+                        </span>
+                    @endif
                 </a>
             @endforeach
         </nav>

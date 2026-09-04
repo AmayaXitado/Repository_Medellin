@@ -15,9 +15,16 @@ enum AccionAuditoria: string
     case CarpetaCreada = 'carpeta.creada';
     case CarpetaActualizada = 'carpeta.actualizada';
     case CarpetaInactivada = 'carpeta.inactivada';
+    case CarpetaReactivada = 'carpeta.reactivada';
     case UsuarioCreado = 'usuario.creado';
     case UsuarioActualizado = 'usuario.actualizado';
     case UsuarioDesactivado = 'usuario.desactivado';
+    case RecepcionRecibida = 'recepcion.recibida';
+    case RecepcionArchivada = 'recepcion.archivada';
+    case RecepcionDescartada = 'recepcion.descartada';
+    case RecepcionReasignada = 'recepcion.reasignada';
+    case EnlaceCreado = 'enlace.creado';
+    case EnlaceRevocado = 'enlace.revocado';
 
     public function etiqueta(): string
     {
@@ -33,9 +40,16 @@ enum AccionAuditoria: string
             self::CarpetaCreada => 'Creó una carpeta',
             self::CarpetaActualizada => 'Actualizó una carpeta',
             self::CarpetaInactivada => 'Inactivó una carpeta',
+            self::CarpetaReactivada => 'Reactivó una carpeta',
             self::UsuarioCreado => 'Creó un usuario',
             self::UsuarioActualizado => 'Actualizó un usuario',
             self::UsuarioDesactivado => 'Desactivó un usuario',
+            self::RecepcionRecibida => 'Recibió un archivo por un enlace de carga',
+            self::RecepcionArchivada => 'Archivó un recibido en el repositorio',
+            self::RecepcionDescartada => 'Descartó un recibido',
+            self::RecepcionReasignada => 'Reasignó un recibido a otra bandeja',
+            self::EnlaceCreado => 'Creó un enlace de carga',
+            self::EnlaceRevocado => 'Revocó un enlace de carga',
         };
     }
 }

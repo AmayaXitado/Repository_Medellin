@@ -47,8 +47,8 @@
         </div>
     </form>
 
-    @can('inactivar', $carpeta)
-        @if($carpeta->activa)
+    @if($carpeta->activa)
+        @can('inactivar', $carpeta)
             <form method="POST" action="{{ route('carpetas.inactivar', $carpeta) }}"
                   class="rounded-lg bg-white p-4 ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700">
                 @csrf @method('PATCH')
@@ -59,8 +59,29 @@
                     Inactivar carpeta
                 </button>
             </form>
-        @endif
-    @endcan
+        @endcan
+    @else
+        <div class="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800
+                    dark:border-rose-900 dark:bg-rose-950 dark:text-rose-200">
+            <p class="font-medium">Carpeta inactiva</p>
+            <p class="mt-1 text-rose-700 dark:text-rose-300">
+                Solo la ve el rol de administración. Su contenido sigue intacto.
+            </p>
+        </div>
+
+        @can('reactivar', $carpeta)
+            <form method="POST" action="{{ route('carpetas.reactivar', $carpeta) }}"
+                  class="rounded-lg bg-white p-4 ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700">
+                @csrf @method('PATCH')
+                <p class="mb-3 text-xs text-slate-500 dark:text-slate-400">
+                    Reactivarla vuelve a mostrarla a lectores y editores.
+                </p>
+                <button class="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">
+                    Reactivar carpeta
+                </button>
+            </form>
+        @endcan
+    @endif
 </div>
 
 @endsection

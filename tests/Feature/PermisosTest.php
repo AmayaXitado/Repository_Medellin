@@ -363,6 +363,7 @@ class PermisosTest extends TestCase
             ['get', route('carpetas.edit', $carpeta)],
             ['put', route('carpetas.update', $carpeta)],
             ['patch', route('carpetas.inactivar', $carpeta)],
+            ['patch', route('carpetas.reactivar', $carpeta)],
             ['get', route('perfil.edit')],
             ['put', route('perfil.update')],
             ['put', route('perfil.password')],

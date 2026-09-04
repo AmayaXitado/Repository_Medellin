@@ -87,6 +87,18 @@
                        class="absolute right-2 top-2 hidden text-xs text-slate-400 hover:text-slate-700 group-hover:block
                               dark:text-slate-400 dark:hover:text-slate-100">Editar</a>
                 @endif
+
+                @unless($carpeta->activa)
+                    @can('reactivar', $carpeta)
+                        <form method="POST" action="{{ route('carpetas.reactivar', $carpeta) }}" class="mt-3">
+                            @csrf @method('PATCH')
+                            <button class="w-full rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white
+                                           hover:bg-emerald-700">
+                                Reactivar carpeta
+                            </button>
+                        </form>
+                    @endcan
+                @endunless
             </div>
         @endforeach
     </div>
@@ -130,9 +142,21 @@
                     <td class="px-4 py-3 text-slate-600 dark:text-slate-400">{{ $documento->fecha_documento?->format('d/m/Y') ?? '—' }}</td>
                     <td class="px-4 py-3 text-slate-600 dark:text-slate-400">v{{ $documento->versionActual?->numero ?? 1 }}</td>
                     <td class="px-4 py-3 text-slate-600 dark:text-slate-400">{{ $documento->versionActual?->tamano_legible ?? '—' }}</td>
-                    <td class="px-4 py-3 text-right">
-                        <a href="{{ route('documentos.descargar', $documento) }}"
-                           class="text-sm font-medium text-sky-700 hover:underline dark:text-sky-400">Descargar</a>
+                    <td class="px-4 py-3">
+                        <div class="flex items-center justify-end gap-3">
+                            <a href="{{ route('documentos.descargar', $documento) }}"
+                               class="text-sm font-medium text-sky-700 hover:underline dark:text-sky-400">Descargar</a>
+
+                            @unless($documento->activo)
+                                @can('reactivar', $documento)
+                                    <form method="POST" action="{{ route('documentos.reactivar', $documento) }}">
+                                        @csrf @method('PATCH')
+                                        <button class="text-sm font-medium text-emerald-700 hover:underline
+                                                       dark:text-emerald-400">Reactivar</button>
+                                    </form>
+                                @endcan
+                            @endunless
+                        </div>
                     </td>
                 </tr>
             @empty
