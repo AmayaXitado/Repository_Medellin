@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\EnlaceCargaController;
 use App\Http\Controllers\Admin\TipoDocumentoController;
 use App\Http\Controllers\Admin\UsuarioController;
 use App\Http\Controllers\AuditoriaController;
@@ -144,6 +145,13 @@ Route::middleware(['auth', 'usuario.activo', 'dependencia'])->group(function () 
         Route::get('tipos', [TipoDocumentoController::class, 'index'])->name('tipos.index');
         Route::post('tipos', [TipoDocumentoController::class, 'store'])->name('tipos.store');
         Route::put('tipos/{tipo}', [TipoDocumentoController::class, 'update'])->name('tipos.update');
+
+        // Administración ve y gestiona todos los de su dependencia; un líder
+        // solo los de las carpetas que lidera. La Policy decide, no la ruta.
+        Route::get('enlaces', [EnlaceCargaController::class, 'index'])->name('enlaces.index');
+        Route::get('enlaces/nuevo', [EnlaceCargaController::class, 'create'])->name('enlaces.create');
+        Route::post('enlaces', [EnlaceCargaController::class, 'store'])->name('enlaces.store');
+        Route::patch('enlaces/{enlace}/revocar', [EnlaceCargaController::class, 'revocar'])->name('enlaces.revocar');
     });
 
     Route::get('auditoria', [AuditoriaController::class, 'index'])->name('auditoria.index');

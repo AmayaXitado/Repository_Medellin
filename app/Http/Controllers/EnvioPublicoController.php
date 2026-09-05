@@ -97,9 +97,11 @@ class EnvioPublicoController extends Controller
 
                     // Copiados del enlace, no leídos por la llave foránea: si
                     // el enlace se borra, la recepción sigue diciendo quién
-                    // mandó qué. Eso es cadena de custodia.
+                    // mandó qué y para qué carpeta era. Eso es cadena de
+                    // custodia, no redundancia por descuido.
                     'remitente_nombre' => $enlace->remitente_nombre,
                     'remitente_email' => $enlace->remitente_email,
+                    'carpeta_sugerida_id' => $enlace->carpeta_id,
 
                     'nombre_original' => Str::limit($archivo->getClientOriginalName(), 250, ''),
                     ...$guardado,

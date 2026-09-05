@@ -30,6 +30,7 @@ class Recepcion extends Model
         'dependencia_id',
         'enlace_carga_id',
         'destinatario_id',
+        'carpeta_sugerida_id',
         'remitente_nombre',
         'remitente_email',
         'nombre_original',
@@ -136,6 +137,11 @@ class Recepcion extends Model
     public function enlace(): BelongsTo
     {
         return $this->belongsTo(EnlaceCarga::class, 'enlace_carga_id');
+    }
+
+    public function carpetaSugerida(): BelongsTo
+    {
+        return $this->belongsTo(Carpeta::class, 'carpeta_sugerida_id');
     }
 
     public function destinatario(): BelongsTo

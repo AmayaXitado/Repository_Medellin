@@ -27,6 +27,7 @@ class EnlaceCarga extends Model
         'token_cifrado',
         'dependencia_id',
         'destinatario_id',
+        'carpeta_id',
         'remitente_nombre',
         'remitente_email',
         'remitente_entidad',
@@ -160,6 +161,11 @@ class EnlaceCarga extends Model
     public function destinatario(): BelongsTo
     {
         return $this->belongsTo(User::class, 'destinatario_id');
+    }
+
+    public function carpeta(): BelongsTo
+    {
+        return $this->belongsTo(Carpeta::class);
     }
 
     public function creador(): BelongsTo

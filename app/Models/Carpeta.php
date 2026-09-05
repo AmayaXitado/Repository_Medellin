@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -68,6 +69,16 @@ class Carpeta extends Model
     public function creador(): BelongsTo
     {
         return $this->belongsTo(User::class, 'creado_por');
+    }
+
+    public function lideres(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'carpeta_lider')->withTimestamps();
+    }
+
+    public function esLideradaPor(User $usuario): bool
+    {
+        return $this->lideres()->whereKey($usuario->id)->exists();
     }
 
     public function scopeActivas(Builder $query): Builder
