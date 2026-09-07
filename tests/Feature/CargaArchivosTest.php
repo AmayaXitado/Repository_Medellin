@@ -40,6 +40,40 @@ class CargaArchivosTest extends TestCase
             ->post(route('documentos.store'), ['nombre' => $nombre, 'archivo' => $archivo]);
     }
 
+    /**
+     * El caso inverso al del vencimiento de los enlaces: aquí la regla es
+     * before_or_equal:today sobre un campo de fecha pura, y un acta fechada
+     * hoy sí tiene que aceptarse. Con la zona horaria en UTC, «hoy» cambiaba
+     * de día a las 7 p. m. hora de Medellín y esto se torcía cada tarde.
+     */
+    public function test_un_documento_fechado_hoy_se_acepta_y_uno_del_futuro_no(): void
+    {
+        $this->actingAs($this->editor)
+            ->post(route('documentos.store'), [
+                'nombre' => 'Acta de hoy',
+                'fecha_documento' => now()->toDateString(),
+                'archivo' => $this->archivoPdf(),
+            ])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('documentos', ['nombre' => 'Acta de hoy']);
+
+        $respuesta = $this->actingAs($this->editor)
+            ->post(route('documentos.store'), [
+                'nombre' => 'Acta del futuro',
+                'fecha_documento' => now()->addDay()->toDateString(),
+                'archivo' => $this->archivoPdf(),
+            ]);
+
+        $respuesta->assertSessionHasErrors('fecha_documento');
+
+        $mensaje = session('errors')->first('fecha_documento');
+        $this->assertStringNotContainsString('validation.', $mensaje, "Salió la clave cruda: «{$mensaje}»");
+
+        $this->assertDatabaseMissing('documentos', ['nombre' => 'Acta del futuro']);
+    }
+
     public function test_se_aceptan_pdf_y_jpg(): void
     {
         $this->subir($this->archivoPdf(), 'Acta en PDF')->assertRedirect();

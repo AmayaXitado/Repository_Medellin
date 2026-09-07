@@ -86,8 +86,16 @@
         <div class="grid gap-4 sm:grid-cols-2">
             <div>
                 <label for="expira_at" class="{{ $etiqueta }}">Vence</label>
-                <input id="expira_at" name="expira_at" type="datetime-local" value="{{ old('expira_at') }}" class="{{ $campo }}">
-                <p class="{{ $ayuda }}">Vacío = sin vencimiento.</p>
+                {{--
+                    Por día y no por minuto. El valor reenviado tras un error
+                    viene ya normalizado al final del día, así que se recorta
+                    a Y-m-d para que el campo lo entienda.
+                --}}
+                <input id="expira_at" name="expira_at" type="date"
+                       min="{{ now()->toDateString() }}"
+                       value="{{ \Illuminate\Support\Str::substr(old('expira_at', ''), 0, 10) }}"
+                       class="{{ $campo }}">
+                <p class="{{ $ayuda }}">Vacío = sin vencimiento. El enlace sirve durante todo el día elegido.</p>
             </div>
             <div>
                 <label for="max_usos" class="{{ $etiqueta }}">Usos máximos</label>

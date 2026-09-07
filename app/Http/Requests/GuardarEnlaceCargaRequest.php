@@ -4,12 +4,39 @@ namespace App\Http\Requests;
 
 use App\Models\Carpeta;
 use App\Services\ContextoDependencia;
+use Carbon\Carbon;
 use Closure;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Throwable;
 
 class GuardarEnlaceCargaRequest extends FormRequest
 {
+    /**
+     * El vencimiento se elige por día, no por minuto: quien genera un enlace
+     * piensa «vence el 15», no «vence el 15 a las 14:30».
+     *
+     * El campo manda solo la fecha, que Carbon interpreta como su medianoche.
+     * Sin normalizar, elegir hoy daba una fecha ya pasada y la validación lo
+     * rechazaba; y un enlace que «vence el 15» moría a las 00:00 del 15, que
+     * es justo al revés de lo que espera cualquiera.
+     */
+    protected function prepareForValidation(): void
+    {
+        $valor = $this->input('expira_at');
+
+        if (! is_string($valor) || trim($valor) === '') {
+            return;
+        }
+
+        try {
+            $this->merge(['expira_at' => Carbon::parse($valor)->endOfDay()->toDateTimeString()]);
+        } catch (Throwable) {
+            // Si llega basura se deja tal cual: que la rechace la regla 'date'
+            // con un mensaje legible, en vez de reventar con un error 500.
+        }
+    }
+
     public function rules(): array
     {
         $dependenciaId = app(ContextoDependencia::class)->id();
@@ -45,7 +72,8 @@ class GuardarEnlaceCargaRequest extends FormRequest
             'remitente_email' => ['nullable', 'email', 'max:255'],
             'remitente_entidad' => ['nullable', 'string', 'max:255'],
             'proposito' => ['nullable', 'string', 'max:255'],
-            'expira_at' => ['nullable', 'date', 'after:now'],
+            // Hoy vale: prepareForValidation() ya lo llevó al final del día.
+            'expira_at' => ['nullable', 'date', 'after_or_equal:today'],
             'max_usos' => ['nullable', 'integer', 'min:1'],
         ];
     }
