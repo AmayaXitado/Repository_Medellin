@@ -1,0 +1,80 @@
+name: Desplegar a produccion
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: produccion
+  cancel-in-progress: false
+
+env:
+  DEPLOY_PATH: /var/www/documenta
+
+jobs:
+  deploy:
+    name: Compilar y desplegar
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el codigo
+        uses: actions/checkout@v4
+
+      - name: Instalar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Compilar assets
+        run: |
+          npm ci
+          npm run build
+
+      - name: Configurar acceso SSH
+        env:
+          SSH_KEY:  ${{ secrets.VPS_SSH_KEY }}
+          SSH_HOST: ${{ secrets.VPS_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Traer el codigo nuevo al VPS
+        env:
+          SSH_HOST: ${{ secrets.VPS_HOST }}
+          SSH_USER: ${{ secrets.VPS_USER }}
+        run: |
+          ssh -i ~/.ssh/id_deploy "$SSH_USER@$SSH_HOST" \
+            "cd '$DEPLOY_PATH' && git fetch --all --prune && git reset --hard origin/main"
+
+      - name: Subir los assets compilados
+        env:
+          SSH_HOST: ${{ secrets.VPS_HOST }}
+          SSH_USER: ${{ secrets.VPS_USER }}
+        run: |
+          rsync -avz --delete -e "ssh -i ~/.ssh/id_deploy" \
+            public/build/ "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/public/build/"
+
+      - name: Ejecutar el despliegue en el servidor
+        env:
+          SSH_HOST: ${{ secrets.VPS_HOST }}
+          SSH_USER: ${{ secrets.VPS_USER }}
+        run: |
+          ssh -i ~/.ssh/id_deploy "$SSH_USER@$SSH_HOST" \
+            "cd '$DEPLOY_PATH' && bash bin/deploy.sh"
+
+      - name: Verificar que el sitio responde
+        run: |
+          code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 \
+                 https://documenta.botenterprise.com.co/)
+          echo "HTTP $code"
+          if [ "$code" -ge 400 ]; then
+            echo "::error::El sitio respondio $code despues del despliegue"
+            exit 1
+          fi
+
+      - name: Borrar la llave
+        if: always()
+        run: rm -f ~/.ssh/id_deploy
