@@ -47,12 +47,14 @@
         })();
     </script>
 
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @vite(['resources/css/app.css', 'resources/css/loader.css', 'resources/js/app.js'])
 </head>
-<body class="h-full bg-slate-100 text-slate-800 antialiased dark:bg-slate-900 dark:text-slate-200">
+<body class="h-full antialiased">
+
+@include('partials.cargando')
 
 @php
-    $foco = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400';
+    $foco = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary)]';
 
     $enlaces = [
         'documentos.index' => [
@@ -101,15 +103,21 @@
     {{-- Solo en móvil: atenúa el contenido y captura el clic fuera del menú. --}}
     <div id="menu-fondo" class="fixed inset-0 z-30 hidden bg-slate-900/60 md:hidden"></div>
 
+    {{--
+        La barra lateral siempre se ve «oscura», sin importar el tema de la
+        página: por eso lleva su propia clase .dark, que aquí no alterna nada
+        por JS, solo fija los valores oscuros de las variables para todo lo
+        que está dentro de este <aside>.
+    --}}
     <aside id="menu-lateral" aria-label="Menú principal"
-           class="fixed inset-y-0 left-0 z-40 flex w-64 -translate-x-full flex-col border-r border-slate-800 bg-slate-900 text-slate-100
+           class="dark fixed inset-y-0 left-0 z-40 flex w-64 -translate-x-full flex-col border-r border-[var(--border)] bg-[var(--card)] text-[var(--text)]
                   transition-transform duration-200 ease-out
                   md:sticky md:top-0 md:h-screen md:shrink-0 md:translate-x-0 md:transition-none">
 
         <div class="flex items-center gap-2 px-4 py-4">
             <a href="{{ route('documentos.index') }}"
                class="flex min-w-0 flex-1 items-center gap-2 rounded-md font-semibold {{ $foco }}">
-                <svg class="size-6 shrink-0 text-sky-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                <svg class="size-6 shrink-0 text-[var(--primary)]" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round"
                           d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 5.25v13.5A2.25 2.25 0 0 0 4.5 21h15a2.25 2.25 0 0 0 2.25-2.25V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z"/>
                 </svg>
@@ -117,7 +125,7 @@
             </a>
 
             <button type="button" id="menu-cerrar" title="Ocultar menú"
-                    class="-mr-1 rounded-md p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white {{ $foco }}">
+                    class="-mr-1 rounded-md p-1.5 text-[var(--muted)] hover:bg-[var(--card-soft)] hover:text-[var(--text)] {{ $foco }}">
                 <svg class="size-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M11 19.5 3.5 12 11 4.5m7.5 15L11 12l7.5-7.5"/>
                 </svg>
@@ -127,11 +135,11 @@
 
         <div class="px-4 pb-4">
             @if($dependenciasDisponibles?->count() > 1)
-                <label for="selector-dependencia" class="mb-1 block text-xs font-medium text-slate-400">Dependencia</label>
+                <label for="selector-dependencia" class="mb-1 block text-xs font-medium text-[var(--muted)]">Dependencia</label>
                 <form method="POST" action="#" id="form-dependencia">
                     @csrf @method('PUT')
                     <select id="selector-dependencia"
-                            class="w-full rounded-md border-0 bg-slate-800 py-1.5 pl-3 pr-8 text-sm text-slate-100 focus:ring-2 focus:ring-sky-500">
+                            class="w-full rounded-md border-0 bg-[var(--card-soft)] py-1.5 pl-3 pr-8 text-sm text-[var(--text)] focus:ring-2 focus:ring-[var(--primary)]">
                         @foreach($dependenciasDisponibles as $dep)
                             <option value="{{ $dep->slug }}" @selected($dep->id === $dependenciaActual?->id)>
                                 {{ $dep->nombre }}
@@ -140,7 +148,7 @@
                     </select>
                 </form>
             @elseif($dependenciaActual)
-                <p class="rounded-md bg-slate-800 px-2.5 py-1.5 text-sm text-slate-300">
+                <p class="rounded-md bg-[var(--card-soft)] px-2.5 py-1.5 text-sm text-[var(--muted)]">
                     {{ $dependenciaActual->nombre }}
                 </p>
             @endif
@@ -151,8 +159,10 @@
                 @php($activo = request()->routeIs($ruta))
                 <a href="{{ route($ruta) }}" @if($activo) aria-current="page" @endif
                    class="flex items-center gap-3 rounded-md px-3 py-2 text-sm {{ $foco }}
-                          {{ $activo ? 'bg-slate-800 font-medium text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
-                    <svg class="size-5 shrink-0 {{ $activo ? 'text-sky-400' : 'text-slate-400' }}"
+                          {{ $activo
+                              ? 'bg-[var(--card-soft)] font-medium text-[var(--text)]'
+                              : 'text-[var(--muted)] hover:bg-[var(--card-soft)] hover:text-[var(--text)]' }}">
+                    <svg class="size-5 shrink-0 {{ $activo ? 'text-[var(--primary)]' : 'text-[var(--muted)]' }}"
                          fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="{{ $enlace['icono'] }}"/>
                     </svg>
@@ -160,7 +170,7 @@
 
                     {{-- El contador es lo que hace que la gente entre a mirar. --}}
                     @if(($enlace['contador'] ?? 0) > 0)
-                        <span class="ml-auto shrink-0 rounded-full bg-sky-600 px-2 py-0.5 text-xs font-semibold text-white"
+                        <span class="ml-auto shrink-0 rounded-full bg-[var(--primary)] px-2 py-0.5 text-xs font-semibold text-white"
                               aria-label="{{ $enlace['contador'] }} sin revisar">
                             {{ $enlace['contador'] > 99 ? '99+' : $enlace['contador'] }}
                         </span>
@@ -169,22 +179,22 @@
             @endforeach
         </nav>
 
-        <div class="border-t border-slate-800 p-3">
+        <div class="border-t border-[var(--border)] p-3">
             <div class="flex items-center gap-2">
                 <a href="{{ route('perfil.edit') }}"
-                   class="flex min-w-0 flex-1 items-center gap-2 rounded-md p-1 hover:bg-slate-800 {{ $foco }}">
-                    <span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-sky-600 text-xs font-semibold">
+                   class="flex min-w-0 flex-1 items-center gap-2 rounded-md p-1 hover:bg-[var(--card-soft)] {{ $foco }}">
+                    <span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-[var(--primary)] text-xs font-semibold text-white">
                         {{ auth()->user()->iniciales() }}
                     </span>
                     <span class="min-w-0">
                         <span class="block truncate text-sm">{{ auth()->user()->name }}</span>
-                        <span class="block truncate text-xs text-slate-400">{{ $rolActual?->etiqueta() }}</span>
+                        <span class="block truncate text-xs text-[var(--muted)]">{{ $rolActual?->etiqueta() }}</span>
                     </span>
                 </a>
 
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
-                    <button class="rounded-md p-2 text-slate-400 hover:bg-slate-800 hover:text-white {{ $foco }}" title="Salir">
+                    <button class="rounded-md p-2 text-[var(--muted)] hover:bg-[var(--card-soft)] hover:text-[var(--text)] {{ $foco }}" title="Salir">
                         <svg class="size-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round"
                                   d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75"/>
@@ -194,7 +204,7 @@
                 </form>
             </div>
 
-            <p class="mt-2 px-1 text-xs text-slate-500">
+            <p class="mt-2 px-1 text-xs text-[var(--muted)]">
                 {{ config('app.name') }} · {{ $dependenciaActual?->nombre }}
             </p>
         </div>
@@ -202,10 +212,9 @@
 
     <div class="flex min-w-0 flex-1 flex-col">
 
-        <header class="sticky top-0 z-20 flex items-center gap-3 border-b border-slate-200 bg-white px-4 py-2
-                       dark:border-slate-700 dark:bg-slate-800">
+        <header class="sticky top-0 z-20 flex items-center gap-3 border-b border-[var(--border)] bg-[var(--card)] px-4 py-2">
             <button type="button" id="menu-boton" aria-controls="menu-lateral" aria-expanded="false"
-                    class="-ml-1 shrink-0 rounded-md p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700 {{ $foco }}">
+                    class="-ml-1 shrink-0 rounded-md p-2 text-[var(--muted)] hover:bg-[var(--card-soft)] {{ $foco }}">
                 <svg class="size-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/>
                 </svg>
@@ -215,14 +224,13 @@
             <form method="GET" action="{{ route('documentos.index') }}" class="min-w-0 max-w-md flex-1">
                 <label class="relative block">
                     <span class="sr-only">Buscar</span>
-                    <svg class="pointer-events-none absolute left-3 top-2.5 size-4 text-slate-400" fill="none"
+                    <svg class="pointer-events-none absolute left-3 top-2.5 size-4 text-[var(--muted)]" fill="none"
                          stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.34-4.34M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/>
                     </svg>
                     <input type="search" name="q" value="{{ request('q') }}"
                            placeholder="Buscar por nombre, archivo o etiqueta…"
-                           class="w-full rounded-md border-slate-300 py-1.5 pl-9 pr-3 text-sm shadow-sm placeholder:text-slate-400 focus:border-sky-500 focus:ring-sky-500
-                                  dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500">
+                           class="liquid-input w-full py-1.5 pl-9 pr-3 text-sm">
                 </label>
             </form>
 
@@ -237,7 +245,7 @@
                 <input type="hidden" name="tema" value="{{ auth()->user()?->tema === \App\Enums\TemaInterfaz::Oscuro ? 'claro' : 'oscuro' }}">
 
                 <button type="submit"
-                        class="flex rounded-md p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700 {{ $foco }}">
+                        class="flex rounded-md p-2 text-[var(--muted)] hover:bg-[var(--card-soft)] {{ $foco }}">
                     <svg class="size-5 dark:hidden" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round"
                               d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z"/>
@@ -371,6 +379,57 @@
             formulario.submit();
         });
     }
+})();
+</script>
+
+<script>
+(function () {
+    // Como aquí no hay SPA, cada clic o envío recarga la página entera: este
+    // overlay solo cubre el hueco entre que el usuario actúa y la siguiente
+    // página termina de llegar. No hace falta ocultarlo "a mano" al terminar
+    // porque esa página siguiente nunca lo trae consigo.
+    const overlay = document.getElementById('cargando-pagina');
+
+    function mostrarCargando() {
+        overlay.classList.remove('hidden');
+    }
+
+    // Enlaces que navegan de verdad: mismo origen, sin modificador de teclado,
+    // sin apuntar a otra pestaña, sin ser un ancla dentro de la misma página.
+    document.addEventListener('click', (evento) => {
+        const enlace = evento.target.closest('a[href]');
+
+        if (!enlace || evento.defaultPrevented) {
+            return;
+        }
+
+        const esOtraPestana = enlace.target === '_blank';
+        const esDescarga = enlace.hasAttribute('download');
+        const esAncla = enlace.getAttribute('href').startsWith('#');
+        const esOtroOrigen = enlace.origin !== window.location.origin;
+        const tieneModificador = evento.metaKey || evento.ctrlKey || evento.shiftKey || evento.altKey || evento.button !== 0;
+
+        if (!esOtraPestana && !esDescarga && !esAncla && !esOtroOrigen && !tieneModificador) {
+            mostrarCargando();
+        }
+    });
+
+    // Bubbling: si un formulario ya manejó su propio envío por AJAX y llamó a
+    // preventDefault() (como el interruptor de tema), defaultPrevented llega
+    // en true aquí y este overlay no se muestra para algo que no navega.
+    document.addEventListener('submit', (evento) => {
+        if (!evento.defaultPrevented) {
+            mostrarCargando();
+        }
+    });
+
+    // El navegador puede restaurar la página desde su caché de atrás/adelante
+    // con el overlay todavía visible de una navegación anterior.
+    window.addEventListener('pageshow', (evento) => {
+        if (evento.persisted) {
+            overlay.classList.add('hidden');
+        }
+    });
 })();
 </script>
 

@@ -18,6 +18,262 @@
 }
 
 /*
+ * Paleta institucional en variables CSS planas: gobierna toda la app (login
+ * y dashboard), no solo las clases utilitarias slate/sky de Tailwind que
+ * quedan por convertir. Cambiar el tema es cambiar estos valores, en un
+ * solo sitio.
+ */
+@layer base {
+    :root {
+        --bg: #f3f5f7;
+        --card: #ffffff;
+        --card-soft: #f8fafb;
+        --border: #dfe4e8;
+        --text: #1f2933;
+        --muted: #66727d;
+        --primary: #1f4e79;
+        --primary-hover: #173b5c;
+        --shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+        --success: #198754;
+        --warning: #b7791f;
+        --danger: #c53030;
+    }
+
+    html[data-theme='dark'],
+    .dark {
+        --bg: #101417;
+        --card: #171d21;
+        --card-soft: #1d252a;
+        --border: #303a40;
+        --text: #edf2f4;
+        --muted: #aab5bc;
+        --primary: #4d8ac4;
+        --primary-hover: #619bd0;
+        --shadow: 0 8px 25px rgba(0, 0, 0, 0.28);
+        --success: #48bb78;
+        --warning: #ecc94b;
+        --danger: #fc8181;
+    }
+
+    body {
+        background-color: var(--bg);
+        color: var(--text);
+        transition: background-color 0.25s ease, color 0.25s ease;
+    }
+}
+
+/*
+ * Componentes institucionales, compartidos por login y dashboard. Viven en
+ * capa 'components' de Tailwind: por debajo de las utilidades, así que
+ * cualquier clase de Tailwind puesta junto a estas (padding, ancho, etc.)
+ * sigue ganando sin pelear especificidad.
+ */
+@layer components {
+    .main-card {
+        background-color: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        box-shadow: var(--shadow);
+        transition: background-color 0.25s ease, border-color 0.25s ease, transform 0.2s ease;
+    }
+
+    .main-card:hover {
+        transform: translateY(-2px);
+    }
+
+    .action-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+        background-color: var(--card-soft);
+        border: 1px solid var(--border);
+        color: var(--text);
+        white-space: nowrap;
+    }
+
+    /* Liquid form styling */
+    .liquid-card {
+        position: relative;
+        background: radial-gradient(135% 100% at 0% 0%, rgba(255, 255, 255, 0.9) 0%, rgba(243, 245, 247, 0.75) 100%);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        box-shadow: 0 20px 50px rgba(31, 78, 121, 0.12), 0 1px 3px rgba(0, 0, 0, 0.05);
+        border-radius: 24px;
+        overflow: hidden;
+    }
+
+    html[data-theme='dark'] .liquid-card,
+    .dark .liquid-card {
+        background: radial-gradient(135% 100% at 0% 0%, rgba(23, 29, 33, 0.92) 0%, rgba(16, 20, 23, 0.85) 100%);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 1px rgba(77, 138, 196, 0.2);
+    }
+
+    .liquid-input {
+        background: rgba(255, 255, 255, 0.75);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 10px 14px;
+        color: var(--text);
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03);
+    }
+
+    html[data-theme='dark'] .liquid-input,
+    .dark .liquid-input {
+        background: rgba(23, 29, 33, 0.6);
+        border-color: rgba(255, 255, 255, 0.12);
+    }
+
+    .liquid-input:focus {
+        outline: none;
+        border-color: var(--primary);
+        background: var(--card);
+        box-shadow: 0 0 0 3px rgba(31, 78, 121, 0.15), inset 0 1px 2px rgba(0, 0, 0, 0.02);
+    }
+
+    html[data-theme='dark'] .liquid-input:focus,
+    .dark .liquid-input:focus {
+        box-shadow: 0 0 0 3px rgba(77, 138, 196, 0.25);
+    }
+
+    .liquid-dropzone {
+        border: 2px dashed var(--border);
+        background: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(31, 78, 121, 0.015) 10px, rgba(31, 78, 121, 0.015) 20px);
+        border-radius: 16px;
+        transition: all 0.25s ease;
+    }
+
+    .liquid-dropzone.active,
+    .liquid-dropzone:hover {
+        border-color: var(--primary);
+        background-color: rgba(31, 78, 121, 0.04);
+        transform: scale(1.005);
+    }
+
+    html[data-theme='dark'] .liquid-dropzone.active,
+    html[data-theme='dark'] .liquid-dropzone:hover {
+        background-color: rgba(77, 138, 196, 0.08);
+    }
+
+    /* Alertas: una base + una variante de color, como los 'liquid-alert-*' */
+    .liquid-alert {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        border-radius: 12px;
+        border: 1px solid;
+        padding: 12px;
+    }
+
+    .liquid-alert-error {
+        border-color: var(--danger);
+        background-color: rgba(197, 48, 48, 0.08);
+        color: var(--danger);
+    }
+
+    html[data-theme='dark'] .liquid-alert-error,
+    .dark .liquid-alert-error {
+        background-color: rgba(252, 129, 129, 0.1);
+    }
+
+    .liquid-alert-success {
+        border-color: var(--success);
+        background-color: rgba(25, 135, 84, 0.08);
+        color: var(--success);
+    }
+
+    html[data-theme='dark'] .liquid-alert-success,
+    .dark .liquid-alert-success {
+        background-color: rgba(72, 187, 120, 0.1);
+    }
+
+    .liquid-alert-warning {
+        border-color: var(--warning);
+        background-color: rgba(183, 121, 31, 0.08);
+        color: var(--warning);
+    }
+
+    html[data-theme='dark'] .liquid-alert-warning,
+    .dark .liquid-alert-warning {
+        background-color: rgba(236, 201, 75, 0.12);
+    }
+
+    .liquid-alert-info {
+        border-color: var(--primary);
+        background-color: var(--card-soft);
+        color: var(--text);
+    }
+
+    .liquid-button-primary {
+        background-color: var(--primary);
+        color: #fff;
+        border: none;
+        cursor: pointer;
+        transition: background-color 0.2s ease, transform 0.15s ease;
+    }
+
+    .liquid-button-primary:hover:not(:disabled) {
+        background-color: var(--primary-hover);
+    }
+
+    .liquid-button-primary:active:not(:disabled) {
+        transform: translateY(1px);
+    }
+
+    .liquid-button-primary:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    /*
+     * Fondos de tinte suave para resaltar una fila u otro elemento sin
+     * necesitar una clase clara y otra oscura por separado (bg-rose-50 +
+     * dark:bg-rose-950, etc.): el valor ya viene calculado para los dos temas.
+     */
+    .bg-danger-soft {
+        background-color: rgba(197, 48, 48, 0.08);
+    }
+
+    html[data-theme='dark'] .bg-danger-soft,
+    .dark .bg-danger-soft {
+        background-color: rgba(252, 129, 129, 0.1);
+    }
+
+    .bg-success-soft {
+        background-color: rgba(25, 135, 84, 0.08);
+    }
+
+    html[data-theme='dark'] .bg-success-soft,
+    .dark .bg-success-soft {
+        background-color: rgba(72, 187, 120, 0.1);
+    }
+
+    .bg-warning-soft {
+        background-color: rgba(183, 121, 31, 0.08);
+    }
+
+    html[data-theme='dark'] .bg-warning-soft,
+    .dark .bg-warning-soft {
+        background-color: rgba(236, 201, 75, 0.12);
+    }
+
+    .bg-primary-soft {
+        background-color: rgba(31, 78, 121, 0.08);
+    }
+
+    html[data-theme='dark'] .bg-primary-soft,
+    .dark .bg-primary-soft {
+        background-color: rgba(77, 138, 196, 0.15);
+    }
+}
+
+/*
  * En escritorio el menú lateral se puede esconder. La preferencia vive en
  * localStorage y se aplica en el <head>, antes de pintar, para que el sidebar
  * no aparezca y desaparezca al cargar cada página.

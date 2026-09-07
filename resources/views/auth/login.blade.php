@@ -6,70 +6,285 @@
     <title>Ingresar · {{ config('app.name') }}</title>
 
     {{--
-        Aquí todavía no hay usuario, así que no hay preferencia guardada: manda
-        la del sistema. Como el variant dark: del proyecto depende de la clase
-        .dark, hay que ponerla a mano — Tailwind ya no la deduce de la media
-        query. Va antes del CSS para que no haya destello blanco.
+        Aquí todavía no hay usuario, así que no hay preferencia guardada en la
+        cuenta: se respeta primero una elección manual guardada en este
+        navegador (botón de la cabecera) y si no existe, la del sistema.
+        Va antes del CSS para que no haya destello blanco.
     --}}
     <script>
         (function () {
+            const raiz = document.documentElement;
             const oscuroDelSistema = window.matchMedia('(prefers-color-scheme: dark)');
 
-            const aplicarTema = () => document.documentElement.classList.toggle('dark', oscuroDelSistema.matches);
+            const preferenciaGuardada = () => {
+                try {
+                    return localStorage.getItem('login-tema');
+                } catch (e) {
+                    return null;
+                }
+            };
+
+            const aplicarTema = () => {
+                const guardada = preferenciaGuardada();
+                raiz.classList.toggle('dark', guardada ? guardada === 'oscuro' : oscuroDelSistema.matches);
+            };
 
             aplicarTema();
             oscuroDelSistema.addEventListener('change', aplicarTema);
+
+            window.alternarTemaLogin = () => {
+                const nuevoTema = raiz.classList.contains('dark') ? 'claro' : 'oscuro';
+
+                try {
+                    localStorage.setItem('login-tema', nuevoTema);
+                } catch (e) {
+                    // Sin almacenamiento el cambio vale solo para esta pantalla.
+                }
+
+                aplicarTema();
+            };
         })();
     </script>
 
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @vite(['resources/css/app.css', 'resources/css/loader.css', 'resources/js/app.js'])
 </head>
-<body class="flex h-full items-center justify-center bg-slate-100 px-4 dark:bg-slate-900">
+<body class="flex min-h-full flex-col">
 
-<div class="w-full max-w-sm">
-    <div class="mb-6 text-center">
-        <h1 class="text-xl font-semibold text-slate-900 dark:text-slate-100">{{ config('app.name') }}</h1>
-        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Repositorio documental centralizado</p>
+@include('partials.cargando')
+
+<header class="flex items-center justify-between gap-3 border-b px-4 py-3.5 sm:px-8"
+        style="border-color: var(--border); background-color: color-mix(in srgb, var(--card) 80%, transparent);">
+    <div class="flex items-center gap-3">
+        <div class="flex size-9 shrink-0 items-center justify-center rounded-xl text-sm font-black text-white shadow-sm"
+             style="background-color: var(--primary);">M</div>
+        <div class="flex flex-col leading-none">
+            <span class="text-[10px] font-bold uppercase tracking-[0.22em]" style="color: var(--muted);">Alcaldía de</span>
+            <span class="text-base font-black uppercase tracking-[0.16em]" style="color: var(--text);">Medellín</span>
+        </div>
     </div>
 
-    <form method="POST" action="{{ route('login') }}"
-          class="rounded-lg bg-white p-6 shadow-sm ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700">
-        @csrf
+    <button type="button" onclick="window.alternarTemaLogin()" title="Cambiar de tema"
+            class="rounded-xl border p-2 transition-colors" style="border-color: var(--border); color: var(--text);">
+        <svg class="size-4 dark:hidden" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z"/>
+        </svg>
+        <svg class="hidden size-4 dark:block" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z"/>
+        </svg>
+        <span class="sr-only">Cambiar de tema</span>
+    </button>
+</header>
 
-        @if($errors->any())
-            <div class="mb-4 rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-700
-                        dark:bg-rose-950 dark:text-rose-200">
-                {{ $errors->first() }}
+<main class="flex flex-1 items-center justify-center p-4 sm:p-6 lg:p-8">
+    <div class="grid w-full max-w-5xl grid-cols-1 items-center gap-8 lg:grid-cols-12">
+
+        {{-- Columna informativa --}}
+        <div class="space-y-6 text-center lg:col-span-6 lg:text-left">
+            <div class="inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-bold"
+                 style="background-color: color-mix(in srgb, var(--primary) 10%, transparent); color: var(--primary); border: 1px solid color-mix(in srgb, var(--primary) 20%, transparent);">
+                <svg class="size-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M3.75 21h16.5M4.5 3.75h15M5.25 3.75v17.25m13.5-17.25v17.25M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21"/>
+                </svg>
+                <span>Gestión documental institucional</span>
             </div>
-        @endif
 
-        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300" for="email">Correo institucional</label>
-        <input id="email" name="email" type="email" value="{{ old('email') }}" required autofocus
-               class="mt-1 w-full rounded-md border-slate-300 text-sm shadow-sm focus:border-sky-500 focus:ring-sky-500
-                      dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100">
+            <h1 class="text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl" style="color: var(--text);">
+                Document`a <span style="color: var(--primary);">Medellín</span>
+            </h1>
 
-        <label class="mt-4 block text-sm font-medium text-slate-700 dark:text-slate-300" for="password">Contraseña</label>
-        <input id="password" name="password" type="password" required
-               class="mt-1 w-full rounded-md border-slate-300 text-sm shadow-sm focus:border-sky-500 focus:ring-sky-500
-                      dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100">
+            <p class="mx-auto max-w-xl text-sm leading-relaxed sm:text-base lg:mx-0" style="color: var(--muted);">
+                Plataforma institucional de archivo, custodia y control de versiones para los documentos de las
+                dependencias de la Alcaldía de Medellín.
+            </p>
 
-        <label class="mt-4 flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-            <input type="checkbox" name="recordarme" value="1"
-                   class="rounded border-slate-300 text-sky-600 focus:ring-sky-500 dark:border-slate-600 dark:bg-slate-900">
-            Mantener la sesión iniciada
-        </label>
+            <div class="grid grid-cols-1 gap-3 pt-2 text-left sm:grid-cols-2">
+                <div class="rounded-2xl border p-3.5" style="background-color: var(--card); border-color: var(--border);">
+                    <div class="mb-1 flex items-center gap-2 text-xs font-bold" style="color: var(--text);">
+                        <svg class="size-4 text-emerald-600" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                  d="M9 12.75 11.25 15 15 9.75M12 3l7.5 3.375v4.5c0 4.94-3.28 9.522-7.5 10.798-4.22-1.276-7.5-5.858-7.5-10.798v-4.5L12 3Z"/>
+                        </svg>
+                        <span>Integridad verificable</span>
+                    </div>
+                    <p class="text-[11px] leading-normal" style="color: var(--muted);">
+                        Ningún archivo reemplaza a otro; cada versión queda con su propia huella y es trazable.
+                    </p>
+                </div>
 
-        <button type="submit"
-                class="mt-6 w-full rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2
-                       dark:focus:ring-offset-slate-800">
-            Ingresar
-        </button>
-    </form>
+                <div class="rounded-2xl border p-3.5" style="background-color: var(--card); border-color: var(--border);">
+                    <div class="mb-1 flex items-center gap-2 text-xs font-bold" style="color: var(--text);">
+                        <svg class="size-4" style="color: var(--primary);" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                  d="M9 12.75 11.25 15 15 9.75M21 12c0 4.556-3.02 8.41-7.167 9.665a2.25 2.25 0 0 1-1.666 0C7.02 20.41 4 16.556 4 12V6.741c0-.966.66-1.813 1.6-2.043l5.25-1.313a2.25 2.25 0 0 1 1.3 0l5.25 1.313A2.25 2.25 0 0 1 21 6.741V12Z"/>
+                        </svg>
+                        <span>Recepción externa segura</span>
+                    </div>
+                    <p class="text-[11px] leading-normal" style="color: var(--muted);">
+                        Enlaces temporales para que gente externa entregue archivos sin necesitar una cuenta.
+                    </p>
+                </div>
+            </div>
+        </div>
 
-    <p class="mt-4 text-center text-xs text-slate-500 dark:text-slate-400">
-        El acceso lo habilita un administrador de la dependencia.
-    </p>
-</div>
+        {{-- Formulario --}}
+        <div class="flex justify-center lg:col-span-6">
+            <div class="liquid-card w-full max-w-md rounded-3xl p-6 sm:p-8">
+                <div class="mb-6 text-center">
+                    <div class="mx-auto mb-3 flex size-12 items-center justify-center rounded-2xl text-white shadow-md"
+                         style="background-color: var(--primary);">
+                        <svg class="size-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                  d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1 1 21.75 8.25Z"/>
+                        </svg>
+                    </div>
+                    <h2 class="text-xl font-black tracking-tight" style="color: var(--text);">Iniciar sesión</h2>
+                    <p class="mt-1 text-xs" style="color: var(--muted);">Ingresa con tus credenciales institucionales</p>
+                </div>
+
+                @if($errors->any())
+                    <div class="liquid-alert liquid-alert-error mb-4 text-xs">
+                        <svg class="mt-0.5 size-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                  d="M12 9v3.75m0 3.75h.007v.008H12v-.008ZM21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+                        </svg>
+                        <div>
+                            <span class="block font-semibold">Error de autenticación</span>
+                            <span>{{ $errors->first() }}</span>
+                        </div>
+                    </div>
+                @endif
+
+                <form method="POST" action="{{ route('login') }}" id="formulario-login" class="space-y-4">
+                    @csrf
+
+                    <div>
+                        <label class="mb-1.5 block text-xs font-bold" style="color: var(--text);" for="email">
+                            Correo institucional
+                        </label>
+                        <div class="relative">
+                            <svg id="icono-email" class="pointer-events-none absolute left-3.5 top-3.5 size-4 transition-opacity duration-150" style="color: var(--muted);"
+                                 fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                      d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"/>
+                            </svg>
+                            <input id="email" name="email" type="email" value="{{ old('email') }}" required autofocus
+                                   class="liquid-input w-full pl-10 pr-3 text-sm">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="mb-1.5 block text-xs font-bold" style="color: var(--text);" for="password">
+                            Contraseña
+                        </label>
+                        <div class="relative">
+                            <svg id="icono-password" class="pointer-events-none absolute left-3.5 top-3.5 size-4 transition-opacity duration-150" style="color: var(--muted);"
+                                 fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                      d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"/>
+                            </svg>
+                            <input id="password" name="password" type="password" required
+                                   class="liquid-input w-full pl-10 pr-10 text-sm">
+                            <button type="button" id="alternar-password"
+                                    class="absolute right-3 top-3 focus:outline-none" style="color: var(--muted);">
+                                <svg id="icono-mostrar-password" class="size-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                          d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
+                                </svg>
+                                <svg id="icono-ocultar-password" class="hidden size-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                          d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0 1 12 4.5c4.756 0 8.774 3.162 10.065 7.498a10.523 10.523 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88"/>
+                                </svg>
+                                <span class="sr-only">Mostrar u ocultar contraseña</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <label class="flex items-center gap-2 pt-1 text-xs" style="color: var(--muted);">
+                        <input type="checkbox" name="recordarme" value="1"
+                               class="rounded" style="border-color: var(--border); accent-color: var(--primary);">
+                        Mantener la sesión iniciada
+                    </label>
+
+                    <button type="submit" id="boton-login"
+                            class="liquid-button-primary mt-2 flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold shadow-md">
+                        <span id="texto-boton-login">Ingresar</span>
+                        <svg id="icono-boton-login" class="size-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/>
+                        </svg>
+                    </button>
+                </form>
+
+                <div class="mt-6 border-t pt-4 text-center" style="border-color: var(--border);">
+                    <p class="text-[11px] leading-relaxed" style="color: var(--muted);">
+                        El acceso lo habilita un administrador de la dependencia. Cada inicio de sesión queda
+                        registrado en la auditoría del sistema.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer class="border-t px-4 py-3.5 text-center text-xs" style="border-color: var(--border); color: var(--muted);">
+    © {{ date('Y') }} Document`a Medellín • Todos los derechos reservados
+</footer>
+
+<script>
+    (function () {
+        const boton = document.getElementById('alternar-password');
+        const campo = document.getElementById('password');
+        const iconoMostrar = document.getElementById('icono-mostrar-password');
+        const iconoOcultar = document.getElementById('icono-ocultar-password');
+
+        boton.addEventListener('click', () => {
+            const visible = campo.type === 'text';
+            campo.type = visible ? 'password' : 'text';
+            iconoMostrar.classList.toggle('hidden', !visible);
+            iconoOcultar.classList.toggle('hidden', visible);
+        });
+
+        // El ícono a la izquierda estorba con el texto escrito una vez el
+        // campo tiene contenido: se desvanece en vez de convivir con él.
+        function ocultarIconoAlEscribir(campoId, iconoId) {
+            const entrada = document.getElementById(campoId);
+            const icono = document.getElementById(iconoId);
+
+            const actualizar = () => icono.classList.toggle('opacity-0', entrada.value.length > 0);
+
+            entrada.addEventListener('input', actualizar);
+            actualizar(); // por si el navegador autocompletó el valor antes de este script.
+        }
+
+        ocultarIconoAlEscribir('email', 'icono-email');
+        ocultarIconoAlEscribir('password', 'icono-password');
+
+        // Evita el doble envío y avisa que la petición va en curso; el propio
+        // envío del formulario decide a dónde va después.
+        document.getElementById('formulario-login').addEventListener('submit', () => {
+            const botonEnviar = document.getElementById('boton-login');
+            botonEnviar.disabled = true;
+            document.getElementById('texto-boton-login').textContent = 'Validando…';
+            document.getElementById('icono-boton-login').classList.add('hidden');
+            document.getElementById('cargando-pagina').classList.remove('hidden');
+        });
+
+        // Si el navegador restaura esta página desde el historial (back/forward)
+        // con el overlay visible de un intento anterior, hay que esconderlo:
+        // ya no hay ninguna petición en curso.
+        window.addEventListener('pageshow', (evento) => {
+            if (evento.persisted) {
+                document.getElementById('cargando-pagina').classList.add('hidden');
+                document.getElementById('boton-login').disabled = false;
+                document.getElementById('texto-boton-login').textContent = 'Ingresar';
+                document.getElementById('icono-boton-login').classList.remove('hidden');
+            }
+        });
+    })();
+</script>
 
 </body>
 </html>

@@ -4,20 +4,20 @@
 @section('contenido')
 
 @php
-    $campo = 'mt-1 w-full rounded-md border-slate-300 text-sm shadow-sm dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100';
-    $etiqueta = 'block text-sm font-medium text-slate-700 dark:text-slate-300';
-    $ayuda = 'mt-1 text-xs text-slate-500 dark:text-slate-400';
+    $campo = 'liquid-input mt-1 w-full text-sm';
+    $etiqueta = 'block text-sm font-medium text-[var(--text)]';
+    $ayuda = 'mt-1 text-xs text-[var(--muted)]';
 @endphp
 
 <div class="mx-auto max-w-xl">
-    <h1 class="mb-1 text-lg font-semibold text-slate-900 dark:text-slate-100">Nuevo enlace de carga</h1>
-    <p class="mb-6 text-sm text-slate-500 dark:text-slate-400">
+    <h1 class="mb-1 text-lg font-semibold text-[var(--text)]">Nuevo enlace de carga</h1>
+    <p class="mb-6 text-sm text-[var(--muted)]">
         Genera una URL para que alguien externo suba un archivo sin cuenta. El enlace queda identificado
         con el remitente que pongas aquí, no con el suyo.
     </p>
 
     <form method="POST" action="{{ route('admin.enlaces.store') }}"
-          class="space-y-6 rounded-lg bg-white p-6 ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700">
+          class="space-y-6 rounded-lg bg-[var(--card)] p-6 ring-1 ring-[var(--border)]">
         @csrf
 
         <div>
@@ -96,10 +96,10 @@
             </div>
         </div>
 
-        <div class="flex justify-end gap-3 border-t border-slate-200 pt-4 dark:border-slate-700">
+        <div class="flex justify-end gap-3 border-t border-[var(--border)] pt-4">
             <a href="{{ route('admin.enlaces.index') }}"
-               class="rounded-md px-4 py-2 text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100">Cancelar</a>
-            <button class="rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700">Crear enlace</button>
+               class="rounded-md px-4 py-2 text-sm text-[var(--muted)] hover:text-[var(--text)]">Cancelar</a>
+            <button class="liquid-button-primary rounded-md px-4 py-2 text-sm font-medium">Crear enlace</button>
         </div>
     </form>
 </div>

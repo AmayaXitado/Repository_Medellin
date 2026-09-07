@@ -1,9 +1,9 @@
 @php
     $doc = $documento ?? null;
     $carpetaPorDefecto = $doc?->carpeta_id ?? ($carpetaActual?->id ?? null);
-    $campo = 'mt-1 w-full rounded-md border-slate-300 text-sm shadow-sm dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100';
-    $etiqueta = 'block text-sm font-medium text-slate-700 dark:text-slate-300';
-    $ayuda = 'mt-1 text-xs text-slate-500 dark:text-slate-400';
+    $campo = 'liquid-input mt-1 w-full text-sm';
+    $etiqueta = 'block text-sm font-medium text-[var(--text)]';
+    $ayuda = 'mt-1 text-xs text-[var(--muted)]';
 @endphp
 
 <div class="grid gap-4 sm:grid-cols-2">
@@ -11,7 +11,7 @@
         <label for="nombre" class="{{ $etiqueta }}">Nombre del documento *</label>
         <input id="nombre" name="nombre" type="text" required maxlength="255"
                value="{{ old('nombre', $doc?->nombre) }}"
-               class="{{ $campo }} focus:border-sky-500 focus:ring-sky-500">
+               class="{{ $campo }}">
     </div>
 
     <div>
