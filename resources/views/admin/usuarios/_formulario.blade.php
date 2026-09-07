@@ -2,9 +2,9 @@
     $u = $usuario ?? null;
     $esNuevo = $u === null;
     $rolSeleccionado = old('rol', ($rolActualUsuario ?? null)?->value);
-    $campo = 'mt-1 w-full rounded-md border-slate-300 text-sm shadow-sm dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100';
-    $etiqueta = 'block text-sm font-medium text-slate-700 dark:text-slate-300';
-    $ayuda = 'mt-1 text-xs text-slate-500 dark:text-slate-400';
+    $campo = 'liquid-input mt-1 w-full text-sm';
+    $etiqueta = 'block text-sm font-medium text-[var(--text)]';
+    $ayuda = 'mt-1 text-xs text-[var(--muted)]';
 @endphp
 
 <div class="space-y-4">
@@ -29,17 +29,16 @@
     </div>
 
     <fieldset>
-        <legend class="text-sm font-medium text-slate-700 dark:text-slate-300">Rol en esta dependencia *</legend>
+        <legend class="text-sm font-medium text-[var(--text)]">Rol en esta dependencia *</legend>
         <div class="mt-2 space-y-2">
             @foreach($roles as $rol)
-                <label class="flex cursor-pointer items-start gap-3 rounded-md border border-slate-200 p-3 hover:bg-slate-50
-                              dark:border-slate-700 dark:hover:bg-slate-700/50">
+                <label class="flex cursor-pointer items-start gap-3 rounded-md border border-[var(--border)] p-3 hover:bg-[var(--card-soft)]">
                     <input type="radio" name="rol" value="{{ $rol->value }}" required
-                           class="mt-0.5 text-sky-600 focus:ring-sky-500 dark:border-slate-600 dark:bg-slate-900"
+                           class="mt-0.5 accent-[var(--primary)]"
                            @checked($rolSeleccionado === $rol->value)>
                     <span>
-                        <span class="block text-sm font-medium text-slate-900 dark:text-slate-100">{{ $rol->etiqueta() }}</span>
-                        <span class="block text-xs text-slate-500 dark:text-slate-400">{{ $rol->descripcion() }}</span>
+                        <span class="block text-sm font-medium text-[var(--text)]">{{ $rol->etiqueta() }}</span>
+                        <span class="block text-xs text-[var(--muted)]">{{ $rol->descripcion() }}</span>
                     </span>
                 </label>
             @endforeach
@@ -59,10 +58,10 @@
         <input id="password_confirmation" name="password_confirmation" type="password" class="{{ $campo }}">
     </div>
 
-    <label class="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+    <label class="flex items-center gap-2 text-sm text-[var(--text)]">
         <input type="hidden" name="activo" value="0">
         <input type="checkbox" name="activo" value="1" @checked(old('activo', $u?->activo ?? true))
-               class="rounded border-slate-300 text-sky-600 focus:ring-sky-500 dark:border-slate-600 dark:bg-slate-900">
+               class="rounded border-[var(--border)] accent-[var(--primary)]">
         Cuenta activa
     </label>
 </div>

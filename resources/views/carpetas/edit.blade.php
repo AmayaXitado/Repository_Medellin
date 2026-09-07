@@ -4,22 +4,22 @@
 @section('contenido')
 
 @php
-    $campo = 'mt-1 w-full rounded-md border-slate-300 text-sm shadow-sm dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100';
-    $etiqueta = 'block text-sm font-medium text-slate-700 dark:text-slate-300';
+    $campo = 'liquid-input mt-1 w-full text-sm';
+    $etiqueta = 'block text-sm font-medium text-[var(--text)]';
 @endphp
 
 <div class="mx-auto max-w-xl space-y-4">
-    <h1 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Editar «{{ $carpeta->nombre }}»</h1>
+    <h1 class="text-lg font-semibold text-[var(--text)]">Editar «{{ $carpeta->nombre }}»</h1>
 
     <form method="POST" action="{{ route('carpetas.update', $carpeta) }}"
-          class="space-y-4 rounded-lg bg-white p-6 ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700">
+          class="space-y-4 rounded-lg bg-[var(--card)] p-6 ring-1 ring-[var(--border)]">
         @csrf @method('PUT')
 
         <div>
             <label for="nombre" class="{{ $etiqueta }}">Nombre *</label>
             <input id="nombre" name="nombre" type="text" required maxlength="150"
                    value="{{ old('nombre', $carpeta->nombre) }}"
-                   class="{{ $campo }} focus:border-sky-500 focus:ring-sky-500">
+                   class="{{ $campo }}">
         </div>
 
         <div>
@@ -40,43 +40,44 @@
                       class="{{ $campo }}">{{ old('descripcion', $carpeta->descripcion) }}</textarea>
         </div>
 
-        <div class="flex justify-end gap-3 border-t border-slate-200 pt-4 dark:border-slate-700">
+        <div class="flex justify-end gap-3 border-t border-[var(--border)] pt-4">
             <a href="{{ route('documentos.index', ['carpeta' => $carpeta->uuid]) }}"
-               class="rounded-md px-4 py-2 text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100">Cancelar</a>
-            <button class="rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700">Guardar</button>
+               class="rounded-md px-4 py-2 text-sm text-[var(--muted)] hover:text-[var(--text)]">Cancelar</a>
+            <button class="liquid-button-primary rounded-md px-4 py-2 text-sm font-medium">Guardar</button>
         </div>
     </form>
 
     @if($carpeta->activa)
         @can('inactivar', $carpeta)
             <form method="POST" action="{{ route('carpetas.inactivar', $carpeta) }}"
-                  class="rounded-lg bg-white p-4 ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700">
+                  class="rounded-lg bg-[var(--card)] p-4 ring-1 ring-[var(--border)]">
                 @csrf @method('PATCH')
-                <p class="mb-3 text-xs text-slate-500 dark:text-slate-400">
+                <p class="mb-3 text-xs text-[var(--muted)]">
                     Inactivar la carpeta la oculta a lectores y editores. Su contenido se conserva.
                 </p>
-                <button class="rounded-md bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700">
+                <button class="rounded-md bg-[var(--danger)] px-4 py-2 text-sm font-medium text-white hover:brightness-90">
                     Inactivar carpeta
                 </button>
             </form>
         @endcan
     @else
-        <div class="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800
-                    dark:border-rose-900 dark:bg-rose-950 dark:text-rose-200">
-            <p class="font-medium">Carpeta inactiva</p>
-            <p class="mt-1 text-rose-700 dark:text-rose-300">
-                Solo la ve el rol de administración. Su contenido sigue intacto.
-            </p>
+        <div class="liquid-alert liquid-alert-error text-sm">
+            <div>
+                <p class="font-medium">Carpeta inactiva</p>
+                <p class="mt-1">
+                    Solo la ve el rol de administración. Su contenido sigue intacto.
+                </p>
+            </div>
         </div>
 
         @can('reactivar', $carpeta)
             <form method="POST" action="{{ route('carpetas.reactivar', $carpeta) }}"
-                  class="rounded-lg bg-white p-4 ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700">
+                  class="rounded-lg bg-[var(--card)] p-4 ring-1 ring-[var(--border)]">
                 @csrf @method('PATCH')
-                <p class="mb-3 text-xs text-slate-500 dark:text-slate-400">
+                <p class="mb-3 text-xs text-[var(--muted)]">
                     Reactivarla vuelve a mostrarla a lectores y editores.
                 </p>
-                <button class="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">
+                <button class="rounded-md bg-[var(--success)] px-4 py-2 text-sm font-medium text-white hover:brightness-90">
                     Reactivar carpeta
                 </button>
             </form>

@@ -22,15 +22,14 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="h-full bg-slate-100 dark:bg-slate-900">
+<body class="h-full">
     <div class="flex min-h-full items-center justify-center px-4 py-10">
         <main class="w-full max-w-lg">
-            <div class="rounded-lg bg-white p-6 shadow-sm ring-1 ring-slate-200
-                        dark:bg-slate-800 dark:ring-slate-700 sm:p-8">
+            <div class="rounded-lg bg-[var(--card)] p-6 shadow-sm ring-1 ring-[var(--border)] sm:p-8">
                 @yield('contenido')
             </div>
 
-            <p class="mt-6 text-center text-xs text-slate-500 dark:text-slate-400">
+            <p class="mt-6 text-center text-xs text-[var(--muted)]">
                 Alcaldía de Medellín · Repositorio documental
             </p>
         </main>
