@@ -63,9 +63,14 @@ return [
     | will be used by the PHP date and date-time functions. The timezone
     | is set to "UTC" by default as it is suitable for most use cases.
     |
+    | El .env del proyecto declara America/Bogota desde el principio, pero
+    | este valor estaba fijo en 'UTC' y lo ignoraba: las fechas en pantalla
+    | salían cinco horas adelantadas y 'today' cambiaba de día a las 7 p. m.
+    | hora de Medellín.
+    |
     */
 
-    'timezone' => 'UTC',
+    'timezone' => env('APP_TIMEZONE', 'UTC'),
 
     /*
     |--------------------------------------------------------------------------
