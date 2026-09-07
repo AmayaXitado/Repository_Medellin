@@ -38,10 +38,16 @@ jobs:
           SSH_HOST: ${{ secrets.VPS_HOST }}
         run: |
           mkdir -p ~/.ssh
-          printf '%s\n' "$SSH_KEY" | tr -d '\r' > ~/.ssh/id_deploy
+          if printf '%s' "$SSH_KEY" | grep -q "BEGIN OPENSSH"; then
+            echo "Formato: PEM"
+            printf '%s\n' "$SSH_KEY" | tr -d '\r' > ~/.ssh/id_deploy
+          else
+            echo "Formato: base64"
+            printf '%s' "$SSH_KEY" | tr -d '\r\n ' | base64 -d > ~/.ssh/id_deploy
+          fi
           chmod 600 ~/.ssh/id_deploy
           if ! ssh-keygen -y -f ~/.ssh/id_deploy > /dev/null 2>&1; then
-            echo "::error::La llave de VPS_SSH_KEY no es valida. Debe incluir las lineas BEGIN y END y conservar sus saltos de linea."
+            echo "::error::La llave de VPS_SSH_KEY sigue sin ser valida."
             exit 1
           fi
           echo "Llave valida"
