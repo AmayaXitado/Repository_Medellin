@@ -11,6 +11,7 @@ concurrency:
 
 env:
   DEPLOY_PATH: /var/www/documenta
+  SSH_OPTS: -i ~/.ssh/id_deploy -o BatchMode=yes -o StrictHostKeyChecking=accept-new
 
 jobs:
   deploy:
@@ -37,16 +38,21 @@ jobs:
           SSH_HOST: ${{ secrets.VPS_HOST }}
         run: |
           mkdir -p ~/.ssh
-          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_deploy
+          printf '%s\n' "$SSH_KEY" | tr -d '\r' > ~/.ssh/id_deploy
           chmod 600 ~/.ssh/id_deploy
-          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          if ! ssh-keygen -y -f ~/.ssh/id_deploy > /dev/null 2>&1; then
+            echo "::error::La llave de VPS_SSH_KEY no es valida. Debe incluir las lineas BEGIN y END y conservar sus saltos de linea."
+            exit 1
+          fi
+          echo "Llave valida"
+          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
 
       - name: Traer el codigo nuevo al VPS
         env:
           SSH_HOST: ${{ secrets.VPS_HOST }}
           SSH_USER: ${{ secrets.VPS_USER }}
         run: |
-          ssh -i ~/.ssh/id_deploy "$SSH_USER@$SSH_HOST" \
+          ssh $SSH_OPTS "$SSH_USER@$SSH_HOST" \
             "cd '$DEPLOY_PATH' && git fetch --all --prune && git reset --hard origin/main"
 
       - name: Subir los assets compilados
@@ -54,7 +60,7 @@ jobs:
           SSH_HOST: ${{ secrets.VPS_HOST }}
           SSH_USER: ${{ secrets.VPS_USER }}
         run: |
-          rsync -avz --delete -e "ssh -i ~/.ssh/id_deploy" \
+          rsync -avz --delete -e "ssh $SSH_OPTS" \
             public/build/ "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/public/build/"
 
       - name: Ejecutar el despliegue en el servidor
@@ -62,7 +68,7 @@ jobs:
           SSH_HOST: ${{ secrets.VPS_HOST }}
           SSH_USER: ${{ secrets.VPS_USER }}
         run: |
-          ssh -i ~/.ssh/id_deploy "$SSH_USER@$SSH_HOST" \
+          ssh $SSH_OPTS "$SSH_USER@$SSH_HOST" \
             "cd '$DEPLOY_PATH' && bash bin/deploy.sh"
 
       - name: Verificar que el sitio responde
