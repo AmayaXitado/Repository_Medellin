@@ -12,8 +12,8 @@
 <div class="mx-auto max-w-xl">
     <h1 class="mb-1 text-lg font-semibold text-[var(--text)]">Nuevo enlace de carga</h1>
     <p class="mb-6 text-sm text-[var(--muted)]">
-        Genera una URL para que alguien externo suba un archivo sin cuenta. El enlace queda identificado
-        con el remitente que pongas aquí, no con el suyo.
+        Genera una URL para que alguien de fuera suba archivos sin tener cuenta. Lo que envíe
+        entra directo a la carpeta que elijas, y esa persona se identifica al enviarlo.
     </p>
 
     <form method="POST" action="{{ route('admin.enlaces.store') }}"
@@ -21,87 +21,57 @@
         @csrf
 
         <div>
-            <label for="destinatario_id" class="{{ $etiqueta }}">Llega a la bandeja de *</label>
-            <select id="destinatario_id" name="destinatario_id" required class="{{ $campo }}">
+            <label for="carpeta_id" class="{{ $etiqueta }}">Carpeta de destino *</label>
+            <select id="carpeta_id" name="carpeta_id" required class="{{ $campo }}">
                 <option value="">Selecciona…</option>
-                @foreach($destinatarios as $destinatario)
-                    <option value="{{ $destinatario->id }}" @selected(old('destinatario_id') == $destinatario->id)>
-                        {{ $destinatario->name }}
-                    </option>
-                @endforeach
-            </select>
-        </div>
-
-        <div>
-            <label for="carpeta_id" class="{{ $etiqueta }}">
-                Carpeta {{ $esAdministrador ? '' : '*' }}
-            </label>
-            <select id="carpeta_id" name="carpeta_id" {{ $esAdministrador ? '' : 'required' }} class="{{ $campo }}">
-                @if($esAdministrador)
-                    <option value="">Sin carpeta fija (queda a criterio de quien clasifique)</option>
-                @else
-                    <option value="">Selecciona…</option>
-                @endif
                 @foreach($carpetas as $carpeta)
-                    <option value="{{ $carpeta->id }}" @selected(old('carpeta_id') == $carpeta->id)>
+                    <option value="{{ $carpeta->id }}" @selected(old('carpeta_id', $carpetaPorDefecto) == $carpeta->id)>
                         {{ $carpeta->nombre }}
                     </option>
                 @endforeach
             </select>
             <p class="{{ $ayuda }}">
                 @if($esAdministrador)
-                    Es solo una sugerencia para quien archive lo recibido: no clasifica el archivo por sí sola.
+                    Todo lo que entre por este enlace se guardará aquí.
                 @else
-                    Solo puedes elegir entre las carpetas que lideras.
+                    Solo puedes generar enlaces hacia las carpetas que lideras.
                 @endif
             </p>
-        </div>
-
-        <div>
-            <label for="remitente_nombre" class="{{ $etiqueta }}">Nombre del remitente *</label>
-            <input id="remitente_nombre" name="remitente_nombre" type="text" required
-                   value="{{ old('remitente_nombre') }}" class="{{ $campo }}">
-        </div>
-
-        <div class="grid gap-4 sm:grid-cols-2">
-            <div>
-                <label for="remitente_email" class="{{ $etiqueta }}">Correo del remitente</label>
-                <input id="remitente_email" name="remitente_email" type="email"
-                       value="{{ old('remitente_email') }}" class="{{ $campo }}">
-            </div>
-            <div>
-                <label for="remitente_entidad" class="{{ $etiqueta }}">Entidad</label>
-                <input id="remitente_entidad" name="remitente_entidad" type="text"
-                       value="{{ old('remitente_entidad') }}" class="{{ $campo }}">
-            </div>
         </div>
 
         <div>
             <label for="proposito" class="{{ $etiqueta }}">Propósito</label>
             <input id="proposito" name="proposito" type="text" value="{{ old('proposito') }}"
                    placeholder="Actas del comité 2026" class="{{ $campo }}">
-            <p class="{{ $ayuda }}">Es lo único que ve el remitente en el formulario público.</p>
+            <p class="{{ $ayuda }}">Es lo único que ve quien recibe el enlace, además del formulario.</p>
         </div>
 
         <div class="grid gap-4 sm:grid-cols-2">
             <div>
                 <label for="expira_at" class="{{ $etiqueta }}">Vence</label>
-                {{--
-                    Por día y no por minuto. El valor reenviado tras un error
-                    viene ya normalizado al final del día, así que se recorta
-                    a Y-m-d para que el campo lo entienda.
-                --}}
                 <input id="expira_at" name="expira_at" type="date"
                        min="{{ now()->toDateString() }}"
                        value="{{ \Illuminate\Support\Str::substr(old('expira_at', ''), 0, 10) }}"
                        class="{{ $campo }}">
-                <p class="{{ $ayuda }}">Vacío = sin vencimiento. El enlace sirve durante todo el día elegido.</p>
+                <p class="{{ $ayuda }}">Vacío = sin vencimiento. Sirve todo el día elegido.</p>
             </div>
             <div>
                 <label for="max_usos" class="{{ $etiqueta }}">Usos máximos</label>
                 <input id="max_usos" name="max_usos" type="number" min="1" value="{{ old('max_usos') }}" class="{{ $campo }}">
                 <p class="{{ $ayuda }}">Vacío = sin límite de usos.</p>
             </div>
+        </div>
+
+        {{--
+            El enlace no lleva identidad: cualquiera a quien se lo reenvíen
+            puede subir. El vencimiento y el número de usos son el único
+            control, así que conviene decirlo aquí y no en un manual.
+        --}}
+        <div class="liquid-alert liquid-alert-warning text-sm">
+            <p>
+                Quien tenga esta URL podrá subir a esa carpeta hasta que venza o se agote.
+                Ponle un vencimiento corto si la vas a enviar por correo o WhatsApp.
+            </p>
         </div>
 
         <div class="flex justify-end gap-3 border-t border-[var(--border)] pt-4">

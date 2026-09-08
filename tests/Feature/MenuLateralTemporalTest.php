@@ -81,13 +81,35 @@ class MenuLateralTemporalTest extends TestCase
         $this->assertStringContainsString('id="menu-lateral"', $html);
         $this->assertStringContainsString('id="menu-boton"', $html);
 
-        // Buscador: GET a documentos.index con el parámetro q.
-        $this->assertStringContainsString('action="'.route('documentos.index').'"', $html);
-        $this->assertStringContainsString('name="q"', $html);
+        // Un solo control del menú, y vive en la cabecera. Si volviera a
+        // aparecer uno dentro del <aside>, quedaría inalcanzable justo cuando
+        // hace falta: con el menú escondido.
+        $this->assertStringNotContainsString('id="menu-cerrar"', $html);
+
+        // El buscador de la barra superior se retiró por decisión de diseño.
+        // La búsqueda por texto sigue existiendo en el backend (?q=), solo que
+        // ya no tiene campo en pantalla.
+        //
+        // Se comprueba por su placeholder, que era único. No sirve buscar
+        // name="q" —la pantalla de Usuarios tiene su propio buscador— ni la
+        // acción del formulario, porque documentos.store apunta a la misma
+        // URL que documentos.index y solo se distinguen por el verbo.
+        $this->assertStringNotContainsString('Buscar por nombre', $html);
 
         // Perfil y salir.
         $this->assertStringContainsString(route('perfil.edit'), $html);
         $this->assertStringContainsString(route('logout'), $html);
+
+        // Salir aparece dos veces y no es un descuido: una en la cabecera
+        // para escritorio y otra en el pie del menú para móvil, cada una
+        // escondida en el tamaño de la otra. Si alguna desaparece, ese
+        // tamaño de pantalla se queda sin forma de cerrar sesión.
+        $this->assertSame(
+            2,
+            substr_count($html, route('logout')),
+            'Salir debe estar dos veces: una por cada tamaño de pantalla.',
+        );
+        $this->assertStringContainsString('hidden shrink-0 md:block', $html);
 
         // Enlace siempre visible.
         $this->assertStringContainsString(route('documentos.index'), $html);

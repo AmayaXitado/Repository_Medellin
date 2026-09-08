@@ -9,7 +9,7 @@
     {{--
         Va antes del CSS a propósito: si esto se resolviera al final del body el
         navegador ya habría pintado, y se vería un destello blanco al cargar en
-        modo oscuro y el sidebar apareciendo para luego esconderse.
+        modo oscuro y el menú apareciendo para luego esconderse.
     --}}
     <script>
         (function () {
@@ -63,16 +63,6 @@
         ],
     ];
 
-    // Quién ve la bandeja lo decide RecepcionPolicy::viewAny, no el rol: así,
-    // cuando llegue el rol nuevo, este menú se mueve solo.
-    if (auth()->user()?->can('viewAny', App\Models\Recepcion::class)) {
-        $enlaces['bandeja.index'] = [
-            'texto' => 'Bandeja de entrada',
-            'icono' => 'M2.25 13.5h3.86a2.25 2.25 0 0 1 2.012 1.244l.256.512a2.25 2.25 0 0 0 2.013 1.244h3.218a2.25 2.25 0 0 0 2.013-1.244l.256-.512a2.25 2.25 0 0 1 2.013-1.244h3.859m-19.5.338V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18v-4.162c0-.224-.034-.447-.1-.661L19.24 5.338a2.25 2.25 0 0 0-2.15-1.588H6.911a2.25 2.25 0 0 0-2.15 1.588L2.35 13.177a2.25 2.25 0 0 0-.1.661Z',
-            'contador' => $recepcionesPendientes ?? 0,
-        ];
-    }
-
     // Administración ve todos los enlaces de su dependencia; un líder de
     // carpeta ve y crea los suyos. La visibilidad la decide EnlaceCargaPolicy.
     if (auth()->user()?->can('viewAny', App\Models\EnlaceCarga::class)) {
@@ -124,13 +114,11 @@
                 <span class="truncate">{{ config('app.name') }}</span>
             </a>
 
-            <button type="button" id="menu-cerrar" title="Ocultar menú"
-                    class="-mr-1 rounded-md p-1.5 text-[var(--muted)] hover:bg-[var(--card-soft)] hover:text-[var(--text)] {{ $foco }}">
-                <svg class="size-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M11 19.5 3.5 12 11 4.5m7.5 15L11 12l7.5-7.5"/>
-                </svg>
-                <span class="sr-only">Ocultar menú</span>
-            </button>
+            {{--
+                Aquí había un segundo botón para cerrar el menú. Se quitó: uno
+                solo lo esconde y lo saca, y es el de la barra superior. Dos
+                controles para lo mismo, en sitios distintos, sobraban.
+            --}}
         </div>
 
         <div class="px-4 pb-4">
@@ -180,7 +168,8 @@
         </nav>
 
         <div class="border-t border-[var(--border)] p-3">
-            <div class="flex items-center gap-2">
+            {{-- Solo en móvil: en escritorio la cuenta vive arriba a la derecha. --}}
+            <div class="flex items-center gap-2 md:hidden">
                 <a href="{{ route('perfil.edit') }}"
                    class="flex min-w-0 flex-1 items-center gap-2 rounded-md p-1 hover:bg-[var(--card-soft)] {{ $foco }}">
                     <span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-[var(--primary)] text-xs font-semibold text-white">
@@ -213,6 +202,13 @@
     <div class="flex min-w-0 flex-1 flex-col">
 
         <header class="sticky top-0 z-20 flex items-center gap-3 border-b border-[var(--border)] bg-[var(--card)] px-4 py-2">
+            {{--
+                El único control del menú. Hace las dos cosas con el mismo
+                clic: en escritorio lo esconde y lo saca, recordando la
+                elección; en móvil abre y cierra el cajón. Vive en la cabecera
+                y no dentro del menú, que es lo que le permite seguir
+                alcanzable cuando el menú está escondido.
+            --}}
             <button type="button" id="menu-boton" aria-controls="menu-lateral" aria-expanded="false"
                     class="-ml-1 shrink-0 rounded-md p-2 text-[var(--muted)] hover:bg-[var(--card-soft)] {{ $foco }}">
                 <svg class="size-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
@@ -220,19 +216,6 @@
                 </svg>
                 <span class="sr-only" id="menu-boton-texto">Mostrar menú</span>
             </button>
-
-            <form method="GET" action="{{ route('documentos.index') }}" class="min-w-0 max-w-md flex-1">
-                <label class="relative block">
-                    <span class="sr-only">Buscar</span>
-                    <svg class="pointer-events-none absolute left-3 top-2.5 size-4 text-[var(--muted)]" fill="none"
-                         stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.34-4.34M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/>
-                    </svg>
-                    <input type="search" name="q" value="{{ request('q') }}"
-                           placeholder="Buscar por nombre, archivo o etiqueta…"
-                           class="liquid-input w-full py-1.5 pl-9 pr-3 text-sm">
-                </label>
-            </form>
 
             {{--
                 Sin JS es un envío normal que recarga; con JS se intercepta y el
@@ -258,6 +241,50 @@
                     <span class="hidden sr-only dark:inline">Cambiar a tema claro</span>
                 </button>
             </form>
+
+            {{--
+                La cuenta, solo en escritorio. En móvil sigue en el pie del
+                menú lateral: aquí arriba competiría por sitio con el
+                hamburguesa en una pantalla estrecha.
+
+                Es un <details> y no un menú montado a mano con JavaScript:
+                así se abre igual si el script falla o todavía no ha cargado.
+                Para llegar a «cerrar sesión» eso no es un lujo.
+            --}}
+            <details id="menu-cuenta" class="relative hidden shrink-0 md:block">
+                <summary class="flex cursor-pointer list-none items-center gap-2 rounded-md p-1 hover:bg-[var(--card-soft)]
+                                [&::-webkit-details-marker]:hidden {{ $foco }}">
+                    <span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-[var(--primary)] text-xs font-semibold text-white">
+                        {{ auth()->user()->iniciales() }}
+                    </span>
+                    <span class="min-w-0 text-left">
+                        <span class="block max-w-40 truncate text-sm text-[var(--text)]">{{ auth()->user()->name }}</span>
+                        <span class="block truncate text-xs text-[var(--muted)]">{{ $rolActual?->etiqueta() }}</span>
+                    </span>
+                    <svg class="size-4 shrink-0 text-[var(--muted)]" fill="none" stroke="currentColor"
+                         stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5"/>
+                    </svg>
+                </summary>
+
+                <div class="absolute right-0 z-30 mt-2 w-56 overflow-hidden rounded-md bg-[var(--card)] py-1 shadow-lg ring-1 ring-[var(--border)]">
+                    <p class="border-b border-[var(--border)] px-4 py-2 text-xs text-[var(--muted)]">
+                        {{ $dependenciaActual?->nombre }}
+                    </p>
+
+                    <a href="{{ route('perfil.edit') }}"
+                       class="block px-4 py-2 text-sm text-[var(--text)] hover:bg-[var(--card-soft)]">
+                        Mi perfil
+                    </a>
+
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button class="block w-full px-4 py-2 text-left text-sm text-[var(--text)] hover:bg-[var(--card-soft)]">
+                            Cerrar sesión
+                        </button>
+                    </form>
+                </div>
+            </details>
         </header>
 
         <main class="mx-auto w-full max-w-7xl flex-1 px-4 py-6">
@@ -272,12 +299,11 @@
     const raiz = document.documentElement;
     const boton = document.getElementById('menu-boton');
     const botonTexto = document.getElementById('menu-boton-texto');
-    const cerrar = document.getElementById('menu-cerrar');
     const menu = document.getElementById('menu-lateral');
     const fondo = document.getElementById('menu-fondo');
     const escritorio = window.matchMedia('(min-width: 768px)');
 
-    // El mismo botón hace dos cosas: en escritorio esconde y muestra el sidebar
+    // El mismo botón hace dos cosas: en escritorio esconde y muestra el menú
     // recordando la elección; en móvil abre y cierra el cajón deslizante.
     function visible() {
         return escritorio.matches
@@ -318,8 +344,29 @@
     }
 
     boton.addEventListener('click', () => mostrar(!visible()));
-    cerrar.addEventListener('click', () => mostrar(false));
+
+    // En móvil, tocar fuera del cajón también lo cierra.
     fondo.addEventListener('click', () => mostrar(false));
+
+    // El menú de la cuenta se abre solo, por ser un <details>. Esto añade
+    // únicamente lo que el navegador no da: cerrarlo al tocar fuera o con
+    // Escape. Si este script no llega a correr, el menú sigue funcionando.
+    const cuenta = document.getElementById('menu-cuenta');
+
+    if (cuenta) {
+        document.addEventListener('click', (e) => {
+            if (cuenta.open && !cuenta.contains(e.target)) {
+                cuenta.open = false;
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && cuenta.open) {
+                cuenta.open = false;
+                cuenta.querySelector('summary')?.focus();
+            }
+        });
+    }
 
     // Escape solo cierra el cajón de móvil: en escritorio esconder la navegación
     // con una tecla suelta sería desconcertante.

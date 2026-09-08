@@ -274,11 +274,11 @@
 }
 
 /*
- * En escritorio el menú lateral se puede esconder. La preferencia vive en
- * localStorage y se aplica en el <head>, antes de pintar, para que el sidebar
- * no aparezca y desaparezca al cargar cada página.
+ * En escritorio el menú lateral se esconde y se saca con el botón de la
+ * cabecera. La preferencia vive en localStorage y se aplica en el <head>,
+ * antes de pintar, para que no aparezca y desaparezca al cargar cada página.
  *
- * Por debajo de md el sidebar ya es un cajón deslizante, así que la regla se
+ * Por debajo de md el menú ya es un cajón deslizante, así que la regla se
  * limita al mismo breakpoint que usan las variantes md: de las vistas.
  */
 @media (width >= theme(--breakpoint-md)) {

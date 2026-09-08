@@ -1,5 +1,8 @@
 @php
     $doc = $documento ?? null;
+    // Al subir, el nombre de cada documento se escribe en su propia tarjeta,
+    // así que aquí sobra. Al editar, este es el único que hay.
+    $conNombre = $conNombre ?? true;
     $carpetaPorDefecto = $doc?->carpeta_id ?? ($carpetaActual?->id ?? null);
     $campo = 'liquid-input mt-1 w-full text-sm';
     $etiqueta = 'block text-sm font-medium text-[var(--text)]';
@@ -7,12 +10,14 @@
 @endphp
 
 <div class="grid gap-4 sm:grid-cols-2">
-    <div class="sm:col-span-2">
-        <label for="nombre" class="{{ $etiqueta }}">Nombre del documento *</label>
-        <input id="nombre" name="nombre" type="text" required maxlength="255"
-               value="{{ old('nombre', $doc?->nombre) }}"
-               class="{{ $campo }}">
-    </div>
+    @if($conNombre)
+        <div class="sm:col-span-2">
+            <label for="nombre" class="{{ $etiqueta }}">Nombre del documento *</label>
+            <input id="nombre" name="nombre" type="text" required maxlength="255"
+                   value="{{ old('nombre', $doc?->nombre) }}"
+                   class="{{ $campo }}">
+        </div>
+    @endif
 
     <div>
         <label for="carpeta_id" class="{{ $etiqueta }}">Carpeta</label>

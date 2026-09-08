@@ -10,6 +10,7 @@ use App\Models\EnlaceCarga;
 use App\Services\Auditor;
 use App\Services\ContextoDependencia;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 /**
@@ -33,7 +34,7 @@ class EnlaceCargaController extends Controller
         $dependencia = $this->contexto->requerida();
 
         $enlaces = EnlaceCarga::query()
-            ->with(['destinatario', 'carpeta', 'creador'])
+            ->with(['carpeta', 'creador'])
             // Administración ve todos los de la dependencia; un líder solo
             // los que él mismo generó.
             ->when(! $usuario->puedeAdministrarEn($dependencia->id), fn ($q) => $q->where('creado_por', $usuario->id))
@@ -43,7 +44,12 @@ class EnlaceCargaController extends Controller
         return view('admin.enlaces.index', ['enlaces' => $enlaces]);
     }
 
-    public function create(): View
+    /**
+     * El parámetro 'carpeta' llega del botón que hay en cada carpeta del
+     * explorador: deja el destino ya elegido para que crear el enlace sea
+     * un clic y un botón.
+     */
+    public function create(Request $peticion): View
     {
         $this->authorize('create', EnlaceCarga::class);
 
@@ -51,12 +57,19 @@ class EnlaceCargaController extends Controller
         $dependencia = $this->contexto->requerida();
         $esAdministrador = $usuario->puedeAdministrarEn($dependencia->id);
 
+        $carpetas = $esAdministrador
+            ? Carpeta::activas()->orderBy('nombre')->get()
+            : $usuario->carpetasLideradas()->where('dependencia_id', $dependencia->id)->activas()->orderBy('nombre')->get();
+
+        $sugerida = $peticion->filled('carpeta')
+            ? Carpeta::where('uuid', $peticion->string('carpeta'))->first()
+            : null;
+
         return view('admin.enlaces.create', [
-            'destinatarios' => $dependencia->usuarios()->orderBy('name')->get(),
-            'carpetas' => $esAdministrador
-                ? Carpeta::activas()->orderBy('nombre')->get()
-                : $usuario->carpetasLideradas()->where('dependencia_id', $dependencia->id)->activas()->orderBy('nombre')->get(),
+            'carpetas' => $carpetas,
             'esAdministrador' => $esAdministrador,
+            // Solo si de verdad puede usarla: el uuid viene de la URL.
+            'carpetaPorDefecto' => $carpetas->firstWhere('id', $sugerida?->id)?->id,
         ]);
     }
 
@@ -71,11 +84,7 @@ class EnlaceCargaController extends Controller
             'token_hash' => EnlaceCarga::hashDe($token),
             'token_cifrado' => $token,
             'dependencia_id' => $dependencia->id,
-            'destinatario_id' => $request->integer('destinatario_id'),
             'carpeta_id' => $request->input('carpeta_id'),
-            'remitente_nombre' => $request->string('remitente_nombre'),
-            'remitente_email' => $request->input('remitente_email'),
-            'remitente_entidad' => $request->input('remitente_entidad'),
             'proposito' => $request->input('proposito'),
             'expira_at' => $request->input('expira_at'),
             'max_usos' => $request->input('max_usos'),
@@ -85,7 +94,7 @@ class EnlaceCargaController extends Controller
         $this->auditor->registrar(
             AccionAuditoria::EnlaceCreado,
             $enlace,
-            "Creó un enlace de carga para {$enlace->remitente_nombre}",
+            "Creó un enlace de carga hacia «{$enlace->carpeta?->nombre}»",
         );
 
         // La URL solo se puede volver a ver aquí, en esta respuesta: después
@@ -105,7 +114,7 @@ class EnlaceCargaController extends Controller
         $this->auditor->registrar(
             AccionAuditoria::EnlaceRevocado,
             $enlace,
-            "Revocó el enlace de carga de {$enlace->remitente_nombre}",
+            "Revocó el enlace de carga hacia «{$enlace->carpeta?->nombre}»",
         );
 
         return back()->with('exito', 'Enlace revocado.');

@@ -74,6 +74,194 @@ class CargaArchivosTest extends TestCase
         $this->assertDatabaseMissing('documentos', ['nombre' => 'Acta del futuro']);
     }
 
+    /**
+     * Al adjuntar aparece una tarjeta con la miniatura y una X para quitarlo.
+     * Lo que se comprueba aquí es el andamiaje: que el campo nativo siga en
+     * pie para quien no tenga JavaScript, y que las piezas que el script
+     * necesita estén en el HTML.
+     */
+    public function test_la_pantalla_de_subida_trae_la_vista_previa_y_su_boton_de_quitar(): void
+    {
+        $respuesta = $this->actingAs($this->editor)->get(route('documentos.create'))->assertOk();
+
+        // El campo de archivo de siempre: sin script, el formulario funciona
+        // igual, y admite varios porque viaja como lista.
+        $respuesta->assertSee('name="archivo[]"', false);
+        $respuesta->assertSee('type="file"', false);
+        $respuesta->assertSee('multiple', false);
+        $respuesta->assertSee('required', false);
+
+        // Y encima, las piezas de la vista previa.
+        $respuesta->assertSee('data-campo-archivo', false);
+        $respuesta->assertSee('data-zona', false);
+        $respuesta->assertSee('data-lista', false);
+        $respuesta->assertSee('data-plantilla', false);
+        $respuesta->assertSee('data-miniatura', false);
+        $respuesta->assertSee('data-quitar', false);
+        $respuesta->assertSee('Quitar el archivo');
+    }
+
+    public function test_subir_una_version_nueva_previsualiza_igual_que_subir_un_documento(): void
+    {
+        $this->subir($this->archivoPdf(), 'Acta con historial')->assertRedirect();
+
+        $documento = Documento::withoutGlobalScopes()->where('nombre', 'Acta con historial')->firstOrFail();
+
+        $this->actingAs($this->editor)
+            ->get(route('documentos.show', $documento))
+            ->assertOk()
+            ->assertSee('data-campo-archivo', false)
+            ->assertSee('data-lista', false)
+            ->assertSee('data-quitar', false);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Varios archivos de una vez
+    |--------------------------------------------------------------------------
+    | Cada archivo se convierte en un documento propio. Es lo único que encaja
+    | con el modelo: un documento tiene versiones sucesivas del mismo archivo,
+    | no archivos hermanos.
+    */
+
+    public function test_subir_varios_archivos_crea_un_documento_por_cada_uno(): void
+    {
+        $this->actingAs($this->editor)
+            ->post(route('documentos.store'), [
+                'archivo' => [
+                    $this->archivoPdf('acta-enero.pdf', 'ENERO'),
+                    $this->archivoPdf('acta-febrero.pdf', 'FEBRERO'),
+                    $this->archivoJpg('acta-marzo.jpg'),
+                ],
+                'etiquetas' => 'actas, 2026',
+            ])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseCount('documentos', 3);
+        $this->assertDatabaseCount('documento_versiones', 3);
+
+        // Sin un nombre por documento, cada uno toma el de su archivo.
+        foreach (['acta-enero', 'acta-febrero', 'acta-marzo'] as $nombre) {
+            $this->assertDatabaseHas('documentos', ['nombre' => $nombre]);
+        }
+
+        // Y los metadatos del formulario son de todos: es lo que hace útil
+        // subir un lote de actas de golpe.
+        foreach (Documento::withoutGlobalScopes()->with(['etiquetas', 'versiones'])->get() as $documento) {
+            $this->assertCount(2, $documento->etiquetas);
+            $this->assertCount(1, $documento->versiones);
+            $this->assertSame(1, $documento->versiones->first()->numero);
+        }
+    }
+
+    public function test_con_un_solo_archivo_manda_el_nombre_que_se_escribio(): void
+    {
+        $this->subir($this->archivoPdf('IMG_20260907.pdf'), 'Acta de la sesión de septiembre')
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('documentos', ['nombre' => 'Acta de la sesión de septiembre']);
+        $this->assertDatabaseMissing('documentos', ['nombre' => 'IMG_20260907']);
+    }
+
+    /**
+     * Cada tarjeta trae su propia caja de nombre. Es lo que salva a las
+     * fotos, que llegan llamándose IMG_20260907.jpg.
+     */
+    public function test_cada_archivo_se_guarda_con_el_nombre_de_su_tarjeta(): void
+    {
+        $this->actingAs($this->editor)
+            ->post(route('documentos.store'), [
+                'archivo' => [
+                    $this->archivoJpg('IMG_20260907.jpg'),
+                    $this->archivoPdf('scan0042.pdf', 'ESCANEO'),
+                ],
+                'nombres' => ['Acta de enero', 'Informe de febrero'],
+            ])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('documentos', ['nombre' => 'Acta de enero']);
+        $this->assertDatabaseHas('documentos', ['nombre' => 'Informe de febrero']);
+        $this->assertDatabaseMissing('documentos', ['nombre' => 'IMG_20260907']);
+    }
+
+    /** Una tarjeta sin nombre no bloquea el envío: cae al del archivo. */
+    public function test_la_tarjeta_que_se_deje_en_blanco_toma_el_nombre_de_su_archivo(): void
+    {
+        $this->actingAs($this->editor)
+            ->post(route('documentos.store'), [
+                'archivo' => [
+                    $this->archivoPdf('acta-enero.pdf', 'ENERO'),
+                    $this->archivoPdf('acta-febrero.pdf', 'FEBRERO'),
+                ],
+                'nombres' => ['Acta de enero', ''],
+            ])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('documentos', ['nombre' => 'Acta de enero']);
+        $this->assertDatabaseHas('documentos', ['nombre' => 'acta-febrero']);
+    }
+
+    /**
+     * Los nombres viajan en una lista aparte de los archivos y casan por
+     * posición. Si alguien invirtiera un orden, los documentos quedarían
+     * con el nombre cruzado y nadie se enteraría.
+     */
+    public function test_los_nombres_no_se_cruzan_entre_archivos(): void
+    {
+        $this->actingAs($this->editor)
+            ->post(route('documentos.store'), [
+                'archivo' => [
+                    $this->archivoPdf('primero.pdf', 'CONTENIDO PRIMERO'),
+                    $this->archivoPdf('segundo.pdf', 'CONTENIDO SEGUNDO'),
+                ],
+                'nombres' => ['Uno', 'Dos'],
+            ])
+            ->assertRedirect();
+
+        $uno = Documento::withoutGlobalScopes()->where('nombre', 'Uno')->firstOrFail();
+        $dos = Documento::withoutGlobalScopes()->where('nombre', 'Dos')->firstOrFail();
+
+        $this->assertSame('primero.pdf', $uno->versiones->first()->nombre_original);
+        $this->assertSame('segundo.pdf', $dos->versiones->first()->nombre_original);
+    }
+
+    /** Todo o nada: nada de quedarse con la mitad del lote subida. */
+    public function test_si_uno_de_los_archivos_no_sirve_no_se_crea_ninguno(): void
+    {
+        $this->actingAs($this->editor)
+            ->post(route('documentos.store'), [
+                'archivo' => [
+                    $this->archivoPdf('bueno.pdf', 'CONTENIDO'),
+                    $this->archivo('disfrazado.pdf', "MZ\x90\x00\x03".str_repeat("\x00", 200), 'application/pdf'),
+                ],
+            ])
+            ->assertSessionHasErrors('archivo.1');
+
+        $this->assertDatabaseCount('documentos', 0);
+        $this->assertDatabaseCount('documento_versiones', 0);
+        $this->assertEmpty(Storage::disk(config('repositorio.disco'))->allFiles());
+    }
+
+    public function test_hay_un_tope_de_archivos_por_carga(): void
+    {
+        $tope = \App\Http\Requests\GuardarDocumentoRequest::MAXIMO_ARCHIVOS;
+
+        $archivos = [];
+
+        for ($i = 1; $i <= $tope + 1; $i++) {
+            $archivos[] = $this->archivoPdf("acta-{$i}.pdf", "CONTENIDO {$i}");
+        }
+
+        $this->actingAs($this->editor)
+            ->post(route('documentos.store'), ['archivo' => $archivos])
+            ->assertSessionHasErrors('archivo');
+
+        $this->assertDatabaseCount('documentos', 0);
+    }
+
     public function test_se_aceptan_pdf_y_jpg(): void
     {
         $this->subir($this->archivoPdf(), 'Acta en PDF')->assertRedirect();
@@ -99,7 +287,10 @@ class CargaArchivosTest extends TestCase
             $respuesta = $this->subir($archivo, $etiqueta);
 
             $this->assertSame(302, $respuesta->status(), "$etiqueta debía rechazarse con validación, no con {$respuesta->status()}.");
-            $respuesta->assertSessionHasErrors('archivo');
+
+            // La clave lleva el índice: el error es de un archivo concreto
+            // de la lista, no del campo entero.
+            $respuesta->assertSessionHasErrors('archivo.0');
         }
 
         $this->assertDatabaseCount('documentos', 0);
@@ -113,7 +304,7 @@ class CargaArchivosTest extends TestCase
         // Aquí sí sirve el archivo falso: solo hace falta que declare el
         // tamaño, no escribir 25 MB de verdad en el disco.
         $this->subir(UploadedFile::fake()->create('enorme.pdf', $maximo + 1, 'application/pdf'))
-            ->assertSessionHasErrors('archivo');
+            ->assertSessionHasErrors('archivo.0');
 
         $this->assertDatabaseCount('documentos', 0);
 

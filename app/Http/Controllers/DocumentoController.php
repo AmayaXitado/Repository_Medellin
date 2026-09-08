@@ -14,6 +14,7 @@ use App\Services\ContextoDependencia;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class DocumentoController extends Controller
@@ -58,7 +59,7 @@ class DocumentoController extends Controller
             ->when($request->filled('tipo'), fn ($q) => $q->where('tipo_documento_id', $request->integer('tipo')))
             ->when($request->filled('desde'), fn ($q) => $q->whereDate('fecha_documento', '>=', $request->date('desde')))
             ->when($request->filled('hasta'), fn ($q) => $q->whereDate('fecha_documento', '<=', $request->date('hasta')))
-            ->with(['versionActual', 'tipoDocumento', 'etiquetas', 'creador'])
+            ->with(['versionActual', 'tipoDocumento', 'etiquetas', 'creador', 'recepcion'])
             ->orderByDesc('created_at')
             ->paginate(config('repositorio.por_pagina'))
             ->withQueryString();
@@ -86,52 +87,105 @@ class DocumentoController extends Controller
         ]);
     }
 
+    /**
+     * Cada archivo se convierte en un documento propio, con su versión 1.
+     * Los metadatos del formulario —carpeta, tipo, fecha, etiquetas— son
+     * comunes a todos: es lo que hace útil subir un lote de actas de una vez.
+     */
     public function store(GuardarDocumentoRequest $request): RedirectResponse
     {
         $this->autorizarEdicion();
         $dependencia = $this->contexto->requerida();
 
-        $documento = DB::transaction(function () use ($request, $dependencia) {
-            $documento = Documento::create([
-                'dependencia_id' => $dependencia->id,
-                'carpeta_id' => $request->input('carpeta_id'),
-                'tipo_documento_id' => $request->input('tipo_documento_id'),
-                'nombre' => $request->string('nombre'),
-                'descripcion' => $request->input('descripcion'),
-                'fecha_documento' => $request->input('fecha_documento'),
-                'creado_por' => $request->user()->id,
-                'actualizado_por' => $request->user()->id,
-            ]);
+        $archivos = $request->archivos();
 
-            $documento->etiquetas()->sync(
-                Etiqueta::resolverDesdeTexto($request->input('etiquetas'), $dependencia->id)
-            );
+        // Todo o nada: si el quinto archivo falla, no quedan cuatro
+        // documentos a medias sin que nadie se entere.
+        $documentos = DB::transaction(function () use ($request, $dependencia, $archivos) {
+            $etiquetas = Etiqueta::resolverDesdeTexto($request->input('etiquetas'), $dependencia->id);
+            $creados = [];
 
-            $this->almacenamiento->guardarVersion(
-                $documento,
-                $request->file('archivo'),
-                $request->input('comentario_version') ?: 'Versión inicial',
-            );
+            foreach ($archivos as $indice => $archivo) {
+                $documento = Documento::create([
+                    'dependencia_id' => $dependencia->id,
+                    'carpeta_id' => $request->input('carpeta_id'),
+                    'tipo_documento_id' => $request->input('tipo_documento_id'),
+                    'nombre' => $this->nombrePara($request, $archivo, $indice, count($archivos)),
+                    'descripcion' => $request->input('descripcion'),
+                    'fecha_documento' => $request->input('fecha_documento'),
+                    'creado_por' => $request->user()->id,
+                    'actualizado_por' => $request->user()->id,
+                ]);
 
-            return $documento;
+                $documento->etiquetas()->sync($etiquetas);
+
+                $this->almacenamiento->guardarVersion(
+                    $documento,
+                    $archivo,
+                    $request->input('comentario_version') ?: 'Versión inicial',
+                );
+
+                $creados[] = $documento;
+            }
+
+            return $creados;
         });
 
-        $this->auditor->registrar(
-            AccionAuditoria::DocumentoCreado,
-            $documento,
-            "Cargó «{$documento->nombre}»",
-        );
+        // Una entrada por documento: la auditoría sigue documentos, no cargas.
+        foreach ($documentos as $documento) {
+            $this->auditor->registrar(
+                AccionAuditoria::DocumentoCreado,
+                $documento,
+                "Cargó «{$documento->nombre}»",
+            );
+        }
+
+        if (count($documentos) === 1) {
+            return redirect()
+                ->route('documentos.show', $documentos[0])
+                ->with('exito', 'Documento cargado correctamente.');
+        }
 
         return redirect()
-            ->route('documentos.show', $documento)
-            ->with('exito', 'Documento cargado correctamente.');
+            ->route('documentos.index', ['carpeta' => $documentos[0]->carpeta?->uuid])
+            ->with('exito', count($documentos).' documentos cargados correctamente.');
+    }
+
+    /**
+     * El nombre de cada documento, por orden de preferencia:
+     *
+     *   1. Lo escrito en la tarjeta de ese archivo (nombres[i]).
+     *   2. El campo suelto 'nombre', si la carga es de un solo archivo.
+     *      Es el respaldo de quien no tenga JavaScript, que no ve tarjetas.
+     *   3. El nombre del archivo, sin extensión.
+     */
+    protected function nombrePara(GuardarDocumentoRequest $request, $archivo, int $indice, int $total): string
+    {
+        $deLaTarjeta = trim((string) $request->input('nombres.'.$indice, ''));
+
+        if ($deLaTarjeta !== '') {
+            return Str::limit($deLaTarjeta, 250, '');
+        }
+
+        $suelto = $request->string('nombre')->trim()->toString();
+
+        if ($total === 1 && $suelto !== '') {
+            return $suelto;
+        }
+
+        $delArchivo = trim(pathinfo($archivo->getClientOriginalName(), PATHINFO_FILENAME));
+
+        return Str::limit($delArchivo ?: 'Documento sin nombre', 250, '');
     }
 
     public function show(Documento $documento): View
     {
         $this->authorize('view', $documento);
 
-        $documento->load(['versiones.autor', 'etiquetas', 'tipoDocumento', 'carpeta', 'creador', 'inactivador']);
+        $documento->load([
+            'versiones.autor', 'etiquetas', 'tipoDocumento', 'carpeta', 'creador', 'inactivador',
+            'recepcion.enlace',
+        ]);
 
         return view('documentos.show', [
             'documento' => $documento,
