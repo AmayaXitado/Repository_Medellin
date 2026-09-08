@@ -30,6 +30,8 @@ class UserFactory extends Factory
         // y queda expulsado en su primera petición.
         return [
             'name' => fake()->name(),
+            // La credencial con la que se entra: única, como el correo antes.
+            'documento' => (string) fake()->unique()->numberBetween(1_000_000, 1_999_999_999),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),

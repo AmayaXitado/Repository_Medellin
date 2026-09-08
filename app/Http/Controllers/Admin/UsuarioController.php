@@ -29,8 +29,16 @@ class UsuarioController extends Controller
 
         $usuarios = $dependencia->usuarios()
             ->when($request->filled('q'), function ($q) use ($request) {
-                $like = '%'.$request->string('q').'%';
-                $q->where(fn ($s) => $s->where('name', 'like', $like)->orWhere('email', 'like', $like));
+                $texto = $request->string('q')->toString();
+                $like = '%'.$texto.'%';
+
+                // El documento se busca normalizado: quien pegue «1.234.567»
+                // desde una planilla tiene que encontrar a la persona igual.
+                $porDocumento = '%'.User::normalizarDocumento($texto).'%';
+
+                $q->where(fn ($s) => $s->where('name', 'like', $like)
+                    ->orWhere('documento', 'like', $porDocumento)
+                    ->orWhere('email', 'like', $like));
             })
             ->orderBy('name')
             ->paginate(config('repositorio.por_pagina'))
@@ -61,9 +69,10 @@ class UsuarioController extends Controller
         // tocarle el nombre, el cargo, el estado ni la contraseña. Si ya
         // existe se devuelve intacta —los valores de abajo se ignoran— y lo
         // único que cambia es la pivote. Además resuelve solo la carrera de
-        // dos administradores dando de alta el mismo correo a la vez.
-        $usuario = User::firstOrCreate(['email' => $request->string('email')->toString()], [
+        // dos administradores dando de alta el mismo documento a la vez.
+        $usuario = User::firstOrCreate(['documento' => $request->string('documento')->toString()], [
             'name' => $request->string('name')->toString(),
+            'email' => $request->input('email'),
             'cargo' => $request->input('cargo'),
             'activo' => $request->boolean('activo', true),
             // El cast 'hashed' del modelo la cifra al asignarla.
@@ -111,7 +120,8 @@ class UsuarioController extends Controller
 
         $usuario->fill([
             'name' => $request->string('name'),
-            'email' => $request->string('email'),
+            'documento' => $request->string('documento'),
+            'email' => $request->input('email'),
             'cargo' => $request->input('cargo'),
             'activo' => $request->boolean('activo'),
         ]);

@@ -35,7 +35,9 @@
                 <tr>
                     <td class="px-4 py-3">
                         <p class="font-medium text-[var(--text)]">{{ $usuario->name }}</p>
-                        <p class="text-xs text-[var(--muted)]">{{ $usuario->email }}{{ $usuario->cargo ? ' · '.$usuario->cargo : '' }}</p>
+                        <p class="text-xs text-[var(--muted)]">
+                            {{ $usuario->documento ?? 'Sin documento' }}{{ $usuario->cargo ? ' · '.$usuario->cargo : '' }}
+                        </p>
                     </td>
                     <td class="px-4 py-3">
                         <span class="rounded bg-[var(--card-soft)] px-2 py-0.5 text-xs font-medium text-[var(--text)]">

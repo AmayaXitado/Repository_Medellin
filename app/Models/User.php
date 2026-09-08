@@ -18,6 +18,7 @@ class User extends Authenticatable
     /** @var list<string> */
     protected $fillable = [
         'name',
+        'documento',
         'email',
         'password',
         'cargo',
@@ -53,6 +54,20 @@ class User extends Authenticatable
             'es_superadmin' => 'boolean',
             'tema' => TemaInterfaz::class,
         ];
+    }
+
+    /**
+     * Forma canónica del documento: sin puntos, espacios ni guiones, y en
+     * mayúsculas.
+     *
+     * Es lo que evita que «1.234.567» y «1234567» acaben siendo dos cuentas
+     * de la misma persona, y lo que permite escribirlo como uno quiera al
+     * iniciar sesión. Se usa igual al guardar y al buscar, para que las dos
+     * puntas hablen el mismo idioma.
+     */
+    public static function normalizarDocumento(?string $documento): string
+    {
+        return mb_strtoupper(preg_replace('/[^A-Za-z0-9]/', '', (string) $documento));
     }
 
     public function dependencias(): BelongsToMany

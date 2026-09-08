@@ -45,6 +45,7 @@ class IntentaRomperloTest extends TestCase
 
         $deBeta = User::factory()->create([
             'name' => 'Ana Ramírez',
+            'documento' => '1234567890',
             'email' => 'ana@medellin.gov.co',
             'cargo' => 'Coordinadora en Beta',
         ]);
@@ -54,11 +55,12 @@ class IntentaRomperloTest extends TestCase
         return [$deBeta, $alfa, $beta, $this->usuarioCon(RolDependencia::Administracion, $alfa)];
     }
 
-    private function datosDeAlta(string $correo): array
+    private function datosDeAlta(string $documento): array
     {
         return [
             'name' => 'Nombre puesto desde Alfa',
-            'email' => $correo,
+            'documento' => $documento,
+            'email' => 'otro@medellin.gov.co',
             'cargo' => 'Auxiliar',
             'rol' => RolDependencia::Lectura->value,
             'activo' => 0,
@@ -68,20 +70,20 @@ class IntentaRomperloTest extends TestCase
     }
 
     /**
-     * El alta de un correo que ya existe sí llega al controlador, así que
+     * El alta de un documento que ya existe sí llega al controlador, así que
      * esta prueba recorre de verdad el firstOrCreate. Si alguien volviera a
      * un firstOrNew con fill(), aquí se vería: un administrador de Alfa no
      * puede tocarle a nadie de Beta el nombre, el cargo, el estado ni la
      * contraseña con la excusa de darle acceso.
      */
-    public function test_dar_acceso_a_un_correo_que_ya_existe_no_debe_pisar_la_cuenta_de_la_otra_dependencia(): void
+    public function test_dar_acceso_a_un_documento_que_ya_existe_no_debe_pisar_la_cuenta_de_la_otra_dependencia(): void
     {
         [$deBeta, , $beta, $adminAlfa] = $this->escenarioDeDosDependencias();
 
         $passwordOriginal = $deBeta->password;
 
         $this->actingAs($adminAlfa)
-            ->post(route('admin.usuarios.store'), $this->datosDeAlta('ana@medellin.gov.co'));
+            ->post(route('admin.usuarios.store'), $this->datosDeAlta('1234567890'));
 
         $deBeta->refresh();
 
@@ -124,7 +126,7 @@ class IntentaRomperloTest extends TestCase
         [$deBeta, $alfa, $beta, $adminAlfa] = $this->escenarioDeDosDependencias();
 
         $this->actingAs($adminAlfa)
-            ->post(route('admin.usuarios.store'), $this->datosDeAlta('ana@medellin.gov.co'));
+            ->post(route('admin.usuarios.store'), $this->datosDeAlta('1234567890'));
 
         $errores = session('errors')?->getBag('default')?->keys() ?? [];
 
@@ -132,8 +134,8 @@ class IntentaRomperloTest extends TestCase
             [],
             $errores,
             'El alta se rechazó por '.implode(', ', $errores).'. GuardarUsuarioRequest aplica '
-            .'unique:users,email también al dar de alta: ahí $this->route(\'usuario\') es null, '
-            .'así que el ->ignore() solo surte efecto al editar. Con eso, firstOrNew y '
+            .'unique:users,documento también al dar de alta: ahí $this->route(\'usuario\') es null, '
+            .'así que el ->ignore() solo surte efecto al editar. Con eso, firstOrCreate y '
             .'syncWithoutDetaching del controlador nunca llegan a ejecutarse, y la promesa del '
             .'formulario («se le suma el acceso a esta») no se cumple.',
         );
@@ -145,34 +147,35 @@ class IntentaRomperloTest extends TestCase
     }
 
     /**
-     * El alta ya no exige que el correo sea único, pero la edición sí: es lo
-     * que impide que un administrador se quede con el correo de otra cuenta
-     * y acabe suplantándola al iniciar sesión.
+     * El alta ya no exige que el documento sea único, pero la edición sí: es
+     * lo que impide que un administrador se quede con el documento de otra
+     * cuenta y acabe suplantándola al iniciar sesión, que ahora es justo lo
+     * que se teclea para entrar.
      */
-    public function test_al_editar_no_se_puede_quedar_con_el_correo_de_otra_cuenta(): void
+    public function test_al_editar_no_se_puede_quedar_con_el_documento_de_otra_cuenta(): void
     {
         [$deBeta, $alfa, , $adminAlfa] = $this->escenarioDeDosDependencias();
 
         $companero = $this->usuarioCon(RolDependencia::Lectura, $alfa);
-        $correoOriginal = $companero->email;
+        $documentoOriginal = $companero->documento;
 
         $this->actingAs($adminAlfa)
             ->put(route('admin.usuarios.update', $companero), [
                 'name' => $companero->name,
-                'email' => 'ana@medellin.gov.co',
+                'documento' => '1234567890',
                 'rol' => RolDependencia::Lectura->value,
                 'activo' => 1,
             ])
-            ->assertSessionHasErrors('email');
+            ->assertSessionHasErrors('documento');
 
-        $this->assertSame($correoOriginal, $companero->fresh()->email);
-        $this->assertSame('ana@medellin.gov.co', $deBeta->fresh()->email);
+        $this->assertSame($documentoOriginal, $companero->fresh()->documento);
+        $this->assertSame('1234567890', $deBeta->fresh()->documento);
 
         // Y conservar el suyo al editar sigue siendo legítimo.
         $this->actingAs($adminAlfa)
             ->put(route('admin.usuarios.update', $companero), [
                 'name' => 'Nombre corregido',
-                'email' => $correoOriginal,
+                'documento' => $documentoOriginal,
                 'rol' => RolDependencia::Lectura->value,
                 'activo' => 1,
             ])
@@ -187,14 +190,39 @@ class IntentaRomperloTest extends TestCase
         [, $alfa, , $adminAlfa] = $this->escenarioDeDosDependencias();
 
         $this->actingAs($adminAlfa)
-            ->post(route('admin.usuarios.store'), $this->datosDeAlta('nueva@medellin.gov.co'))
+            ->post(route('admin.usuarios.store'), $this->datosDeAlta('9876543210'))
             ->assertRedirect()
             ->assertSessionHasNoErrors();
 
-        $nueva = User::where('email', 'nueva@medellin.gov.co')->firstOrFail();
+        $nueva = User::where('documento', '9876543210')->firstOrFail();
 
         $this->assertSame('Nombre puesto desde Alfa', $nueva->name);
         $this->assertSame(RolDependencia::Lectura, $nueva->rolEn($alfa));
+    }
+
+    /**
+     * Los puntos del documento se quitan al guardar. Si no, «1.234.567» y
+     * «1234567» serían dos cuentas de la misma persona y el índice único no
+     * se enteraría.
+     */
+    public function test_el_documento_se_guarda_sin_puntos_ni_espacios(): void
+    {
+        [, $alfa, , $adminAlfa] = $this->escenarioDeDosDependencias();
+
+        $this->actingAs($adminAlfa)
+            ->post(route('admin.usuarios.store'), $this->datosDeAlta('98.765.432'))
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('users', ['documento' => '98765432']);
+        $this->assertDatabaseMissing('users', ['documento' => '98.765.432']);
+
+        // Y volver a darlo de alta escrito de otra forma reconoce la cuenta
+        // en vez de crear una segunda.
+        $this->actingAs($adminAlfa)
+            ->post(route('admin.usuarios.store'), $this->datosDeAlta('98 765 432'));
+
+        $this->assertSame(1, User::where('documento', '98765432')->count());
     }
 
     /*

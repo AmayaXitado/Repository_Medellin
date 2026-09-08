@@ -161,18 +161,30 @@
                     @csrf
 
                     <div>
-                        <label class="mb-1.5 block text-xs font-bold" style="color: var(--text);" for="email">
-                            Correo institucional
+                        <label class="mb-1.5 block text-xs font-bold" style="color: var(--text);" for="documento">
+                            Documento de identidad
                         </label>
                         <div class="relative">
-                            <svg id="icono-email" class="pointer-events-none absolute left-3.5 top-3.5 size-4 transition-opacity duration-150" style="color: var(--muted);"
+                            <svg id="icono-documento" class="pointer-events-none absolute left-3.5 top-3.5 size-4 transition-opacity duration-150" style="color: var(--muted);"
                                  fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round"
-                                      d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"/>
+                                      d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Zm6-10.125a1.875 1.875 0 1 1-3.75 0 1.875 1.875 0 0 1 3.75 0Zm1.294 6.336a6.721 6.721 0 0 1-3.17.789 6.721 6.721 0 0 1-3.168-.789 3.376 3.376 0 0 1 6.338 0Z"/>
                             </svg>
-                            <input id="email" name="email" type="email" value="{{ old('email') }}" required autofocus
+                            {{--
+                                inputmode numérico: en el celular sale el
+                                teclado de cifras, que es lo que se teclea el
+                                99 % de las veces. No es 'type=number' porque
+                                eso rompe las cédulas de extranjería, que
+                                llevan letras.
+                            --}}
+                            <input id="documento" name="documento" type="text" inputmode="numeric"
+                                   value="{{ old('documento') }}" required autofocus
+                                   autocomplete="username" maxlength="30"
                                    class="liquid-input w-full pl-10 pr-3 text-sm">
                         </div>
+                        <p class="mt-1.5 text-[11px]" style="color: var(--muted);">
+                            Sin puntos ni espacios. Da igual cómo lo escribas.
+                        </p>
                     </div>
 
                     <div>
@@ -259,7 +271,7 @@
             actualizar(); // por si el navegador autocompletó el valor antes de este script.
         }
 
-        ocultarIconoAlEscribir('email', 'icono-email');
+        ocultarIconoAlEscribir('documento', 'icono-documento');
         ocultarIconoAlEscribir('password', 'icono-password');
 
         // Evita el doble envío y avisa que la petición va en curso; el propio
