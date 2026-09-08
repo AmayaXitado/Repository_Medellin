@@ -126,10 +126,8 @@
                       class="flex flex-wrap items-end gap-3 border-t border-[var(--border)] bg-[var(--card-soft)] px-4 py-3">
                     @csrf
                     <div class="flex-1 min-w-48">
-                        <label class="block text-xs font-medium text-[var(--muted)]">Archivo de la nueva versión</label>
-                        <input type="file" name="archivo" required
-                               accept="{{ collect(config('repositorio.extensiones_permitidas'))->map(fn ($e) => '.'.$e)->join(',') }}"
-                               class="mt-1 block w-full text-sm text-[var(--muted)] file:mr-3 file:rounded-md file:border-0 file:bg-[var(--card)] file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-[var(--text)]">
+                        <label for="archivo" class="block text-xs font-medium text-[var(--muted)]">Archivo de la nueva versión</label>
+                        <x-campo-archivo requerido compacto />
                     </div>
                     <div class="flex-1 min-w-48">
                         <label class="block text-xs font-medium text-[var(--muted)]">Qué cambió</label>
@@ -170,6 +168,67 @@
                 </div>
             </dl>
         </div>
+
+        {{--
+            Cadena de custodia. Solo aparece si el documento entró por un
+            enlace de carga: es lo que el documento por sí solo no puede
+            contar, porque nadie de dentro lo subió.
+        --}}
+        @if($documento->recepcion)
+            @php($recepcion = $documento->recepcion)
+
+            <div id="origen" class="rounded-lg bg-[var(--card)] p-4 ring-1 ring-[var(--border)]">
+                <h2 class="mb-1 text-sm font-medium text-[var(--text)]">
+                    <span class="rounded bg-success-soft px-1.5 py-0.5 text-xs text-[var(--success)]">Recibido de fuera</span>
+                </h2>
+                <p class="mb-3 text-xs text-[var(--muted)]">
+                    Llegó por un enlace de carga. Estos datos los declaró quien lo envió.
+                </p>
+
+                @if($recepcion->estado_escaneo->requiereAdvertencia())
+                    <div class="mb-3 rounded-md bg-warning-soft px-3 py-2 text-xs text-[var(--warning)]">
+                        {{ $recepcion->estado_escaneo->etiqueta() }}: trátalo con precaución.
+                    </div>
+                @endif
+
+                <dl class="space-y-2 text-sm">
+                    <div class="flex justify-between gap-3">
+                        <dt class="text-[var(--muted)]">Lo envió</dt>
+                        <dd class="text-right text-[var(--text)]">{{ $recepcion->remitente_nombre }}</dd>
+                    </div>
+                    <div class="flex justify-between gap-3">
+                        <dt class="text-[var(--muted)]">Correo</dt>
+                        <dd class="text-right text-[var(--text)]">{{ $recepcion->remitente_email ?? '—' }}</dd>
+                    </div>
+                    <div class="flex justify-between gap-3">
+                        <dt class="text-[var(--muted)]">Entidad</dt>
+                        <dd class="text-right text-[var(--text)]">{{ $recepcion->remitente_entidad ?? '—' }}</dd>
+                    </div>
+                    <div class="flex justify-between gap-3">
+                        <dt class="text-[var(--muted)]">Recibido el</dt>
+                        <dd class="text-right text-[var(--text)]">{{ $recepcion->created_at->format('d/m/Y H:i') }}</dd>
+                    </div>
+                    <div class="flex justify-between gap-3">
+                        <dt class="text-[var(--muted)]">IP de origen</dt>
+                        <dd class="text-right text-[var(--text)]">{{ $recepcion->ip_remitente ?? '—' }}</dd>
+                    </div>
+                    <div class="flex justify-between gap-3">
+                        <dt class="text-[var(--muted)]">Archivo original</dt>
+                        <dd class="text-right text-[var(--text)]">{{ $recepcion->nombre_original }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-[var(--muted)]">Huella SHA-256</dt>
+                        <dd class="mt-1 break-all font-mono text-xs text-[var(--text)]">{{ $recepcion->hash ?? '—' }}</dd>
+                    </div>
+                    @if($recepcion->agente)
+                        <div>
+                            <dt class="text-[var(--muted)]">Navegador</dt>
+                            <dd class="mt-1 break-all text-xs text-[var(--text)]">{{ $recepcion->agente }}</dd>
+                        </div>
+                    @endif
+                </dl>
+            </div>
+        @endif
 
         @can('inactivar', $documento)
             <div class="rounded-lg bg-[var(--card)] p-4 ring-1 ring-[var(--border)]">

@@ -3,7 +3,6 @@
 namespace App\Http\Middleware;
 
 use App\Models\Dependencia;
-use App\Models\Recepcion;
 use App\Services\ContextoDependencia;
 use Closure;
 use Illuminate\Http\Request;
@@ -45,10 +44,6 @@ class EstablecerDependencia
         View::share('dependenciaActual', $seleccionada);
         View::share('dependenciasDisponibles', $disponibles);
         View::share('rolActual', $usuario->rolEn($seleccionada));
-
-        // El contador del menú. Va después de establecer el contexto porque
-        // de él depende quién tiene bandeja y qué hay dentro.
-        View::share('recepcionesPendientes', Recepcion::pendientesPara($usuario));
 
         return $next($request);
     }

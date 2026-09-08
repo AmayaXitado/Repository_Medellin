@@ -7,7 +7,8 @@
     <div>
         <h1 class="text-lg font-semibold text-[var(--text)]">Enlaces de carga</h1>
         <p class="text-sm text-[var(--muted)]">
-            Cada enlace deja subir archivos sin cuenta, a nombre de un remitente identificado.
+            Cada enlace deja subir archivos sin cuenta, directo a una carpeta. Quien lo recibe
+            se identifica al enviar.
         </p>
     </div>
 
@@ -36,8 +37,8 @@
     <table class="min-w-full divide-y divide-[var(--border)] text-sm">
         <thead class="bg-[var(--card-soft)] text-left text-xs uppercase tracking-wide text-[var(--muted)]">
             <tr>
-                <th class="px-4 py-3 font-medium">Remitente</th>
-                <th class="px-4 py-3 font-medium">Destino</th>
+                <th class="px-4 py-3 font-medium">Carpeta de destino</th>
+                <th class="px-4 py-3 font-medium">Creado por</th>
                 <th class="px-4 py-3 font-medium">Usos</th>
                 <th class="px-4 py-3 font-medium">Vence</th>
                 <th class="px-4 py-3 font-medium">Estado</th>
@@ -48,17 +49,12 @@
             @forelse($enlaces as $enlace)
                 <tr>
                     <td class="px-4 py-3">
-                        <p class="font-medium text-[var(--text)]">{{ $enlace->remitente_nombre }}</p>
-                        <p class="text-xs text-[var(--muted)]">
-                            {{ $enlace->remitente_entidad ?? $enlace->remitente_email ?? 'Sin más datos' }}
-                        </p>
-                    </td>
-                    <td class="px-4 py-3 text-[var(--text)]">
-                        <p>Bandeja de {{ $enlace->destinatario?->name }}</p>
-                        @if($enlace->carpeta)
-                            <p class="text-xs text-[var(--muted)]">Carpeta: {{ $enlace->carpeta->nombre }}</p>
+                        <p class="font-medium text-[var(--text)]">{{ $enlace->carpeta?->nombre ?? 'Sin carpeta' }}</p>
+                        @if($enlace->proposito)
+                            <p class="text-xs text-[var(--muted)]">{{ $enlace->proposito }}</p>
                         @endif
                     </td>
+                    <td class="px-4 py-3 text-[var(--text)]">{{ $enlace->creador?->name ?? '—' }}</td>
                     <td class="px-4 py-3 text-[var(--text)]">
                         {{ $enlace->usos }}{{ $enlace->max_usos ? ' / '.$enlace->max_usos : '' }}
                     </td>

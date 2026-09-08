@@ -1,9 +1,9 @@
 <?php
 
 use App\Enums\AccionAuditoria;
+use App\Models\Carpeta;
 use App\Models\Dependencia;
 use App\Models\EnlaceCarga;
-use App\Models\User;
 use App\Services\Auditor;
 use App\Services\ContextoDependencia;
 use Illuminate\Foundation\Inspiring;
@@ -17,17 +17,14 @@ Artisan::command('inspire', function () {
 |--------------------------------------------------------------------------
 | Enlaces de carga
 |--------------------------------------------------------------------------
-| Ayuda temporal para probar la vía pública mientras no exista la pantalla
-| de administración de enlaces. Bórrala cuando llegue ese punto.
+| Atajo de consola. La forma normal de generarlos es el botón «Enlace de
+| carga» que hay dentro de cada carpeta del explorador.
 */
 
 Artisan::command(
-    'enlace:crear {remitente : Nombre de la persona externa}
+    'enlace:crear {carpeta : Nombre de la carpeta de destino}
                   {--dependencia= : Slug de la dependencia (por defecto, la primera activa)}
-                  {--destinatario= : Correo de quien recibe (por defecto, el primer administrador)}
                   {--proposito= : Para qué es el enlace}
-                  {--email= : Correo del remitente}
-                  {--entidad= : Empresa o entidad del remitente}
                   {--dias= : Días hasta el vencimiento}
                   {--usos= : Número máximo de envíos}',
     function (Auditor $auditor, ContextoDependencia $contexto) {
@@ -41,19 +38,23 @@ Artisan::command(
             return 1;
         }
 
-        $destinatario = $this->option('destinatario')
-            ? User::where('email', $this->option('destinatario'))->first()
-            : $dependencia->usuarios()->wherePivot('rol', 'administracion')->orderBy('users.id')->first();
+        // El contexto hace falta para la auditoría y para el global scope:
+        // en consola no hay middleware que lo llene.
+        $contexto->establecer($dependencia);
 
-        if ($destinatario === null) {
-            $this->error('No encontré al destinatario. Indícalo con --destinatario=correo@ejemplo.com');
+        $carpeta = Carpeta::where('dependencia_id', $dependencia->id)
+            ->where('nombre', $this->argument('carpeta'))
+            ->first();
+
+        if ($carpeta === null) {
+            $this->error('No encontré esa carpeta en '.$dependencia->nombre.'. Carpetas disponibles:');
+
+            foreach (Carpeta::where('dependencia_id', $dependencia->id)->orderBy('nombre')->pluck('nombre') as $nombre) {
+                $this->line('  · '.$nombre);
+            }
 
             return 1;
         }
-
-        // El contexto hace falta para que la auditoría quede en la dependencia
-        // correcta: en consola no hay middleware que lo llene.
-        $contexto->establecer($dependencia);
 
         $token = EnlaceCarga::generarToken();
 
@@ -61,20 +62,17 @@ Artisan::command(
             'token_hash' => EnlaceCarga::hashDe($token),
             'token_cifrado' => $token,
             'dependencia_id' => $dependencia->id,
-            'destinatario_id' => $destinatario->id,
-            'remitente_nombre' => $this->argument('remitente'),
-            'remitente_email' => $this->option('email'),
-            'remitente_entidad' => $this->option('entidad'),
+            'carpeta_id' => $carpeta->id,
             'proposito' => $this->option('proposito'),
             'activo' => true,
-            'expira_at' => $this->option('dias') ? now()->addDays((int) $this->option('dias')) : null,
+            'expira_at' => $this->option('dias') ? now()->addDays((int) $this->option('dias'))->endOfDay() : null,
             'max_usos' => $this->option('usos') ? (int) $this->option('usos') : null,
         ]);
 
         $auditor->registrar(
             AccionAuditoria::EnlaceCreado,
             $enlace,
-            "Creó un enlace de carga para {$enlace->remitente_nombre} (por consola)",
+            "Creó un enlace de carga hacia «{$carpeta->nombre}» (por consola)",
         );
 
         $this->newLine();
@@ -82,9 +80,8 @@ Artisan::command(
         $this->newLine();
 
         $this->table(['Campo', 'Valor'], [
-            ['Remitente', $enlace->remitente_nombre],
             ['Dependencia', $dependencia->nombre],
-            ['Llega a', $destinatario->name.' <'.$destinatario->email.'>'],
+            ['Entrega en', $carpeta->nombre],
             ['Propósito', $enlace->proposito ?: '—'],
             ['Vence', $enlace->expira_at?->format('d/m/Y H:i') ?? 'nunca'],
             ['Usos máximos', $enlace->max_usos ?? 'sin límite'],
@@ -93,9 +90,9 @@ Artisan::command(
         $this->newLine();
         $this->line('  '.$enlace->url());
         $this->newLine();
-        $this->warn('  El token es un secreto: quien tenga esa URL puede enviar en nombre del remitente.');
+        $this->warn('  Quien tenga esa URL puede subir a esa carpeta: el enlace no lleva identidad.');
         $this->newLine();
 
         return 0;
     },
-)->purpose('Crea un enlace de carga y muestra su URL (ayuda temporal hasta el punto 5)');
+)->purpose('Crea un enlace de carga hacia una carpeta y muestra su URL');

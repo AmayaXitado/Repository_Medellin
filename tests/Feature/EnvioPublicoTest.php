@@ -4,11 +4,11 @@ namespace Tests\Feature;
 
 use App\Enums\AccionAuditoria;
 use App\Enums\EstadoEscaneo;
-use App\Enums\EstadoRecepcion;
+use App\Models\Carpeta;
 use App\Models\Dependencia;
+use App\Models\Documento;
 use App\Models\EnlaceCarga;
 use App\Models\Recepcion;
-use App\Models\User;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -19,8 +19,8 @@ use Tests\TestCase;
 
 /**
  * La vía pública es la superficie más expuesta del sistema: es la única que
- * responde sin sesión. Todo lo de aquí trata de que no cuente nada, no
- * acepte nada raro y deje rastro de todo.
+ * responde sin sesión, y ahora lo que entra por ella se convierte en
+ * documento en el acto, sin bandeja donde nadie lo revise antes.
  */
 class EnvioPublicoTest extends TestCase
 {
@@ -28,7 +28,7 @@ class EnvioPublicoTest extends TestCase
 
     private Dependencia $dependencia;
 
-    private User $destinatario;
+    private Carpeta $carpeta;
 
     protected function setUp(): void
     {
@@ -38,7 +38,10 @@ class EnvioPublicoTest extends TestCase
         Storage::fake('public');
 
         $this->dependencia = Dependencia::factory()->create(['nombre' => 'Inclusión Social', 'slug' => 'inclusion-social']);
-        $this->destinatario = User::factory()->create(['name' => 'Funcionaria Receptora']);
+        $this->carpeta = Carpeta::factory()->create([
+            'dependencia_id' => $this->dependencia->id,
+            'nombre' => 'Actas de comité',
+        ]);
     }
 
     /** @return array{0: EnlaceCarga, 1: string} */
@@ -46,10 +49,7 @@ class EnvioPublicoTest extends TestCase
     {
         $token = EnlaceCarga::generarToken();
 
-        $enlace = EnlaceCarga::factory()->conToken($token)->create([
-            'dependencia_id' => $this->dependencia->id,
-            'destinatario_id' => $this->destinatario->id,
-            'remitente_nombre' => 'Ana Ramírez',
+        $enlace = EnlaceCarga::factory()->conToken($token)->hacia($this->carpeta)->create([
             'proposito' => 'Actas del comité 2026',
             ...$atributos,
         ]);
@@ -60,6 +60,18 @@ class EnvioPublicoTest extends TestCase
     private function url(string $token): string
     {
         return route('envio.formulario', ['token' => $token]);
+    }
+
+    /** @return array<string, mixed> */
+    private function envio(array $extra = []): array
+    {
+        return [
+            'remitente_nombre' => 'Ana Ramírez',
+            'remitente_email' => 'ana@entidad-externa.co',
+            'remitente_entidad' => 'Contratista Uno',
+            'archivo' => [$this->archivoPdf('acta-agosto.pdf', 'CONTENIDO EXTERNO')],
+            ...$extra,
+        ];
     }
 
     /*
@@ -74,53 +86,179 @@ class EnvioPublicoTest extends TestCase
 
         $this->get($this->url($token))
             ->assertOk()
-            ->assertSee('Enviar un documento')
+            ->assertSee('Enviar documentos')
             ->assertSee('Actas del comité 2026');
 
         $this->assertGuest();
     }
 
-    public function test_un_envio_valido_cae_pendiente_en_la_bandeja_del_destinatario(): void
+    public function test_lo_enviado_se_vuelve_documento_en_la_carpeta_del_enlace(): void
     {
         [$enlace, $token] = $this->enlace();
 
-        $this->post(route('envio.recibir', ['token' => $token]), [
-            'archivo' => $this->archivoPdf('acta-agosto.pdf', 'CONTENIDO EXTERNO'),
+        $this->post(route('envio.recibir', ['token' => $token]), $this->envio([
             'mensaje' => 'Acta de la sesión del 12 de agosto',
-        ])->assertRedirect(route('envio.confirmacion'));
+        ]))->assertRedirect(route('envio.confirmacion'));
 
+        $documento = Documento::withoutGlobalScopes()->firstOrFail();
+
+        $this->assertSame($this->carpeta->id, $documento->carpeta_id);
+        $this->assertSame('acta-agosto', $documento->nombre);
+        $this->assertTrue($documento->activo);
+
+        // Nadie de dentro lo subió: queda sin autor a propósito.
+        $this->assertNull($documento->creado_por);
+
+        // Y con su versión 1, como cualquier otro documento.
+        $this->assertCount(1, $documento->versiones);
+        $this->assertSame(1, $documento->versiones->first()->numero);
+        $this->assertStringContainsString(
+            'CONTENIDO EXTERNO',
+            Storage::disk(config('repositorio.disco'))->get($documento->versiones->first()->ruta),
+        );
+
+        $this->assertSame(1, $enlace->fresh()->usos);
+    }
+
+    public function test_la_cadena_de_custodia_queda_guardada_junto_al_documento(): void
+    {
+        [$enlace, $token] = $this->enlace();
+
+        $this->post(route('envio.recibir', ['token' => $token]), $this->envio());
+
+        $documento = Documento::withoutGlobalScopes()->firstOrFail();
         $recepcion = Recepcion::withoutGlobalScopes()->firstOrFail();
 
-        $this->assertSame($this->destinatario->id, $recepcion->destinatario_id);
-        $this->assertSame($this->dependencia->id, $recepcion->dependencia_id);
+        $this->assertSame($documento->id, $recepcion->documento_id);
         $this->assertSame($enlace->id, $recepcion->enlace_carga_id);
-        $this->assertSame(EstadoRecepcion::Pendiente, $recepcion->estado);
-        $this->assertSame('acta-agosto.pdf', $recepcion->nombre_original);
-        $this->assertSame('Acta de la sesión del 12 de agosto', $recepcion->mensaje);
 
-        // Copiado del enlace: si el enlace se borra, esto sigue diciendo quién mandó.
+        // Lo que declaró quien envió, no lo que dijera el enlace.
         $this->assertSame('Ana Ramírez', $recepcion->remitente_nombre);
+        $this->assertSame('ana@entidad-externa.co', $recepcion->remitente_email);
+        $this->assertSame('Contratista Uno', $recepcion->remitente_entidad);
 
-        // Nada se da por limpio hasta que exista el escáner.
+        $this->assertSame('acta-agosto.pdf', $recepcion->nombre_original);
+        $this->assertSame('127.0.0.1', $recepcion->ip_remitente);
+        $this->assertNotNull($recepcion->hash);
+
+        // Nada que entra de fuera se da por limpio mientras no haya escáner.
         $this->assertSame(EstadoEscaneo::Pendiente, $recepcion->estado_escaneo);
+    }
 
-        // Y todavía no es un documento del repositorio.
+    /** Sin nombre, correo y entidad no hay a quién volver: los tres se piden. */
+    public function test_la_identidad_la_escribe_quien_envia_y_va_completa(): void
+    {
+        [, $token] = $this->enlace();
+
+        $this->post(route('envio.recibir', ['token' => $token]), [
+            'archivo' => [$this->archivoPdf()],
+        ])->assertSessionHasErrors(['remitente_nombre', 'remitente_email', 'remitente_entidad']);
+
+        // Y falta cualquiera de los tres, tampoco entra.
+        foreach (['remitente_nombre', 'remitente_email', 'remitente_entidad'] as $campo) {
+            $envio = $this->envio();
+            unset($envio[$campo]);
+
+            $this->post(route('envio.recibir', ['token' => $token]), $envio)
+                ->assertSessionHasErrors($campo);
+        }
+
         $this->assertDatabaseCount('documentos', 0);
+        $this->assertDatabaseCount('recepciones', 0);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Varios archivos por envío
+    |--------------------------------------------------------------------------
+    */
+
+    public function test_se_pueden_enviar_varios_archivos_y_cada_uno_es_un_documento(): void
+    {
+        [$enlace, $token] = $this->enlace();
+
+        $this->post(route('envio.recibir', ['token' => $token]), $this->envio([
+            'archivo' => [
+                $this->archivoPdf('acta-enero.pdf', 'ENERO'),
+                $this->archivoPdf('acta-febrero.pdf', 'FEBRERO'),
+                $this->archivoJpg('foto.jpg'),
+            ],
+        ]))->assertRedirect(route('envio.confirmacion'));
+
+        $this->assertSame(3, Documento::withoutGlobalScopes()->count());
+        $this->assertSame(3, Recepcion::withoutGlobalScopes()->count());
+
+        // Todos caen en la carpeta del enlace y cada uno con su versión 1.
+        foreach (Documento::withoutGlobalScopes()->with('versiones')->get() as $documento) {
+            $this->assertSame($this->carpeta->id, $documento->carpeta_id);
+            $this->assertCount(1, $documento->versiones);
+        }
+
+        // Un uso por envío, no por archivo: quien pone «1 uso» piensa en una
+        // entrega, no en un contador de ficheros.
+        $this->assertSame(1, $enlace->fresh()->usos);
+    }
+
+    public function test_cada_archivo_se_guarda_con_el_nombre_de_su_tarjeta(): void
+    {
+        [, $token] = $this->enlace();
+
+        $this->post(route('envio.recibir', ['token' => $token]), $this->envio([
+            'archivo' => [
+                $this->archivoJpg('IMG_20260908.jpg'),
+                $this->archivoPdf('scan0042.pdf', 'ESCANEO'),
+            ],
+            'nombres' => ['Acta de enero', ''],
+        ]))->assertRedirect();
+
+        $this->assertDatabaseHas('documentos', ['nombre' => 'Acta de enero']);
+
+        // La tarjeta en blanco cae al nombre del archivo.
+        $this->assertDatabaseHas('documentos', ['nombre' => 'scan0042']);
+        $this->assertDatabaseMissing('documentos', ['nombre' => 'IMG_20260908']);
+    }
+
+    public function test_no_se_pueden_enviar_mas_de_tres_archivos(): void
+    {
+        [, $token] = $this->enlace();
+
+        $archivos = [];
+
+        for ($i = 1; $i <= 4; $i++) {
+            $archivos[] = $this->archivoPdf("acta-{$i}.pdf", "CONTENIDO {$i}");
+        }
+
+        $this->post(route('envio.recibir', ['token' => $token]), $this->envio(['archivo' => $archivos]))
+            ->assertSessionHasErrors('archivo');
+
+        $this->assertDatabaseCount('documentos', 0);
+    }
+
+    /** Todo o nada: nada de quedarse con la mitad del envío dentro. */
+    public function test_si_uno_de_los_archivos_no_sirve_no_entra_ninguno(): void
+    {
+        [, $token] = $this->enlace();
+
+        $this->post(route('envio.recibir', ['token' => $token]), $this->envio([
+            'archivo' => [
+                $this->archivoPdf('bueno.pdf', 'CONTENIDO'),
+                $this->archivo('disfrazado.pdf', "MZ\x90\x00\x03".str_repeat("\x00", 200), 'application/pdf'),
+            ],
+        ]))->assertSessionHasErrors('archivo.1');
+
+        $this->assertDatabaseCount('documentos', 0);
+        $this->assertDatabaseCount('recepciones', 0);
+        $this->assertEmpty(Storage::disk(config('repositorio.disco'))->allFiles());
     }
 
     public function test_la_confirmacion_dice_que_llego_y_no_se_puede_abrir_a_secas(): void
     {
         [, $token] = $this->enlace();
 
-        $this->post(route('envio.recibir', ['token' => $token]), [
-            'archivo' => $this->archivoPdf('acta-agosto.pdf'),
-        ]);
+        $this->post(route('envio.recibir', ['token' => $token]), $this->envio());
 
-        $this->followingRedirects()
-            ->get(route('envio.confirmacion'))
-            ->assertOk();
+        $this->followingRedirects()->get(route('envio.confirmacion'))->assertOk();
 
-        // Entrar directo, sin haber enviado nada, no confirma nada.
         $this->flushSession();
         $this->get(route('envio.confirmacion'))->assertStatus(404);
     }
@@ -170,12 +308,24 @@ class EnvioPublicoTest extends TestCase
         }
     }
 
-    /**
-     * En el móvil se puede tomar la foto en el momento o traer un archivo ya
-     * guardado. Sin JavaScript tiene que seguir siendo un campo de archivo
-     * normal: quien envía es gente de fuera, con teléfonos de todo tipo, y
-     * quedarse sin poder enviar no es una opción.
-     */
+    public function test_la_pantalla_publica_no_revela_nada_del_sistema(): void
+    {
+        [, $token] = $this->enlace();
+
+        $respuesta = $this->get($this->url($token))->assertOk();
+
+        // El propósito sí, porque es lo que el remitente necesita saber.
+        $respuesta->assertSee('Actas del comité 2026');
+
+        // La carpeta de destino, la dependencia y el resto de la estructura, no.
+        $respuesta->assertDontSee('Actas de comité');
+        $respuesta->assertDontSee('Inclusión Social');
+        $respuesta->assertDontSee('inclusion-social');
+        $respuesta->assertDontSee(route('login'), false);
+        $respuesta->assertDontSee(route('documentos.index'), false);
+        $respuesta->assertDontSee(EnlaceCarga::hashDe($token), false);
+    }
+
     public function test_el_formulario_deja_tomar_la_foto_o_elegir_un_archivo(): void
     {
         [, $token] = $this->enlace();
@@ -185,35 +335,15 @@ class EnvioPublicoTest extends TestCase
         $respuesta->assertSee('Tomar foto');
         $respuesta->assertSee('Elegir archivo');
 
-        // El respaldo sin JavaScript.
-        $respuesta->assertSee('name="archivo"', false);
+        // Sin JavaScript sigue siendo un campo de archivo normal, y admite
+        // varios porque viaja como lista.
+        $respuesta->assertSee('name="archivo[]"', false);
         $respuesta->assertSee('type="file"', false);
-        $respuesta->assertSee('required', false);
+        $respuesta->assertSee('multiple', false);
 
-        // La cámara trasera es la que sirve para fotografiar un papel.
-        $respuesta->assertSee("'capture', 'environment'", false);
-    }
-
-    public function test_la_pantalla_publica_no_revela_nada_del_sistema(): void
-    {
-        [$enlace, $token] = $this->enlace();
-
-        $respuesta = $this->get($this->url($token))->assertOk();
-
-        // El propósito sí, porque es lo que el remitente necesita saber.
-        $respuesta->assertSee('Actas del comité 2026');
-
-        // El resto, no.
-        $respuesta->assertDontSee('Funcionaria Receptora');
-        $respuesta->assertDontSee($this->destinatario->email);
-        $respuesta->assertDontSee('Inclusión Social');
-        $respuesta->assertDontSee('inclusion-social');
-        $respuesta->assertDontSee($enlace->remitente_email);
-        $respuesta->assertDontSee(route('login'), false);
-        $respuesta->assertDontSee(route('documentos.index'), false);
-
-        // Ni el hash con el que se busca en la base.
-        $respuesta->assertDontSee(EnlaceCarga::hashDe($token), false);
+        // Y cada tarjeta trae su caja de nombre.
+        $respuesta->assertSee('name="nombres[]"', false);
+        $respuesta->assertSee('data-quitar', false);
     }
 
     /*
@@ -226,11 +356,11 @@ class EnvioPublicoTest extends TestCase
     {
         [, $token] = $this->enlace();
 
-        $this->post(route('envio.recibir', ['token' => $token]), [
-            'archivo' => $this->archivo('informe.pdf', "MZ\x90\x00\x03".str_repeat("\x00", 200), 'application/pdf'),
-        ])->assertSessionHasErrors('archivo');
+        $this->post(route('envio.recibir', ['token' => $token]), $this->envio([
+            'archivo' => [$this->archivo('informe.pdf', "MZ\x90\x00\x03".str_repeat("\x00", 200), 'application/pdf')],
+        ]))->assertSessionHasErrors('archivo.0');
 
-        $this->assertDatabaseCount('recepciones', 0);
+        $this->assertDatabaseCount('documentos', 0);
         $this->assertEmpty(Storage::disk(config('repositorio.disco'))->allFiles());
     }
 
@@ -238,37 +368,31 @@ class EnvioPublicoTest extends TestCase
     {
         [, $token] = $this->enlace();
 
-        $this->post(route('envio.recibir', ['token' => $token]), ['mensaje' => 'solo texto'])
-            ->assertSessionHasErrors('archivo');
+        $this->post(route('envio.recibir', ['token' => $token]), [
+            'remitente_nombre' => 'Ana Ramírez',
+            'mensaje' => 'solo texto',
+        ])->assertSessionHasErrors('archivo');
 
-        $this->assertDatabaseCount('recepciones', 0);
+        $this->assertDatabaseCount('documentos', 0);
     }
 
-    public function test_el_archivo_se_guarda_bajo_recepciones_con_un_nombre_puesto_por_el_sistema(): void
+    public function test_el_archivo_se_guarda_fuera_del_disco_publico_con_nombre_del_sistema(): void
     {
         [, $token] = $this->enlace();
 
-        $this->post(route('envio.recibir', ['token' => $token]), [
+        $this->post(route('envio.recibir', ['token' => $token]), $this->envio([
             // Nombre hostil: rutas relativas dentro del nombre del archivo.
-            'archivo' => $this->archivoPdf('../../../etc/passwd.pdf', 'CONTENIDO'),
-        ])->assertRedirect();
+            'archivo' => [$this->archivoPdf('../../../etc/passwd.pdf', 'CONTENIDO')],
+        ]))->assertRedirect();
 
-        $recepcion = Recepcion::withoutGlobalScopes()->firstOrFail();
+        $version = Documento::withoutGlobalScopes()->firstOrFail()->versiones->first();
 
-        $this->assertStringStartsWith('recepciones/'.$this->dependencia->id.'/', $recepcion->ruta);
-        $this->assertStringNotContainsString('..', $recepcion->ruta);
-        $this->assertStringNotContainsString('passwd', $recepcion->ruta);
-        $this->assertStringNotContainsString('documentos/', $recepcion->ruta);
+        $this->assertStringStartsWith('documentos/'.$this->dependencia->id.'/', $version->ruta);
+        $this->assertStringNotContainsString('..', $version->ruta);
+        $this->assertStringNotContainsString('passwd', $version->ruta);
 
-        Storage::disk(config('repositorio.disco'))->assertExists($recepcion->ruta);
-
-        // Nunca en el disco público: solo el destinatario lo verá, por dentro.
+        Storage::disk(config('repositorio.disco'))->assertExists($version->ruta);
         $this->assertEmpty(Storage::disk('public')->allFiles());
-
-        // El hash describe el archivo que de verdad quedó en disco.
-        $enDisco = Storage::disk(config('repositorio.disco'))->get($recepcion->ruta);
-        $this->assertSame(hash('sha256', $enDisco), $recepcion->hash);
-        $this->assertSame(strlen($enDisco), $recepcion->tamano);
     }
 
     /*
@@ -282,21 +406,19 @@ class EnvioPublicoTest extends TestCase
         [$enlace, $token] = $this->enlace(['max_usos' => 2]);
 
         foreach ([1, 2] as $numero) {
-            $this->post(route('envio.recibir', ['token' => $token]), [
-                'archivo' => $this->archivoPdf("envio-{$numero}.pdf", "CONTENIDO {$numero}"),
-            ])->assertRedirect(route('envio.confirmacion'));
+            $this->post(route('envio.recibir', ['token' => $token]), $this->envio([
+                'archivo' => [$this->archivoPdf("envio-{$numero}.pdf", "CONTENIDO {$numero}")],
+            ]))->assertRedirect(route('envio.confirmacion'));
 
             $this->assertSame($numero, $enlace->fresh()->usos);
         }
 
-        // Gastados los dos, ni el formulario ni la carga responden.
         $this->get($this->url($token))->assertStatus(404);
 
-        $this->post(route('envio.recibir', ['token' => $token]), [
-            'archivo' => $this->archivoPdf('tercero.pdf'),
-        ])->assertStatus(404);
+        $this->post(route('envio.recibir', ['token' => $token]), $this->envio())
+            ->assertStatus(404);
 
-        $this->assertSame(2, Recepcion::withoutGlobalScopes()->count());
+        $this->assertSame(2, Documento::withoutGlobalScopes()->count());
     }
 
     public function test_un_token_revocado_deja_de_aceptar_envios_de_inmediato(): void
@@ -305,11 +427,10 @@ class EnvioPublicoTest extends TestCase
 
         $enlace->revocar();
 
-        $this->post(route('envio.recibir', ['token' => $token]), [
-            'archivo' => $this->archivoPdf(),
-        ])->assertStatus(404);
+        $this->post(route('envio.recibir', ['token' => $token]), $this->envio())
+            ->assertStatus(404);
 
-        $this->assertDatabaseCount('recepciones', 0);
+        $this->assertDatabaseCount('documentos', 0);
     }
 
     public function test_la_carga_se_limita_por_token(): void
@@ -317,14 +438,13 @@ class EnvioPublicoTest extends TestCase
         [, $token] = $this->enlace();
 
         for ($intento = 1; $intento <= 6; $intento++) {
-            $this->post(route('envio.recibir', ['token' => $token]), [
-                'archivo' => $this->archivoPdf("envio-{$intento}.pdf", "CONTENIDO {$intento}"),
-            ])->assertRedirect();
+            $this->post(route('envio.recibir', ['token' => $token]), $this->envio([
+                'archivo' => [$this->archivoPdf("envio-{$intento}.pdf", "CONTENIDO {$intento}")],
+            ]))->assertRedirect();
         }
 
-        $this->post(route('envio.recibir', ['token' => $token]), [
-            'archivo' => $this->archivoPdf('septimo.pdf'),
-        ])->assertStatus(429);
+        $this->post(route('envio.recibir', ['token' => $token]), $this->envio())
+            ->assertStatus(429);
     }
 
     /*
@@ -333,23 +453,18 @@ class EnvioPublicoTest extends TestCase
     |--------------------------------------------------------------------------
     */
 
-    public function test_el_envio_queda_auditado_con_su_ip_y_su_agente(): void
+    public function test_el_envio_queda_auditado_apuntando_al_documento(): void
     {
         [, $token] = $this->enlace();
 
-        $this->post(route('envio.recibir', ['token' => $token]), [
-            'archivo' => $this->archivoPdf('acta.pdf'),
-        ]);
+        $this->post(route('envio.recibir', ['token' => $token]), $this->envio());
 
-        $recepcion = Recepcion::withoutGlobalScopes()->firstOrFail();
-
-        $this->assertSame('127.0.0.1', $recepcion->ip_remitente);
-        $this->assertNotNull($recepcion->agente);
+        $documento = Documento::withoutGlobalScopes()->firstOrFail();
 
         $this->assertDatabaseHas('auditorias', [
             'accion' => AccionAuditoria::RecepcionRecibida->value,
-            'auditable_type' => Recepcion::class,
-            'auditable_id' => $recepcion->id,
+            'auditable_type' => Documento::class,
+            'auditable_id' => $documento->id,
             // Sin usuario, porque no hay sesión; con dependencia, para que
             // administración lo vea en su pantalla de auditoría.
             'user_id' => null,
@@ -368,8 +483,6 @@ class EnvioPublicoTest extends TestCase
         $this->assertNotNull($registro, 'Un intento con token inválido no dejó rastro.');
         $this->assertStringContainsString('rechazado', $registro->datos);
         $this->assertStringContainsString('inexistente', $registro->datos);
-
-        // El hash identifica el intento; el secreto no se escribe en ningún sitio.
         $this->assertStringContainsString(EnlaceCarga::hashDe($token), $registro->datos);
         $this->assertStringNotContainsString($token, json_encode((array) $registro));
     }
@@ -386,7 +499,6 @@ class EnvioPublicoTest extends TestCase
             $this->get('/enviar/'.$basura)->assertNotFound();
         }
 
-        // Y '/enviar' a secas no es una ruta: el token es obligatorio.
         $this->get('/enviar')->assertNotFound();
     }
 
@@ -395,13 +507,9 @@ class EnvioPublicoTest extends TestCase
         foreach (['envio.formulario', 'envio.recibir'] as $nombre) {
             $middleware = Route::getRoutes()->getByName($nombre)->gatherMiddleware();
 
-            // Fuera de los grupos internos: quien entra aquí no tiene cuenta
-            // ni dependencia activa.
             $this->assertNotContains('auth', $middleware, "$nombre exige sesión.");
             $this->assertNotContains('usuario.activo', $middleware, "$nombre exige usuario activo.");
             $this->assertNotContains('dependencia', $middleware, "$nombre exige dependencia.");
-
-            // Pero dentro de 'web', que es de donde salen la sesión y el CSRF.
             $this->assertContains('web', $middleware, "$nombre quedó fuera del grupo web, y con ello sin CSRF.");
 
             $this->assertTrue(
@@ -410,8 +518,6 @@ class EnvioPublicoTest extends TestCase
             );
         }
 
-        // Y la ruta no está excluida de la comprobación: excluirla abriría un
-        // envío falsificable desde cualquier otro sitio web.
         $this->assertSame([], $this->urisSinCsrf(), 'Hay rutas excluidas de la validación CSRF.');
     }
 

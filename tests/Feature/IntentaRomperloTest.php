@@ -302,7 +302,7 @@ class IntentaRomperloTest extends TestCase
         foreach ($intentos as $descripcion => $archivo) {
             $this->actingAs($editor)
                 ->post(route('documentos.store'), ['nombre' => $descripcion, 'archivo' => $archivo])
-                ->assertSessionHasErrors('archivo');
+                ->assertSessionHasErrors('archivo.0');
         }
 
         // La validación mira el contenido, no la extensión ni el mime que

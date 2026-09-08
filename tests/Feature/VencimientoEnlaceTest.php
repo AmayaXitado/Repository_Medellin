@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\RolDependencia;
+use App\Models\Carpeta;
 use App\Models\Dependencia;
 use App\Models\EnlaceCarga;
 use App\Models\User;
@@ -22,7 +23,7 @@ class VencimientoEnlaceTest extends TestCase
 
     private User $admin;
 
-    private User $destinatario;
+    private Carpeta $carpeta;
 
     protected function setUp(): void
     {
@@ -30,14 +31,14 @@ class VencimientoEnlaceTest extends TestCase
 
         $this->dependencia = Dependencia::factory()->create();
         $this->admin = $this->usuarioCon(RolDependencia::Administracion, $this->dependencia);
-        $this->destinatario = $this->usuarioCon(RolDependencia::Edicion, $this->dependencia);
+        $this->carpeta = Carpeta::factory()->create(['dependencia_id' => $this->dependencia->id]);
     }
 
     private function crear(?string $vence)
     {
         return $this->actingAs($this->admin)->post(route('admin.enlaces.store'), array_filter([
-            'destinatario_id' => $this->destinatario->id,
-            'remitente_nombre' => 'Proveedor Externo SAS',
+            'carpeta_id' => $this->carpeta->id,
+            'proposito' => 'Actas del comité',
             'expira_at' => $vence,
         ], fn ($valor) => $valor !== null));
     }
@@ -113,9 +114,7 @@ class VencimientoEnlaceTest extends TestCase
     {
         $token = EnlaceCarga::generarToken();
 
-        EnlaceCarga::factory()->conToken($token)->create([
-            'dependencia_id' => $this->dependencia->id,
-            'destinatario_id' => $this->destinatario->id,
+        EnlaceCarga::factory()->conToken($token)->hacia($this->carpeta)->create([
             'expira_at' => now()->subDay()->endOfDay(),
         ]);
 

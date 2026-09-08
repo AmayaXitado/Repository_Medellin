@@ -15,7 +15,23 @@
         @endforeach
     </nav>
 
-    <div class="ml-auto flex gap-2">
+    <div class="ml-auto flex flex-wrap gap-2">
+        {{--
+            Solo dentro de una carpeta: un enlace de carga tiene que decir a
+            dónde entrega, y en la raíz no hay carpeta que poner.
+        --}}
+        @if($carpetaActual && auth()->user()?->can('create', App\Models\EnlaceCarga::class))
+            <a href="{{ route('admin.enlaces.create', ['carpeta' => $carpetaActual->uuid]) }}"
+               class="flex items-center gap-1.5 rounded-md bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--text)] ring-1 ring-[var(--border)] hover:bg-[var(--card-soft)]">
+                <svg class="size-4 text-[var(--muted)]" fill="none" stroke="currentColor" stroke-width="1.8"
+                     viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244"/>
+                </svg>
+                Enlace de carga
+            </a>
+        @endif
+
         @if($rolActual?->puedeEditar())
             <a href="{{ route('carpetas.create', ['carpeta' => $carpetaActual?->uuid]) }}"
                class="rounded-md bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--text)] ring-1 ring-[var(--border)] hover:bg-[var(--card-soft)]">
@@ -133,6 +149,25 @@
                     <td class="px-4 py-3 text-[var(--muted)]">{{ $documento->versionActual?->tamano_legible ?? '—' }}</td>
                     <td class="px-4 py-3">
                         <div class="flex items-center justify-end gap-3">
+                            {{--
+                                Solo si llegó de fuera: lleva al documento, donde
+                                está su cadena de custodia —quién dijo ser, desde
+                                qué IP y con qué huella entró—.
+                            --}}
+                            @if($documento->recepcion)
+                                <a href="{{ route('documentos.show', $documento) }}#origen"
+                                   title="Llegó por un enlace de carga: ver de dónde"
+                                   class="flex items-center gap-1 rounded-md bg-success-soft px-2 py-1 text-xs font-medium text-[var(--success)] hover:underline">
+                                    <svg class="size-3.5" fill="none" stroke="currentColor" stroke-width="2"
+                                         viewBox="0 0 24 24" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                              d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
+                                    </svg>
+                                    Origen
+                                </a>
+                            @endif
+
                             <a href="{{ route('documentos.descargar', $documento) }}"
                                class="text-sm font-medium text-[var(--primary)] hover:underline">Descargar</a>
 

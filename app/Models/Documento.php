@@ -87,6 +87,21 @@ class Documento extends Model
         return $this->hasOne(DocumentoVersion::class)->ofMany('numero', 'max');
     }
 
+    /**
+     * Si llegó por un enlace de carga, aquí está su cadena de custodia:
+     * quién dijo ser, desde qué IP y con qué navegador. Null si lo subió
+     * alguien de dentro por el formulario normal.
+     */
+    public function recepcion(): HasOne
+    {
+        return $this->hasOne(Recepcion::class);
+    }
+
+    public function llegoDeFuera(): bool
+    {
+        return $this->recepcion()->exists();
+    }
+
     public function creador(): BelongsTo
     {
         return $this->belongsTo(User::class, 'creado_por');

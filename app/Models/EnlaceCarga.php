@@ -12,8 +12,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 /**
- * Enlace de carga: una URL con identidad que permite a alguien externo subir
- * un archivo sin tener cuenta en el repositorio.
+ * Enlace de carga: una URL que permite a alguien externo subir un archivo a
+ * una carpeta concreta, sin tener cuenta en el repositorio.
+ *
+ * El enlace no lleva identidad: quien lo recibe declara su nombre, su correo
+ * y su entidad al subir, y eso queda en la recepción. Lo que el enlace sí
+ * decide es la carpeta de destino, hasta cuándo sirve y cuántas veces.
  */
 #[ScopedBy([DependenciaScope::class])]
 class EnlaceCarga extends Model
@@ -26,11 +30,7 @@ class EnlaceCarga extends Model
         'token_hash',
         'token_cifrado',
         'dependencia_id',
-        'destinatario_id',
         'carpeta_id',
-        'remitente_nombre',
-        'remitente_email',
-        'remitente_entidad',
         'proposito',
         'activo',
         'expira_at',
@@ -156,11 +156,6 @@ class EnlaceCarga extends Model
     public function dependencia(): BelongsTo
     {
         return $this->belongsTo(Dependencia::class);
-    }
-
-    public function destinatario(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'destinatario_id');
     }
 
     public function carpeta(): BelongsTo

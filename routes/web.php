@@ -6,7 +6,6 @@ use App\Http\Controllers\Admin\UsuarioController;
 use App\Http\Controllers\AuditoriaController;
 use App\Http\Controllers\Auth\PerfilController;
 use App\Http\Controllers\Auth\SesionController;
-use App\Http\Controllers\BandejaController;
 use App\Http\Controllers\CarpetaController;
 use App\Http\Controllers\DependenciaActualController;
 use App\Http\Controllers\DescargaController;
@@ -103,19 +102,6 @@ Route::middleware(['auth', 'usuario.activo', 'dependencia'])->group(function () 
         ->name('carpetas.inactivar');
     Route::patch('carpetas/{carpeta}/reactivar', [CarpetaController::class, 'reactivar'])
         ->name('carpetas.reactivar');
-
-    /*
-    |----------------------------------------------------------------------
-    | Bandeja de entrada
-    |----------------------------------------------------------------------
-    | Lo que llegó por un enlace de carga y todavía no es un documento.
-    | Quién entra aquí lo decide RecepcionPolicy.
-    */
-
-    Route::get('bandeja', [BandejaController::class, 'index'])->name('bandeja.index');
-    Route::get('bandeja/{recepcion}', [BandejaController::class, 'show'])->name('bandeja.show');
-    Route::get('bandeja/{recepcion}/archivo', [BandejaController::class, 'previsualizar'])
-        ->name('bandeja.archivo');
 
     /*
     |----------------------------------------------------------------------

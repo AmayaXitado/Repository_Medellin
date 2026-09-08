@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Carpeta;
 use App\Models\Dependencia;
 use App\Models\EnlaceCarga;
 use App\Models\User;
@@ -24,10 +25,7 @@ class EnlaceCargaFactory extends Factory
             'token_hash' => EnlaceCarga::hashDe($token),
             'token_cifrado' => $token,
             'dependencia_id' => Dependencia::factory(),
-            'destinatario_id' => User::factory(),
-            'remitente_nombre' => fake()->name(),
-            'remitente_email' => fake()->unique()->safeEmail(),
-            'remitente_entidad' => 'Entidad externa',
+            'carpeta_id' => null,
             'proposito' => 'Actas del comité',
             'activo' => true,
             'expira_at' => null,
@@ -46,12 +44,18 @@ class EnlaceCargaFactory extends Factory
         ]);
     }
 
-    public function para(User $destinatario, ?Dependencia $dependencia = null): static
+    /** La carpeta a la que entrega. Sin ella el enlace no sirve de nada. */
+    public function hacia(Carpeta $carpeta): static
     {
-        return $this->state(fn (array $atributos) => [
-            'destinatario_id' => $destinatario->id,
-            'dependencia_id' => $dependencia?->id ?? $atributos['dependencia_id'],
+        return $this->state(fn () => [
+            'carpeta_id' => $carpeta->id,
+            'dependencia_id' => $carpeta->dependencia_id,
         ]);
+    }
+
+    public function creadoPor(User $usuario): static
+    {
+        return $this->state(fn () => ['creado_por' => $usuario->id]);
     }
 
     public function revocado(): static
