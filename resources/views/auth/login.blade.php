@@ -51,11 +51,11 @@
 
     @vite(['resources/css/app.css', 'resources/css/loader.css', 'resources/js/app.js'])
 </head>
-<body class="flex min-h-full flex-col">
+<body class="flex h-dvh w-full flex-col overflow-hidden">
 
 @include('partials.cargando')
 
-<header class="flex items-center justify-between gap-3 border-b px-4 py-3.5 sm:px-8"
+<header class="flex shrink-0 items-center justify-between gap-3 border-b px-4 py-2.5 sm:px-8"
         style="border-color: var(--border); background-color: color-mix(in srgb, var(--card) 80%, transparent);">
     {{--
         Dos archivos y no uno con filtro CSS: el logotipo es texto fino, y
@@ -81,11 +81,17 @@
     </button>
 </header>
 
-<main class="flex flex-1 items-center justify-center p-4 sm:p-6 lg:p-8">
+{{--
+    overflow-y-auto es solo la red de seguridad para una ventana absurdamente
+    baja: con los tamaños en clamp() de aquí abajo, la tarjeta se encoge sola
+    y en cualquier pantalla real no debería activarse nunca.
+--}}
+<main class="flex min-h-0 flex-1 items-center justify-center overflow-y-auto p-[clamp(0.5rem,2vh,2rem)]">
     <div class="grid w-full max-w-5xl grid-cols-1 items-center gap-8 lg:grid-cols-12">
 
-        {{-- Columna informativa --}}
-        <div class="space-y-6 text-center lg:col-span-6 lg:text-left">
+        {{-- Columna informativa: solo en pantallas anchas, para que el login
+             quepa sin scroll en móvil sin sacrificar el mensaje institucional. --}}
+        <div class="hidden space-y-6 lg:col-span-6 lg:block lg:text-left">
             <div class="inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-bold"
                  style="background-color: color-mix(in srgb, var(--primary) 10%, transparent); color: var(--primary); border: 1px solid color-mix(in srgb, var(--primary) 20%, transparent);">
                 <svg class="size-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -106,52 +112,26 @@
                 dependencias del Comité de Estudios Médicos.
             </p>
 
-            <div class="grid grid-cols-1 gap-3 pt-2 text-left sm:grid-cols-2">
-                <div class="rounded-2xl border p-3.5" style="background-color: var(--card); border-color: var(--border);">
-                    <div class="mb-1 flex items-center gap-2 text-xs font-bold" style="color: var(--text);">
-                        <svg class="size-4 text-emerald-600" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                  d="M9 12.75 11.25 15 15 9.75M12 3l7.5 3.375v4.5c0 4.94-3.28 9.522-7.5 10.798-4.22-1.276-7.5-5.858-7.5-10.798v-4.5L12 3Z"/>
-                        </svg>
-                        <span>Integridad verificable</span>
-                    </div>
-                    <p class="text-[11px] leading-normal" style="color: var(--muted);">
-                        Ningún archivo reemplaza a otro; cada versión queda con su propia huella y es trazable.
-                    </p>
-                </div>
 
-                <div class="rounded-2xl border p-3.5" style="background-color: var(--card); border-color: var(--border);">
-                    <div class="mb-1 flex items-center gap-2 text-xs font-bold" style="color: var(--text);">
-                        <svg class="size-4" style="color: var(--primary);" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                  d="M9 12.75 11.25 15 15 9.75M21 12c0 4.556-3.02 8.41-7.167 9.665a2.25 2.25 0 0 1-1.666 0C7.02 20.41 4 16.556 4 12V6.741c0-.966.66-1.813 1.6-2.043l5.25-1.313a2.25 2.25 0 0 1 1.3 0l5.25 1.313A2.25 2.25 0 0 1 21 6.741V12Z"/>
-                        </svg>
-                        <span>Recepción externa segura</span>
-                    </div>
-                    <p class="text-[11px] leading-normal" style="color: var(--muted);">
-                        Enlaces temporales para que gente externa entregue archivos sin necesitar una cuenta.
-                    </p>
-                </div>
-            </div>
         </div>
 
         {{-- Formulario --}}
         <div class="flex justify-center lg:col-span-6">
-            <div class="liquid-card w-full max-w-md rounded-3xl p-6 sm:p-8">
-                <div class="mb-6 text-center">
-                    <div class="mx-auto mb-3 flex size-12 items-center justify-center rounded-2xl text-white shadow-md"
-                         style="background-color: var(--primary);">
-                        <svg class="size-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <div class="liquid-card w-full max-w-md rounded-3xl p-[clamp(0.9rem,3.5vh,2rem)]">
+                <div class="text-center" style="margin-bottom: clamp(0.5rem, 2.5vh, 1.5rem);">
+                    <div class="mx-auto flex items-center justify-center rounded-2xl text-white shadow-md"
+                         style="background-color: var(--primary); width: clamp(2rem, 6vh, 3rem); height: clamp(2rem, 6vh, 3rem); margin-bottom: clamp(0.25rem, 1.2vh, 0.75rem);">
+                        <svg style="width: clamp(1rem, 3vh, 1.5rem); height: clamp(1rem, 3vh, 1.5rem);" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round"
                                   d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1 1 21.75 8.25Z"/>
                         </svg>
                     </div>
-                    <h2 class="text-xl font-black tracking-tight" style="color: var(--text);">Iniciar sesión</h2>
+                    <h2 class="font-black tracking-tight" style="color: var(--text); font-size: clamp(1rem, 2.5vh, 1.25rem);">Iniciar sesión</h2>
                     <p class="mt-1 text-xs" style="color: var(--muted);">Ingresa con tus credenciales institucionales</p>
                 </div>
 
                 @if($errors->any())
-                    <div class="liquid-alert liquid-alert-error mb-4 text-xs">
+                    <div class="liquid-alert liquid-alert-error mb-3 text-xs">
                         <svg class="mt-0.5 size-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round"
                                   d="M12 9v3.75m0 3.75h.007v.008H12v-.008ZM21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
@@ -163,7 +143,7 @@
                     </div>
                 @endif
 
-                <form method="POST" action="{{ route('login') }}" id="formulario-login" class="space-y-4">
+                <form method="POST" action="{{ route('login') }}" id="formulario-login" style="display: flex; flex-direction: column; gap: clamp(0.5rem, 1.8vh, 0.75rem);">
                     @csrf
 
                     <div>
@@ -202,7 +182,7 @@
                                       d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"/>
                             </svg>
                             <input id="password" name="password" type="password" required
-                                   class="liquid-input w-full pl-10 pr-10 text-sm">
+                                   class="liquid-input w-full pl-10 pr-10 text-sm" style="padding-top: clamp(0.4rem, 1.2vh, 0.625rem); padding-bottom: clamp(0.4rem, 1.2vh, 0.625rem);">
                             <button type="button" id="alternar-password"
                                     class="absolute right-3 top-3 focus:outline-none" style="color: var(--muted);">
                                 <svg id="icono-mostrar-password" class="size-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
@@ -219,14 +199,15 @@
                         </div>
                     </div>
 
-                    <label class="flex items-center gap-2 pt-1 text-xs" style="color: var(--muted);">
+                    <label class="flex items-center gap-2 text-xs" style="color: var(--muted);">
                         <input type="checkbox" name="recordarme" value="1"
                                class="rounded" style="border-color: var(--border); accent-color: var(--primary);">
                         Mantener la sesión iniciada
                     </label>
 
                     <button type="submit" id="boton-login"
-                            class="liquid-button-primary mt-2 flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold shadow-md">
+                            class="liquid-button-primary flex w-full items-center justify-center gap-2 rounded-xl text-sm font-bold shadow-md"
+                            style="padding-top: clamp(0.5rem, 1.6vh, 0.75rem); padding-bottom: clamp(0.5rem, 1.6vh, 0.75rem);">
                         <span id="texto-boton-login">Ingresar</span>
                         <svg id="icono-boton-login" class="size-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/>
@@ -234,7 +215,7 @@
                     </button>
                 </form>
 
-                <div class="mt-6 border-t pt-4 text-center" style="border-color: var(--border);">
+                <div class="border-t text-center" style="border-color: var(--border); margin-top: clamp(0.5rem, 2vh, 1.5rem); padding-top: clamp(0.4rem, 1.5vh, 1rem);">
                     <p class="text-[11px] leading-relaxed" style="color: var(--muted);">
                         El acceso lo habilita un administrador de la dependencia. Cada inicio de sesión queda
                         registrado en la auditoría del sistema.
@@ -245,7 +226,7 @@
     </div>
 </main>
 
-<footer class="border-t px-4 py-3.5 text-center text-xs" style="border-color: var(--border); color: var(--muted);">
+<footer class="shrink-0 border-t px-4 py-2 text-center text-xs" style="border-color: var(--border); color: var(--muted);">
     © {{ date('Y') }} {{ config('app.name') }} • Comité de Estudios Médicos
 </footer>
 
