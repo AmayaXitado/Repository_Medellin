@@ -20,8 +20,10 @@ class VerificarUsuarioActivo
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
+            // Bajo la clave del campo que sí existe en el formulario de
+            // ingreso: si se marcara en otra, el aviso no se vería.
             return redirect()->route('login')
-                ->withErrors(['email' => 'Tu cuenta fue desactivada. Comunícate con el administrador.']);
+                ->withErrors(['identificador' => 'Tu cuenta fue desactivada. Comunícate con el administrador.']);
         }
 
         return $next($request);

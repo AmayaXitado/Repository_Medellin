@@ -1,8 +1,8 @@
-# Repository-Medellin
+# Documenta
 
 Repositorio documental centralizado para la dependencia de **Inclusión Social**
-(Alcaldía de Medellín), diseñado desde el inicio para replicarse a otras
-dependencias como Salud Mental sin abrir la plataforma a toda la Alcaldía.
+(Comité de Estudios Médicos), diseñado desde el inicio para replicarse a otras
+dependencias como Salud Mental sin abrir la plataforma a todo el Comité.
 
 **Stack:** Laravel 12 · Blade · Tailwind 4 (Vite) · MySQL · almacenamiento local abstraído
 

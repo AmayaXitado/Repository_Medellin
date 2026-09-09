@@ -26,7 +26,7 @@
             </div>
 
             <p class="text-sm text-[var(--muted)]">
-                Correo: <span class="text-[var(--text)]">{{ auth()->user()->email }}</span> ·
+                Documento: <span class="text-[var(--text)]">{{ auth()->user()->documento ?? '—' }}</span> ·
                 Rol en {{ $dependenciaActual?->nombre }}:
                 <span class="text-[var(--text)]">{{ $rolActual?->etiqueta() }}</span>
             </p>

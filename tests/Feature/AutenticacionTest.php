@@ -24,7 +24,7 @@ class AutenticacionTest extends TestCase
     {
         $usuario = $this->usuarioCon(RolDependencia::Lectura);
 
-        $this->post(route('login'), ['email' => $usuario->email, 'password' => 'password'])
+        $this->post(route('login'), ['identificador' => $usuario->documento, 'password' => 'password'])
             ->assertRedirect(route('documentos.index'));
 
         $this->assertAuthenticatedAs($usuario);
@@ -35,23 +35,70 @@ class AutenticacionTest extends TestCase
     {
         $usuario = $this->usuarioCon(RolDependencia::Lectura);
 
-        // Correo que no existe.
-        $this->post(route('login'), ['email' => 'nadie@ninguna.test', 'password' => 'password'])
+        // Documento que no existe.
+        $this->post(route('login'), ['identificador' => '9999999999', 'password' =>'password'])
             ->assertRedirect()
-            ->assertSessionHasErrors(['email' => self::MENSAJE_GENERICO])
+            ->assertSessionHasErrors(['identificador' => self::MENSAJE_GENERICO])
             ->assertSessionDoesntHaveErrors('password');
 
         $this->assertGuest();
 
-        // Correo que sí existe, contraseña equivocada: el mismo mensaje.
+        // Documento que sí existe, contraseña equivocada: el mismo mensaje.
         // Si dijera «la contraseña es incorrecta» estaría confirmando que
-        // ese correo tiene cuenta.
-        $this->post(route('login'), ['email' => $usuario->email, 'password' => 'incorrecta'])
+        // ese documento tiene cuenta.
+        $this->post(route('login'), ['identificador' => $usuario->documento, 'password' => 'incorrecta'])
             ->assertRedirect()
-            ->assertSessionHasErrors(['email' => self::MENSAJE_GENERICO])
+            ->assertSessionHasErrors(['identificador' => self::MENSAJE_GENERICO])
             ->assertSessionDoesntHaveErrors('password');
 
         $this->assertGuest();
+    }
+
+    /**
+     * La cédula se escribe con puntos en unos sitios y sin ellos en otros.
+     * Da igual cómo se teclee: se normaliza antes de buscar.
+     */
+    public function test_el_documento_se_puede_escribir_con_puntos_o_sin_ellos(): void
+    {
+        $usuario = $this->usuarioCon(RolDependencia::Lectura);
+        $usuario->update(['documento' => '1234567890']);
+
+        foreach (['1234567890', '1.234.567.890', '1 234 567 890', ' 1234567890 '] as $comoLoEscribe) {
+            $this->post(route('login'), ['identificador' => $comoLoEscribe, 'password' => 'password'])
+                ->assertRedirect(route('documentos.index'));
+
+            $this->assertAuthenticatedAs($usuario);
+
+            $this->post(route('logout'));
+            $this->app['auth']->forgetGuards();
+        }
+    }
+
+    /**
+     * Las tres formas llevan a la misma cuenta y a la misma contraseña. El
+     * documento es la identidad; el usuario y el correo son atajos, para que
+     * nadie tenga que recordar cuál eligió quien lo dio de alta.
+     */
+    public function test_se_entra_con_documento_con_usuario_o_con_correo(): void
+    {
+        $usuario = $this->usuarioCon(RolDependencia::Lectura);
+
+        $usuario->update([
+            'documento' => '1234567890',
+            'usuario' => 'jamaya',
+            'email' => 'jamaya@medellin.gov.co',
+        ]);
+
+        foreach (['1234567890', 'jamaya', 'JAMAYA', 'jamaya@medellin.gov.co'] as $identificador) {
+            $this->post(route('login'), ['identificador' => $identificador, 'password' => 'password'])
+                ->assertRedirect(route('documentos.index'));
+
+            $this->assertTrue(auth()->check(), "No entró con «{$identificador}».");
+            $this->assertAuthenticatedAs($usuario);
+
+            $this->post(route('logout'));
+            $this->app['auth']->forgetGuards();
+        }
     }
 
     public function test_un_usuario_desactivado_no_puede_iniciar_sesion(): void
@@ -59,9 +106,9 @@ class AutenticacionTest extends TestCase
         $usuario = $this->usuarioCon(RolDependencia::Lectura);
         $usuario->update(['activo' => false]);
 
-        $this->post(route('login'), ['email' => $usuario->email, 'password' => 'password'])
+        $this->post(route('login'), ['identificador' => $usuario->documento, 'password' => 'password'])
             ->assertRedirect()
-            ->assertSessionHasErrors('email');
+            ->assertSessionHasErrors('identificador');
 
         $this->assertGuest();
     }
@@ -70,7 +117,7 @@ class AutenticacionTest extends TestCase
     {
         $usuario = $this->usuarioCon(RolDependencia::Lectura);
 
-        $this->post(route('login'), ['email' => $usuario->email, 'password' => 'password']);
+        $this->post(route('login'), ['identificador' => $usuario->documento, 'password' => 'password']);
         $this->get(route('documentos.index'))->assertOk();
 
         // Un administrador lo desactiva mientras la persona sigue navegando.
@@ -85,7 +132,7 @@ class AutenticacionTest extends TestCase
 
         $this->get(route('documentos.index'))
             ->assertRedirect(route('login'))
-            ->assertSessionHasErrors('email');
+            ->assertSessionHasErrors('identificador');
 
         $this->assertGuest();
     }
@@ -105,11 +152,11 @@ class AutenticacionTest extends TestCase
     public function test_el_ingreso_se_limita_a_seis_intentos_por_minuto(): void
     {
         for ($intento = 1; $intento <= 6; $intento++) {
-            $this->post(route('login'), ['email' => 'fuerza@bruta.test', 'password' => 'mala'.$intento])
+            $this->post(route('login'), ['identificador' => '9999999999', 'password' =>'mala'.$intento])
                 ->assertStatus(302);
         }
 
-        $this->post(route('login'), ['email' => 'fuerza@bruta.test', 'password' => 'mala7'])
+        $this->post(route('login'), ['identificador' => '9999999999', 'password' =>'mala7'])
             ->assertStatus(429);
     }
 
@@ -143,7 +190,7 @@ class AutenticacionTest extends TestCase
     {
         $usuario = $this->usuarioCon(RolDependencia::Lectura);
 
-        $this->post(route('login'), ['email' => $usuario->email, 'password' => 'password']);
+        $this->post(route('login'), ['identificador' => $usuario->documento, 'password' => 'password']);
         $this->assertAuthenticated();
 
         $this->post(route('logout'))->assertRedirect(route('login'));

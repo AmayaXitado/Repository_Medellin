@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Enums\AccionAuditoria;
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use App\Services\Auditor;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -24,14 +25,24 @@ class SesionController extends Controller
 
     public function store(Request $request, Auditor $auditor): RedirectResponse
     {
-        $credenciales = $request->validate([
-            'email' => ['required', 'email'],
+        $request->validate([
+            'identificador' => ['required', 'string', 'max:255'],
             'password' => ['required', 'string'],
-        ], attributes: ['email' => 'correo', 'password' => 'contraseña']);
+        ], attributes: ['identificador' => 'documento o usuario', 'password' => 'contraseña']);
 
-        if (! Auth::attempt($credenciales, $request->boolean('recordarme'))) {
+        // Se acepta el documento, el nombre de usuario o el correo: quien
+        // entra cada mañana no debería tener que recordar cuál de los tres
+        // eligió el administrador que lo dio de alta.
+        $usuario = User::porIdentificador($request->input('identificador'));
+
+        $entro = $usuario !== null && Auth::attempt(
+            ['id' => $usuario->id, 'password' => $request->input('password')],
+            $request->boolean('recordarme'),
+        );
+
+        if (! $entro) {
             throw ValidationException::withMessages([
-                'email' => 'Las credenciales no coinciden con nuestros registros.',
+                'identificador' => 'Las credenciales no coinciden con nuestros registros.',
             ]);
         }
 
@@ -39,7 +50,7 @@ class SesionController extends Controller
             Auth::logout();
 
             throw ValidationException::withMessages([
-                'email' => 'Tu cuenta está desactivada. Comunícate con el administrador.',
+                'identificador' => 'Tu cuenta está desactivada. Comunícate con el administrador.',
             ]);
         }
 

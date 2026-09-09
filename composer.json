@@ -2,7 +2,7 @@
     "$schema": "https://getcomposer.org/schema.json",
     "name": "laravel/laravel",
     "type": "project",
-    "description": "Repositorio documental centralizado — Inclusión Social, Alcaldía de Medellín.",
+    "description": "Repositorio documental centralizado — Inclusión Social, Comité de Estudios Médicos.",
     "keywords": ["laravel", "framework"],
     "license": "MIT",
     "require": {

@@ -35,9 +35,9 @@ class EnlaceCargaController extends Controller
 
         $enlaces = EnlaceCarga::query()
             ->with(['carpeta', 'creador'])
-            // Administración ve todos los de la dependencia; un líder solo
+            // Quien gestiona ve todos los de la dependencia; un líder solo
             // los que él mismo generó.
-            ->when(! $usuario->puedeAdministrarEn($dependencia->id), fn ($q) => $q->where('creado_por', $usuario->id))
+            ->when(! $usuario->puedeGestionarEn($dependencia->id), fn ($q) => $q->where('creado_por', $usuario->id))
             ->latest()
             ->paginate(config('repositorio.por_pagina'));
 
@@ -55,7 +55,7 @@ class EnlaceCargaController extends Controller
 
         $usuario = auth()->user();
         $dependencia = $this->contexto->requerida();
-        $esAdministrador = $usuario->puedeAdministrarEn($dependencia->id);
+        $esAdministrador = $usuario->puedeGestionarEn($dependencia->id);
 
         $carpetas = $esAdministrador
             ? Carpeta::activas()->orderBy('nombre')->get()

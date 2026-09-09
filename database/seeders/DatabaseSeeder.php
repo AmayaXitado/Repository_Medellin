@@ -45,10 +45,12 @@ class DatabaseSeeder extends Seeder
             ],
         );
 
+        // Se entra con el documento, no con el correo.
         $admin = User::firstOrCreate(
-            ['email' => 'admin@menteplena.com.co'],
+            ['documento' => '1234567890'],
             [
                 'name' => 'Administrador del repositorio',
+                'email' => 'admin@menteplena.com.co',
                 'cargo' => 'Administración de la plataforma',
                 'password' => Hash::make('Cambiar2026'),
                 'activo' => true,
@@ -70,7 +72,7 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
-        $this->command?->info('Usuario inicial: admin@menteplena.com.co / Cambiar2026');
-        $this->command?->warn('Cambia esa contraseña antes de exponer la plataforma.');
+        $this->command?->info('Usuario inicial — documento: 1234567890 / contraseña: Cambiar2026');
+        $this->command?->warn('Cambia ese documento y esa contraseña antes de exponer la plataforma.');
     }
 }

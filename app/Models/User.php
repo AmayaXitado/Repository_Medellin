@@ -18,6 +18,8 @@ class User extends Authenticatable
     /** @var list<string> */
     protected $fillable = [
         'name',
+        'documento',
+        'usuario',
         'email',
         'password',
         'cargo',
@@ -53,6 +55,50 @@ class User extends Authenticatable
             'es_superadmin' => 'boolean',
             'tema' => TemaInterfaz::class,
         ];
+    }
+
+    /**
+     * Forma canónica del documento: sin puntos, espacios ni guiones, y en
+     * mayúsculas.
+     *
+     * Es lo que evita que «1.234.567» y «1234567» acaben siendo dos cuentas
+     * de la misma persona, y lo que permite escribirlo como uno quiera al
+     * iniciar sesión. Se usa igual al guardar y al buscar, para que las dos
+     * puntas hablen el mismo idioma.
+     */
+    public static function normalizarDocumento(?string $documento): string
+    {
+        return mb_strtoupper(preg_replace('/[^A-Za-z0-9]/', '', (string) $documento));
+    }
+
+    /** El alias de acceso se guarda y se compara siempre en minúsculas. */
+    public static function normalizarUsuario(?string $usuario): string
+    {
+        return mb_strtolower(trim((string) $usuario));
+    }
+
+    /**
+     * Encuentra a alguien por lo que haya tecleado para entrar: su documento,
+     * su nombre de usuario o su correo.
+     *
+     * Se resuelve aquí, y no con tres Auth::attempt seguidos, para que la
+     * comprobación de la contraseña ocurra una sola vez pase lo que pase: si
+     * unas formas de identificarse tardaran más que otras, el tiempo de
+     * respuesta diría cuáles existen.
+     */
+    public static function porIdentificador(?string $valor): ?self
+    {
+        $valor = trim((string) $valor);
+
+        if ($valor === '') {
+            return null;
+        }
+
+        return static::query()
+            ->where('documento', static::normalizarDocumento($valor))
+            ->orWhere('usuario', static::normalizarUsuario($valor))
+            ->orWhere('email', $valor)
+            ->first();
     }
 
     public function dependencias(): BelongsToMany
@@ -105,6 +151,13 @@ class User extends Authenticatable
         return $this->rolEn($dependencia)?->puedeEditar() ?? false;
     }
 
+    /** Gestiona personas y estructura: Coordinación y Administración. */
+    public function puedeGestionarEn(Dependencia|int|null $dependencia): bool
+    {
+        return $this->rolEn($dependencia)?->puedeGestionar() ?? false;
+    }
+
+    /** Retira contenido de la vista y ve lo retirado: solo Administración. */
     public function puedeAdministrarEn(Dependencia|int|null $dependencia): bool
     {
         return $this->rolEn($dependencia)?->puedeAdministrar() ?? false;

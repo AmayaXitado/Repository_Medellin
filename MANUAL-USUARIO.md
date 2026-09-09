@@ -1,4 +1,4 @@
-# Manual de uso — Repositorio Documental Medellín
+# Manual de uso — Documenta
 
 Guía funcional para las personas que usan la plataforma día a día. Para instalación
 y decisiones de arquitectura, ver [INICIO.md](INICIO.md).
@@ -8,7 +8,7 @@ y decisiones de arquitectura, ver [INICIO.md](INICIO.md).
 ## 1. Qué es
 
 Repositorio documental centralizado para la dependencia de **Inclusión Social**
-(Alcaldía de Medellín), pensado desde el inicio para replicarse a otras
+(Comité de Estudios Médicos), pensado desde el inicio para replicarse a otras
 dependencias (Salud Mental es la siguiente) sin que unas vean los archivos de
 otras. Nace para reemplazar el envío de evidencias por enlaces de OneDrive, que
 no dejaba rastro de quién subía qué ni permitía controlar el acceso.

@@ -14,13 +14,34 @@
     </div>
 
     <div>
-        <label for="email" class="{{ $etiqueta }}">Correo *</label>
-        <input id="email" name="email" type="email" required value="{{ old('email', $u?->email) }}" class="{{ $campo }}">
-        @if($esNuevo)
-            <p class="{{ $ayuda }}">
-                Si la persona ya tiene cuenta en otra dependencia, se le suma el acceso a esta.
-            </p>
-        @endif
+        <label for="documento" class="{{ $etiqueta }}">Documento de identidad *</label>
+        <input id="documento" name="documento" type="text" inputmode="numeric" required maxlength="30"
+               value="{{ old('documento', $u?->documento) }}" class="{{ $campo }}">
+        <p class="{{ $ayuda }}">
+            Es con lo que la persona inicia sesión. Sin puntos ni espacios.
+            @if($esNuevo)
+                Si ya tiene cuenta en otra dependencia, se le suma el acceso a esta.
+            @endif
+        </p>
+    </div>
+
+    <div>
+        <label for="usuario" class="{{ $etiqueta }}">
+            Nombre de usuario <span class="font-normal text-[var(--muted)]">(opcional)</span>
+        </label>
+        <input id="usuario" name="usuario" type="text" maxlength="50" autocapitalize="none"
+               placeholder="jamaya" value="{{ old('usuario', $u?->usuario) }}" class="{{ $campo }}">
+        <p class="{{ $ayuda }}">
+            Atajo para no teclear la cédula al entrar. Minúsculas, sin espacios, con alguna letra.
+        </p>
+    </div>
+
+    <div>
+        <label for="email" class="{{ $etiqueta }}">
+            Correo <span class="font-normal text-[var(--muted)]">(opcional)</span>
+        </label>
+        <input id="email" name="email" type="email" value="{{ old('email', $u?->email) }}" class="{{ $campo }}">
+        <p class="{{ $ayuda }}">Solo como dato de contacto: no sirve para entrar.</p>
     </div>
 
     <div>

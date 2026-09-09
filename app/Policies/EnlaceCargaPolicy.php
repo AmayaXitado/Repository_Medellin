@@ -18,7 +18,7 @@ class EnlaceCargaPolicy
     {
         $dependenciaId = app(ContextoDependencia::class)->id();
 
-        return $usuario->puedeAdministrarEn($dependenciaId) || $this->lideraAlgunaCarpeta($usuario, $dependenciaId);
+        return $usuario->puedeGestionarEn($dependenciaId) || $this->lideraAlgunaCarpeta($usuario, $dependenciaId);
     }
 
     public function create(User $usuario): bool
@@ -32,13 +32,13 @@ class EnlaceCargaPolicy
             return false;
         }
 
-        return $usuario->puedeAdministrarEn($enlace->dependencia_id) || $enlace->creado_por === $usuario->id;
+        return $usuario->puedeGestionarEn($enlace->dependencia_id) || $enlace->creado_por === $usuario->id;
     }
 
     /** Administración revoca cualquiera de su dependencia; un líder solo los suyos. */
     public function revocar(User $usuario, EnlaceCarga $enlace): bool
     {
-        if ($usuario->puedeAdministrarEn($enlace->dependencia_id)) {
+        if ($usuario->puedeGestionarEn($enlace->dependencia_id)) {
             return true;
         }
 
