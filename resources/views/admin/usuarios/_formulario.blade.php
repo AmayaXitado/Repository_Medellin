@@ -26,6 +26,17 @@
     </div>
 
     <div>
+        <label for="usuario" class="{{ $etiqueta }}">
+            Nombre de usuario <span class="font-normal text-[var(--muted)]">(opcional)</span>
+        </label>
+        <input id="usuario" name="usuario" type="text" maxlength="50" autocapitalize="none"
+               placeholder="jamaya" value="{{ old('usuario', $u?->usuario) }}" class="{{ $campo }}">
+        <p class="{{ $ayuda }}">
+            Atajo para no teclear la cédula al entrar. Minúsculas, sin espacios, con alguna letra.
+        </p>
+    </div>
+
+    <div>
         <label for="email" class="{{ $etiqueta }}">
             Correo <span class="font-normal text-[var(--muted)]">(opcional)</span>
         </label>

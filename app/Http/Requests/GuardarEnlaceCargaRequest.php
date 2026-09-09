@@ -41,7 +41,7 @@ class GuardarEnlaceCargaRequest extends FormRequest
     {
         $dependenciaId = app(ContextoDependencia::class)->id();
         $usuario = $this->user();
-        $esAdministrador = $usuario->puedeAdministrarEn($dependenciaId);
+        $esAdministrador = $usuario->puedeGestionarEn($dependenciaId);
 
         return [
             /*

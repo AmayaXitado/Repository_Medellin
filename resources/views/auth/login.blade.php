@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Ingresar · {{ config('app.name') }}</title>
 
+    <link rel="icon" type="image/png" href="{{ asset('img/favicon-cem.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('img/favicon-cem.png') }}">
+
     {{--
         Aquí todavía no hay usuario, así que no hay preferencia guardada en la
         cuenta: se respeta primero una elección manual guardada en este
@@ -54,14 +57,15 @@
 
 <header class="flex items-center justify-between gap-3 border-b px-4 py-3.5 sm:px-8"
         style="border-color: var(--border); background-color: color-mix(in srgb, var(--card) 80%, transparent);">
-    <div class="flex items-center gap-3">
-        <div class="flex size-9 shrink-0 items-center justify-center rounded-xl text-sm font-black text-white shadow-sm"
-             style="background-color: var(--primary);">M</div>
-        <div class="flex flex-col leading-none">
-            <span class="text-[10px] font-bold uppercase tracking-[0.22em]" style="color: var(--muted);">Alcaldía de</span>
-            <span class="text-base font-black uppercase tracking-[0.16em]" style="color: var(--text);">Medellín</span>
-        </div>
-    </div>
+    {{--
+        Dos archivos y no uno con filtro CSS: el logotipo es texto fino, y
+        teñirlo por filtro emborrona los bordes suavizados. Cada tema carga
+        el suyo, ya del color que le toca.
+    --}}
+    <img src="{{ asset('img/logo-cem-claro.png') }}" alt="Comité de Estudios Médicos"
+         class="h-9 w-auto dark:hidden">
+    <img src="{{ asset('img/logo-cem-oscuro.png') }}" alt="Comité de Estudios Médicos"
+         class="hidden h-9 w-auto dark:block">
 
     <button type="button" onclick="window.alternarTemaLogin()" title="Cambiar de tema"
             class="rounded-xl border p-2 transition-colors" style="border-color: var(--border); color: var(--text);">
@@ -92,12 +96,14 @@
             </div>
 
             <h1 class="text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl" style="color: var(--text);">
-                Document`a <span style="color: var(--primary);">Medellín</span>
+                {{-- Un solo sitio manda: APP_NAME. Así el nombre no vive
+                     escrito a mano en dos pantallas que se desincronizan. --}}
+                {{ config('app.name') }}
             </h1>
 
             <p class="mx-auto max-w-xl text-sm leading-relaxed sm:text-base lg:mx-0" style="color: var(--muted);">
                 Plataforma institucional de archivo, custodia y control de versiones para los documentos de las
-                dependencias de la Alcaldía de Medellín.
+                dependencias del Comité de Estudios Médicos.
             </p>
 
             <div class="grid grid-cols-1 gap-3 pt-2 text-left sm:grid-cols-2">
@@ -161,29 +167,27 @@
                     @csrf
 
                     <div>
-                        <label class="mb-1.5 block text-xs font-bold" style="color: var(--text);" for="documento">
-                            Documento de identidad
+                        <label class="mb-1.5 block text-xs font-bold" style="color: var(--text);" for="identificador">
+                            Documento, usuario o correo
                         </label>
                         <div class="relative">
-                            <svg id="icono-documento" class="pointer-events-none absolute left-3.5 top-3.5 size-4 transition-opacity duration-150" style="color: var(--muted);"
+                            <svg id="icono-identificador" class="pointer-events-none absolute left-3.5 top-3.5 size-4 transition-opacity duration-150" style="color: var(--muted);"
                                  fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round"
                                       d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Zm6-10.125a1.875 1.875 0 1 1-3.75 0 1.875 1.875 0 0 1 3.75 0Zm1.294 6.336a6.721 6.721 0 0 1-3.17.789 6.721 6.721 0 0 1-3.168-.789 3.376 3.376 0 0 1 6.338 0Z"/>
                             </svg>
                             {{--
-                                inputmode numérico: en el celular sale el
-                                teclado de cifras, que es lo que se teclea el
-                                99 % de las veces. No es 'type=number' porque
-                                eso rompe las cédulas de extranjería, que
-                                llevan letras.
+                                Sin inputmode numérico: el campo acepta las
+                                tres formas, y forzar el teclado de cifras
+                                estorbaría a quien entra con su usuario.
                             --}}
-                            <input id="documento" name="documento" type="text" inputmode="numeric"
-                                   value="{{ old('documento') }}" required autofocus
-                                   autocomplete="username" maxlength="30"
+                            <input id="identificador" name="identificador" type="text"
+                                   value="{{ old('identificador') }}" required autofocus
+                                   autocomplete="username" maxlength="255"
                                    class="liquid-input w-full pl-10 pr-3 text-sm">
                         </div>
                         <p class="mt-1.5 text-[11px]" style="color: var(--muted);">
-                            Sin puntos ni espacios. Da igual cómo lo escribas.
+                            Cualquiera de los tres sirve. El documento, con puntos o sin ellos.
                         </p>
                     </div>
 
@@ -242,7 +246,7 @@
 </main>
 
 <footer class="border-t px-4 py-3.5 text-center text-xs" style="border-color: var(--border); color: var(--muted);">
-    © {{ date('Y') }} Document`a Medellín • Todos los derechos reservados
+    © {{ date('Y') }} {{ config('app.name') }} • Comité de Estudios Médicos
 </footer>
 
 <script>
@@ -271,7 +275,7 @@
             actualizar(); // por si el navegador autocompletó el valor antes de este script.
         }
 
-        ocultarIconoAlEscribir('documento', 'icono-documento');
+        ocultarIconoAlEscribir('identificador', 'icono-identificador');
         ocultarIconoAlEscribir('password', 'icono-password');
 
         // Evita el doble envío y avisa que la petición va en curso; el propio

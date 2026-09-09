@@ -120,7 +120,7 @@ class MenuLateralTemporalTest extends TestCase
 
         // Control de rol sobre los enlaces de administración.
         foreach ([route('admin.usuarios.index'), route('admin.tipos.index'), route('auditoria.index')] as $ruta) {
-            if ($rol->puedeAdministrar()) {
+            if ($rol->puedeGestionar()) {
                 $this->assertStringContainsString($ruta, $html, "Falta el enlace $ruta para administración");
             } else {
                 $this->assertStringNotContainsString($ruta, $html, "El rol {$rol->value} NO debe ver $ruta");
@@ -128,7 +128,7 @@ class MenuLateralTemporalTest extends TestCase
         }
     }
 
-    public function test_las_pantallas_conservan_el_sidebar_en_los_tres_roles(): void
+    public function test_las_pantallas_conservan_el_sidebar_en_todos_los_roles(): void
     {
         foreach (RolDependencia::cases() as $rol) {
             $usuario = $this->usuarioCon($rol);
@@ -148,7 +148,7 @@ class MenuLateralTemporalTest extends TestCase
                 $pantallas['carpetas.edit'] = route('carpetas.edit', $carpeta);
             }
 
-            if ($rol->puedeAdministrar()) {
+            if ($rol->puedeGestionar()) {
                 $pantallas['admin.usuarios.index'] = route('admin.usuarios.index');
                 $pantallas['admin.usuarios.create'] = route('admin.usuarios.create');
                 $pantallas['admin.usuarios.edit'] = route('admin.usuarios.edit', $usuario);

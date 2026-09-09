@@ -50,11 +50,11 @@ class UsuarioController extends Controller
         ]);
     }
 
-    public function create(): View
+    public function create(Request $request): View
     {
         $this->autorizar();
 
-        return view('admin.usuarios.create', ['roles' => RolDependencia::cases()]);
+        return view('admin.usuarios.create', ['roles' => $this->rolesAsignables($request)]);
     }
 
     public function store(GuardarUsuarioRequest $request): RedirectResponse
@@ -72,6 +72,7 @@ class UsuarioController extends Controller
         // dos administradores dando de alta el mismo documento a la vez.
         $usuario = User::firstOrCreate(['documento' => $request->string('documento')->toString()], [
             'name' => $request->string('name')->toString(),
+            'usuario' => $request->input('usuario'),
             'email' => $request->input('email'),
             'cargo' => $request->input('cargo'),
             'activo' => $request->boolean('activo', true),
@@ -101,15 +102,16 @@ class UsuarioController extends Controller
                 : "{$usuario->name} ya tenía cuenta: se le asignó el rol de {$rol->etiqueta()} en esta dependencia.");
     }
 
-    public function edit(User $usuario): View
+    public function edit(Request $request, User $usuario): View
     {
         $this->autorizar();
         $this->verificarPertenencia($usuario);
+        $this->verificarRango($request, $usuario);
 
         return view('admin.usuarios.edit', [
             'usuario' => $usuario,
             'rolActualUsuario' => $usuario->rolEn($this->contexto->id()),
-            'roles' => RolDependencia::cases(),
+            'roles' => $this->rolesAsignables($request),
         ]);
     }
 
@@ -117,10 +119,12 @@ class UsuarioController extends Controller
     {
         $this->autorizar();
         $this->verificarPertenencia($usuario);
+        $this->verificarRango($request, $usuario);
 
         $usuario->fill([
             'name' => $request->string('name'),
             'documento' => $request->string('documento'),
+            'usuario' => $request->input('usuario'),
             'email' => $request->input('email'),
             'cargo' => $request->input('cargo'),
             'activo' => $request->boolean('activo'),
@@ -153,6 +157,7 @@ class UsuarioController extends Controller
     {
         $this->autorizar();
         $this->verificarPertenencia($usuario);
+        $this->verificarRango($request, $usuario);
 
         abort_if($usuario->id === $request->user()->id, 403, 'No puedes revocar tu propio acceso.');
 
@@ -169,11 +174,42 @@ class UsuarioController extends Controller
 
     protected function autorizar(): void
     {
-        abort_unless($this->contexto->puedeAdministrar(), 403, 'Solo administración puede gestionar usuarios.');
+        abort_unless($this->contexto->puedeGestionar(), 403, 'No tienes permiso para gestionar usuarios.');
     }
 
     protected function verificarPertenencia(User $usuario): void
     {
         abort_unless($usuario->perteneceA($this->contexto->id()), 404);
+    }
+
+    /**
+     * Nadie administra a quien está por encima suyo.
+     *
+     * Sin esto, Coordinación podría abrir la ficha de un administrador y
+     * cambiarle la contraseña, o bajarle el rol: dos formas de quedarse con
+     * la dependencia sin tener nunca el permiso para ello.
+     */
+    protected function verificarRango(Request $request, User $usuario): void
+    {
+        $actor = $request->user();
+
+        // La cuenta superadmin es de plataforma, no de la dependencia: solo
+        // otro superadmin la toca.
+        abort_if(
+            $usuario->es_superadmin && ! $actor->es_superadmin,
+            403,
+            'Esa cuenta es de plataforma y no se gestiona desde aquí.',
+        );
+
+        $mio = $actor->rolEn($this->contexto->id())?->nivel() ?? 0;
+        $suyo = $usuario->rolEn($this->contexto->id())?->nivel() ?? 0;
+
+        abort_if($suyo > $mio, 403, 'No puedes gestionar a alguien con un rol por encima del tuyo.');
+    }
+
+    /** Los roles que este usuario puede repartir, nunca por encima del suyo. */
+    protected function rolesAsignables(Request $request): array
+    {
+        return $request->user()->rolEn($this->contexto->id())?->asignables() ?? [];
     }
 }

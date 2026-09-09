@@ -6,6 +6,9 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('titulo', 'Repositorio') · {{ config('app.name') }}</title>
 
+    <link rel="icon" type="image/png" href="{{ asset('img/favicon-cem.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('img/favicon-cem.png') }}">
+
     {{--
         Va antes del CSS a propósito: si esto se resolviera al final del body el
         navegador ya habría pintado, y se vería un destello blanco al cargar en
@@ -72,7 +75,9 @@
         ];
     }
 
-    if ($rolActual?->puedeAdministrar()) {
+    // Coordinación gestiona personas y estructura, así que ve estas tres.
+    // Lo que no ve —ni tiene— es nada de retirar contenido.
+    if ($rolActual?->puedeGestionar()) {
         $enlaces['admin.usuarios.index'] = [
             'texto' => 'Usuarios',
             'icono' => 'M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z',
@@ -105,13 +110,14 @@
                   md:sticky md:top-0 md:h-screen md:shrink-0 md:translate-x-0 md:transition-none">
 
         <div class="flex items-center gap-2 px-4 py-4">
+            {{--
+                El menú lateral es oscuro en los dos temas —lleva su propia
+                clase .dark—, así que aquí siempre va el logotipo blanco.
+            --}}
             <a href="{{ route('documentos.index') }}"
-               class="flex min-w-0 flex-1 items-center gap-2 rounded-md font-semibold {{ $foco }}">
-                <svg class="size-6 shrink-0 text-[var(--primary)]" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                          d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 5.25v13.5A2.25 2.25 0 0 0 4.5 21h15a2.25 2.25 0 0 0 2.25-2.25V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z"/>
-                </svg>
-                <span class="truncate">{{ config('app.name') }}</span>
+               class="flex min-w-0 flex-1 items-center rounded-md {{ $foco }}">
+                <img src="{{ asset('img/logo-cem-oscuro.png') }}" alt="{{ config('app.name') }}"
+                     class="h-8 w-auto">
             </a>
 
             {{--

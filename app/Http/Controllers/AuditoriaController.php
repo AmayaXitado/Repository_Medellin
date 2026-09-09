@@ -15,7 +15,7 @@ class AuditoriaController extends Controller
 
     public function index(Request $request): View
     {
-        abort_unless($this->contexto->puedeAdministrar(), 403, 'Solo administración consulta la auditoría.');
+        abort_unless($this->contexto->puedeGestionar(), 403, 'No tienes permiso para consultar la auditoría.');
 
         $registros = Auditoria::query()
             ->where('dependencia_id', $this->contexto->requerida()->id)

@@ -51,9 +51,9 @@ class MensajesDeValidacionTest extends TestCase
 
     public function test_los_mensajes_salen_en_espanol(): void
     {
-        $this->post(route('login'), [])->assertSessionHasErrors('documento');
+        $this->post(route('login'), [])->assertSessionHasErrors('identificador');
 
-        $mensaje = session('errors')->first('documento');
+        $mensaje = session('errors')->first('identificador');
 
         $this->assertStringContainsString('obligatorio', $mensaje);
         $this->assertStringContainsString('documento', $mensaje, 'No usó el nombre amable del campo.');

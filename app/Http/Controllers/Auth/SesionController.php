@@ -26,20 +26,23 @@ class SesionController extends Controller
     public function store(Request $request, Auditor $auditor): RedirectResponse
     {
         $request->validate([
-            'documento' => ['required', 'string', 'max:30'],
+            'identificador' => ['required', 'string', 'max:255'],
             'password' => ['required', 'string'],
-        ], attributes: ['documento' => 'documento', 'password' => 'contraseña']);
+        ], attributes: ['identificador' => 'documento o usuario', 'password' => 'contraseña']);
 
-        // Se normaliza antes de buscar: quien escriba «1.234.567» y quien
-        // escriba «1234567» tienen que entrar a la misma cuenta.
-        $credenciales = [
-            'documento' => User::normalizarDocumento($request->input('documento')),
-            'password' => $request->input('password'),
-        ];
+        // Se acepta el documento, el nombre de usuario o el correo: quien
+        // entra cada mañana no debería tener que recordar cuál de los tres
+        // eligió el administrador que lo dio de alta.
+        $usuario = User::porIdentificador($request->input('identificador'));
 
-        if (! Auth::attempt($credenciales, $request->boolean('recordarme'))) {
+        $entro = $usuario !== null && Auth::attempt(
+            ['id' => $usuario->id, 'password' => $request->input('password')],
+            $request->boolean('recordarme'),
+        );
+
+        if (! $entro) {
             throw ValidationException::withMessages([
-                'documento' => 'Las credenciales no coinciden con nuestros registros.',
+                'identificador' => 'Las credenciales no coinciden con nuestros registros.',
             ]);
         }
 
@@ -47,7 +50,7 @@ class SesionController extends Controller
             Auth::logout();
 
             throw ValidationException::withMessages([
-                'documento' => 'Tu cuenta está desactivada. Comunícate con el administrador.',
+                'identificador' => 'Tu cuenta está desactivada. Comunícate con el administrador.',
             ]);
         }
 

@@ -47,6 +47,11 @@ class ContextoDependencia
         return $this->rol()?->puedeEditar() ?? false;
     }
 
+    public function puedeGestionar(): bool
+    {
+        return $this->rol()?->puedeGestionar() ?? false;
+    }
+
     public function puedeAdministrar(): bool
     {
         return $this->rol()?->puedeAdministrar() ?? false;

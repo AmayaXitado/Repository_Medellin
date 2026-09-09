@@ -6,7 +6,7 @@
 <div class="mb-4 flex flex-wrap items-center gap-3">
     <div>
         <h1 class="text-lg font-semibold text-[var(--text)]">Usuarios de {{ $dependenciaActual->nombre }}</h1>
-        <p class="text-sm text-[var(--muted)]">Los accesos se asignan por dependencia, no a toda la Alcaldía.</p>
+        <p class="text-sm text-[var(--muted)]">Los accesos se asignan por dependencia, no a todo el Comité.</p>
     </div>
 
     <form method="GET" class="ml-auto">
@@ -36,12 +36,12 @@
                     <td class="px-4 py-3">
                         <p class="font-medium text-[var(--text)]">{{ $usuario->name }}</p>
                         <p class="text-xs text-[var(--muted)]">
-                            {{ $usuario->documento ?? 'Sin documento' }}{{ $usuario->cargo ? ' · '.$usuario->cargo : '' }}
+                            {{ $usuario->documento ?? 'Sin documento' }}{{ $usuario->usuario ? ' · '.$usuario->usuario : '' }}{{ $usuario->cargo ? ' · '.$usuario->cargo : '' }}
                         </p>
                     </td>
                     <td class="px-4 py-3">
                         <span class="rounded bg-[var(--card-soft)] px-2 py-0.5 text-xs font-medium text-[var(--text)]">
-                            {{ $rolUsuario?->etiqueta() }}
+                            {{ $rolUsuario?->etiqueta() }}{{ $usuario->es_superadmin ? ' · plataforma' : '' }}
                         </span>
                     </td>
                     <td class="px-4 py-3">

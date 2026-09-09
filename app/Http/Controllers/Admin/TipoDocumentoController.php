@@ -62,6 +62,6 @@ class TipoDocumentoController extends Controller
 
     protected function autorizar(): void
     {
-        abort_unless($this->contexto->puedeAdministrar(), 403);
+        abort_unless($this->contexto->puedeGestionar(), 403);
     }
 }
