@@ -102,9 +102,9 @@
             </div>
 
             <h1 class="text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl" style="color: var(--text);">
-                {{-- Un solo sitio manda: APP_NAME. Así el nombre no vive
-                     escrito a mano en dos pantallas que se desincronizan. --}}
-                {{ config('app.name') }}
+                {{-- El nombre sale de APP_NAME; «Medellín» va aparte porque
+                     es lo que lleva el color de acento. --}}
+                {{ config('app.name') }} <span style="color: var(--primary);">Medellín</span>
             </h1>
 
             <p class="mx-auto max-w-xl text-sm leading-relaxed sm:text-base lg:mx-0" style="color: var(--muted);">
