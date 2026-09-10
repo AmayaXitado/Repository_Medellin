@@ -127,14 +127,24 @@ Bajo `/admin`, visible solo para rol Administración:
   crear usuario, revocar acceso, subir versión) queda registrada con autor,
   fecha e IP.
 
-## 9. Fase 2 — nueva dependencia
+## 9. Confirmaciones de acciones
+
+Crear, actualizar, inactivar o reactivar algo no muestra un cartel fijo
+arriba del contenido: aparece como un **aviso flotante** (toast) en la
+esquina superior derecha, con el color del tema activo (verde para éxito,
+rojo para error). Se cierra solo a los pocos segundos, o se puede cerrar a
+mano. Los errores de validación de un formulario son la excepción: siguen
+mostrándose junto al formulario, porque hay que verlos mientras se corrige,
+no como un aviso que desaparece solo.
+
+## 10. Fase 2 — nueva dependencia
 
 El seeder deja creada Salud Mental, inactiva. Para habilitarla: marcar
 `activa = true` en la tabla `dependencias`, crear su primer administrador y
 asignarle el rol ahí. Ese administrador da acceso a su propio equipo desde
 `/admin/usuarios`. No se toca código para esto.
 
-## 10. Fuera de alcance (a propósito)
+## 11. Fuera de alcance (a propósito)
 
 Para mantener el sistema ligero, deliberadamente no incluye: edición en línea
 de documentos, chats internos, firmas digitales ni flujos de aprobación con

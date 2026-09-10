@@ -98,8 +98,8 @@ class UsuarioController extends Controller
         return redirect()
             ->route('admin.usuarios.index')
             ->with('exito', $esCuentaNueva
-                ? 'Usuario creado y habilitado en la dependencia.'
-                : "{$usuario->name} ya tenía cuenta: se le asignó el rol de {$rol->etiqueta()} en esta dependencia.");
+                ? 'Usuario creado.'
+                : "Acceso asignado a {$usuario->name}.");
     }
 
     public function edit(Request $request, User $usuario): View

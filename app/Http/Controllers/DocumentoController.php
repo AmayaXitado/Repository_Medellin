@@ -143,12 +143,12 @@ class DocumentoController extends Controller
         if (count($documentos) === 1) {
             return redirect()
                 ->route('documentos.show', $documentos[0])
-                ->with('exito', 'Documento cargado correctamente.');
+                ->with('exito', 'Documento cargado.');
         }
 
         return redirect()
             ->route('documentos.index', ['carpeta' => $documentos[0]->carpeta?->uuid])
-            ->with('exito', count($documentos).' documentos cargados correctamente.');
+            ->with('exito', count($documentos).' documentos cargados.');
     }
 
     /**
@@ -230,7 +230,7 @@ class DocumentoController extends Controller
 
         return redirect()
             ->route('documentos.show', $documento)
-            ->with('exito', 'Datos del documento actualizados.');
+            ->with('exito', 'Documento actualizado.');
     }
 
     protected function autorizarEdicion(): void

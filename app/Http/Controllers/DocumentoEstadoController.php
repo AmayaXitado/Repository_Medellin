@@ -41,7 +41,7 @@ class DocumentoEstadoController extends Controller
             ['motivo' => $datos['motivo']],
         );
 
-        return back()->with('exito', 'Documento inactivado. Sigue disponible para administración y auditoría.');
+        return back()->with('exito', 'Documento inactivado.');
     }
 
     public function reactivar(Documento $documento): RedirectResponse
