@@ -2,10 +2,10 @@
   /* Variables configurables */
   --size: 2.5em;
   --thickness: 0.5em;
-  --color-1: hsla(337, 84%, 48%, 0.75);
-  --color-2: hsla(160, 50%, 48%, 0.75);
-  --color-3: hsla(190, 61%, 65%, 0.75);
-  --color-4: hsla(41, 82%, 52%, 0.75);
+  --color-1: #1f4e79;
+  --color-2: #173b5c;
+  --color-3: #66727d;
+  --color-4: #f3f5f7;
 
   /* Valores calculados automáticamente (Equivalentes a $lat y $offset) */
   --lat: calc((var(--size) - var(--thickness)) / 2);

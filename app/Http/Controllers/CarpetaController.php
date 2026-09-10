@@ -110,7 +110,7 @@ class CarpetaController extends Controller
             ->route('documentos.index', ['carpeta' => $carpeta->carpeta_id
                 ? $carpeta->padre?->uuid
                 : null])
-            ->with('exito', 'Carpeta inactivada. Sigue visible para administración, que puede reactivarla.');
+            ->with('exito', 'Carpeta inactivada.');
     }
 
     /** Vuelve a mostrarla a lectores y editores. Nada se había borrado. */

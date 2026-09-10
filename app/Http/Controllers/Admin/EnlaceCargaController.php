@@ -102,7 +102,7 @@ class EnlaceCargaController extends Controller
         return redirect()
             ->route('admin.enlaces.index')
             ->with('enlace_url', $enlace->url())
-            ->with('exito', 'Enlace creado. Copia la URL ahora: no volverá a mostrarse completa.');
+            ->with('exito', 'Enlace creado.');
     }
 
     public function revocar(EnlaceCarga $enlace): RedirectResponse

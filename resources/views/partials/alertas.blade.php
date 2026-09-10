@@ -1,13 +1,19 @@
-@if(session('exito'))
-    <div class="liquid-alert liquid-alert-success mb-4 text-sm">
-        {{ session('exito') }}
-    </div>
-@endif
-
-@if(session('error'))
-    <div class="liquid-alert liquid-alert-error mb-4 text-sm">
-        {{ session('error') }}
-    </div>
+{{--
+    Las confirmaciones de acción (crear, guardar, inactivar…) salen como
+    toast, no como una caja fija arriba del contenido. window.mostrarToast
+    vive en resources/js/toasts.js.
+--}}
+@if(session('exito') || session('error'))
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            @if(session('exito'))
+                window.mostrarToast?.('exito', @json(session('exito')));
+            @endif
+            @if(session('error'))
+                window.mostrarToast?.('error', @json(session('error')));
+            @endif
+        });
+    </script>
 @endif
 
 @if($errors->any())
