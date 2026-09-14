@@ -47,6 +47,17 @@ class EnlaceCargaPolicy
             && $usuario->lideraCarpeta($enlace->carpeta);
     }
 
+    /**
+     * Quien puede revocar un enlace puede corregir su fecha de entrega: es
+     * el mismo círculo de confianza. Va aparte de 'revocar' porque se
+     * concede sobre enlaces ya vencidos o revocados —corregir es arreglar
+     * el historial, y el historial no caduca.
+     */
+    public function corregirEnvio(User $usuario, EnlaceCarga $enlace): bool
+    {
+        return $this->revocar($usuario, $enlace);
+    }
+
     protected function lideraAlgunaCarpeta(User $usuario, ?int $dependenciaId): bool
     {
         if ($dependenciaId === null) {

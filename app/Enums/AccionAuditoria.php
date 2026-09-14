@@ -25,6 +25,7 @@ enum AccionAuditoria: string
     case RecepcionReasignada = 'recepcion.reasignada';
     case EnlaceCreado = 'enlace.creado';
     case EnlaceRevocado = 'enlace.revocado';
+    case EnlaceFechaEnvioCorregida = 'enlace.fecha_envio_corregida';
 
     public function etiqueta(): string
     {
@@ -50,6 +51,7 @@ enum AccionAuditoria: string
             self::RecepcionReasignada => 'Reasignó un recibido a otra bandeja',
             self::EnlaceCreado => 'Creó un enlace de carga',
             self::EnlaceRevocado => 'Revocó un enlace de carga',
+            self::EnlaceFechaEnvioCorregida => 'Corrigió la fecha de envío de un enlace',
         };
     }
 }

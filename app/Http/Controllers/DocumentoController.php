@@ -48,7 +48,10 @@ class DocumentoController extends Controller
                 fn ($q) => $q->where('carpeta_id', $carpetaActual?->id),
                 fn ($q) => $q->where('nombre', 'like', '%'.$busqueda.'%'),
             )
-            ->withCount('documentos')
+            // El contador respeta lo que ese usuario puede ver: sin esto la
+            // tarjeta prometía cinco documentos y dentro solo había dos, los
+            // activos. Los inactivos los cuenta solo quien puede abrirlos.
+            ->withCount(['documentos' => fn ($q) => $q->visiblesPara($usuario)])
             ->orderBy('nombre')
             ->get();
 

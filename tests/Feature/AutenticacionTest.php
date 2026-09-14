@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\RolDependencia;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
@@ -52,6 +53,57 @@ class AutenticacionTest extends TestCase
             ->assertSessionDoesntHaveErrors('password');
 
         $this->assertGuest();
+    }
+
+    /**
+     * El mensaje no delata la cuenta, pero el reloj tampoco debe hacerlo.
+     *
+     * Auth::attempt iguala la duración de todo fallo con el «timebox» de
+     * Laravel. Se entra en él siempre, también sin usuario: cortocircuitar
+     * antes devolvía el intento inventado en un par de milisegundos y el real
+     * en doscientos, y esa diferencia basta para ir sacando qué documentos
+     * están dados de alta.
+     */
+    public function test_el_reloj_tampoco_dice_que_cuentas_existen(): void
+    {
+        $usuario = $this->usuarioCon(RolDependencia::Lectura);
+
+        // El limitador de seis intentos por minuto estorba a la medición;
+        // lo que se comprueba aquí es el controlador, no el limitador.
+        $this->withoutMiddleware(ThrottleRequests::class);
+
+        $medir = function (string $identificador): float {
+            $this->flushSession();
+
+            $inicio = microtime(true);
+            $respuesta = $this->post(route('login'), [
+                'identificador' => $identificador,
+                'password' => 'incorrecta',
+            ]);
+            $ms = (microtime(true) - $inicio) * 1000;
+
+            // Un error 500 se cronometraría como si fuera el camino bueno.
+            $respuesta->assertRedirect()->assertSessionHasErrors('identificador');
+
+            return $ms;
+        };
+
+        $medir($usuario->documento); // calentamiento: la primera paga el arranque
+
+        $existentes = $inventados = [];
+
+        for ($i = 0; $i < 3; $i++) {
+            $existentes[] = $medir($usuario->documento);
+            $inventados[] = $medir('9999999999');
+        }
+
+        // Se comparan los mínimos: la media la ensucia cualquier pausa del
+        // recolector de basura, el mínimo es el suelo real de cada camino.
+        $this->assertLessThan(
+            50,
+            abs(min($inventados) - min($existentes)),
+            'El ingreso tarda distinto según si la cuenta existe: eso permite enumerarlas.',
+        );
     }
 
     /**

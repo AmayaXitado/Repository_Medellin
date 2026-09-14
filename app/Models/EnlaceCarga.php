@@ -36,6 +36,7 @@ class EnlaceCarga extends Model
         'expira_at',
         'max_usos',
         'usos',
+        'enviado_at',
         'creado_por',
     ];
 
@@ -52,7 +53,21 @@ class EnlaceCarga extends Model
             'expira_at' => 'datetime',
             'max_usos' => 'integer',
             'usos' => 'integer',
+            'enviado_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Generar el enlace es, en la práctica, entregarlo: nadie crea uno para
+     * guardarlo en un cajón. Se marca aquí y no en el controlador para que
+     * valga también para los seeders y las factories, y se respeta el valor
+     * que venga puesto —lo usa la corrección de fecha y lo usan las pruebas.
+     */
+    protected static function booted(): void
+    {
+        static::creating(function (self $enlace) {
+            $enlace->enviado_at ??= now();
+        });
     }
 
     /*

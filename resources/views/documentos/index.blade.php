@@ -166,6 +166,23 @@
                                     </svg>
                                     Origen
                                 </a>
+
+                                {{--
+                                    Marca discreta, sin texto: solo el reloj y
+                                    su title. Llegar fuera de horario no es una
+                                    falta de nadie —el remitente es de fuera—,
+                                    así que no compite con el resto de la fila.
+                                --}}
+                                @if($documento->recepcion->fuera_de_horario)
+                                    <span title="Llegó fuera del horario hábil" class="text-[var(--warning)]">
+                                        <svg class="size-4" fill="none" stroke="currentColor" stroke-width="2"
+                                             viewBox="0 0 24 24" aria-hidden="true">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                  d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+                                        </svg>
+                                        <span class="sr-only">Llegó fuera del horario hábil</span>
+                                    </span>
+                                @endif
                             @endif
 
                             <a href="{{ route('documentos.descargar', $documento) }}"

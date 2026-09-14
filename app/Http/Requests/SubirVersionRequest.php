@@ -14,8 +14,8 @@ class SubirVersionRequest extends FormRequest
                 'required',
                 'file',
                 'max:'.config('repositorio.tamano_maximo_kb'),
-                'mimes:'.implode(',', config('repositorio.extensiones_permitidas')),
-                'mimetypes:'.implode(',', config('repositorio.mimetypes_permitidos')),
+                'mimes:'.implode(',', config('repositorio.formatos.aplicacion.extensiones')),
+                'mimetypes:'.implode(',', config('repositorio.formatos.aplicacion.mimetypes')),
             ],
             'comentario' => ['nullable', 'string', 'max:255'],
         ];
@@ -27,8 +27,8 @@ class SubirVersionRequest extends FormRequest
             'archivo.required' => 'Selecciona el archivo de la nueva versión.',
             'archivo.max' => 'El archivo supera el tamaño máximo permitido ('
                 .round(config('repositorio.tamano_maximo_kb') / 1024).' MB).',
-            'archivo.mimes' => 'Solo se permiten archivos PDF e imágenes (JPG, PNG, WEBP).',
-            'archivo.mimetypes' => 'El contenido del archivo no corresponde a un PDF ni a una imagen.',
+            'archivo.mimes' => 'Solo se permiten archivos PDF, imágenes (JPG, PNG, WEBP) y hojas de cálculo (XLSX, XLS).',
+            'archivo.mimetypes' => 'El contenido del archivo no corresponde a un PDF, ni a una imagen, ni a una hoja de cálculo.',
         ];
     }
 }

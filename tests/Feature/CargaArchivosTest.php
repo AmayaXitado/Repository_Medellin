@@ -12,8 +12,10 @@ use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 /**
- * El repositorio solo recibe PDF y fotografía, y el archivo nunca acaba en
- * un sitio que el navegador pueda pedir por su cuenta.
+ * Por dentro el repositorio recibe PDF, fotografía y hojas de cálculo, y el
+ * archivo nunca acaba en un sitio que el navegador pueda pedir por su cuenta.
+ * Lo que entra por un enlace de carga es más estrecho, y eso se prueba aparte
+ * en EnvioPublicoTest.
  */
 class CargaArchivosTest extends TestCase
 {
@@ -271,6 +273,56 @@ class CargaArchivosTest extends TestCase
         $this->assertDatabaseHas('documentos', ['nombre' => 'Foto del acta']);
         $this->assertDatabaseHas('documento_versiones', ['mime' => 'application/pdf']);
         $this->assertDatabaseHas('documento_versiones', ['mime' => 'image/jpeg']);
+    }
+
+    /**
+     * Quien ya entró al repositorio también sube hojas de cálculo: los
+     * inventarios y las programaciones del comité viven en Excel, no en PDF.
+     */
+    /** Si el selector no las ofrece, nadie llega a intentarlo. */
+    public function test_el_formulario_de_carga_ofrece_las_hojas_de_calculo(): void
+    {
+        $this->actingAs($this->editor)
+            ->get(route('documentos.create'))
+            ->assertOk()
+            ->assertSee('accept=".pdf,.jpg,.jpeg,.png,.webp,.xlsx,.xls"', false);
+    }
+
+    public function test_se_aceptan_los_dos_formatos_de_excel(): void
+    {
+        $this->subir($this->archivoXlsx(), 'Inventario 2026')->assertSessionHasNoErrors();
+        $this->subir($this->archivoXls(), 'Programación del comité')->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('documentos', ['nombre' => 'Inventario 2026']);
+        $this->assertDatabaseHas('documentos', ['nombre' => 'Programación del comité']);
+
+        // El mime que se guarda es el que se leyó del contenido, no el que
+        // declaró el navegador: es el que decide después si se previsualiza.
+        $this->assertDatabaseHas('documento_versiones', [
+            'mime' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
+        $this->assertDatabaseHas('documento_versiones', ['mime' => 'application/vnd.ms-excel']);
+    }
+
+    /**
+     * Aceptar hojas de cálculo no es aceptar cualquier cosa de Office: un
+     * .xlsm trae macros, y un .exe con nombre de Excel sigue siendo un .exe.
+     */
+    public function test_un_ejecutable_disfrazado_de_excel_se_rechaza(): void
+    {
+        $respuesta = $this->subir(
+            $this->archivo(
+                'inventario.xlsx',
+                "MZ\x90\x00\x03".str_repeat("\x00", 200),
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            ),
+            'Inventario falso',
+        );
+
+        $respuesta->assertSessionHasErrors('archivo.0');
+
+        $this->assertDatabaseCount('documentos', 0);
+        $this->assertEmpty(Storage::disk(config('repositorio.disco'))->allFiles());
     }
 
     public function test_se_rechazan_docx_y_exe_con_error_de_validacion_no_con_un_error_del_servidor(): void
