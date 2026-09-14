@@ -56,6 +56,16 @@
                    value="{{ old('remitente_entidad') }}" autocomplete="organization"
                    class="{{ $campo }}">
         </div>
+
+        <div>
+            <label for="nodo" class="{{ $etiqueta }}">Nodo *</label>
+            <select id="nodo" name="nodo" required class="{{ $campo }}">
+                <option value="">Selecciona…</option>
+                @foreach(range(1, 6) as $n)
+                    <option value="{{ $n }}" @selected(old('nodo') == $n)>Nodo {{ $n }}</option>
+                @endforeach
+            </select>
+        </div>
     </fieldset>
 
     <fieldset>

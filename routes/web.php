@@ -13,6 +13,7 @@ use App\Http\Controllers\DocumentoController;
 use App\Http\Controllers\DocumentoEstadoController;
 use App\Http\Controllers\DocumentoVersionController;
 use App\Http\Controllers\EnvioPublicoController;
+use App\Http\Controllers\NotificacionController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -108,6 +109,10 @@ Route::middleware(['auth', 'usuario.activo', 'dependencia'])->group(function () 
     | Perfil propio
     |----------------------------------------------------------------------
     */
+
+    Route::get('notificaciones', [NotificacionController::class, 'index'])->name('notificaciones.index');
+    Route::post('notificaciones/leidas', [NotificacionController::class, 'marcarLeidas'])->name('notificaciones.leidas');
+    Route::patch('notificaciones/{notificacion}', [NotificacionController::class, 'marcarLeida'])->name('notificaciones.leida');
 
     Route::get('perfil', [PerfilController::class, 'edit'])->name('perfil.edit');
     Route::put('perfil', [PerfilController::class, 'update'])->name('perfil.update');

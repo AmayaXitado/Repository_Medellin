@@ -8,6 +8,8 @@
  * una tarjeta por archivo con su nombre editable, y la X para quitarlo.
  */
 
+import { estamparFoto } from './foto-georreferencial';
+
 function pesoLegible(bytes) {
     const unidades = ['B', 'KB', 'MB', 'GB'];
     let cantidad = Math.max(0, bytes);
@@ -235,8 +237,14 @@ function iniciar(campo) {
         autocompletar(campo, seleccion);
     };
 
+    // Recuerda si la próxima foto viene de la cámara, para estamparla: lo
+    // elegido de galería no es evidencia de que se tomó ahí y entonces.
+    let ultimaFueCamara = false;
+
     /** Abre el campo pidiendo cámara, o el selector de archivos de siempre. */
     const abrir = (conCamara) => {
+        ultimaFueCamara = conCamara;
+
         if (conCamara) {
             // 'environment' es la cámara trasera, la de fotografiar un papel.
             entrada.setAttribute('capture', 'environment');
@@ -256,7 +264,22 @@ function iniciar(campo) {
 
     // El navegador ya reemplazó la lista del input por lo recién elegido:
     // se toma de ahí y se vuelve a componer con lo que hubiera antes.
-    entrada.addEventListener('change', () => agregar(entrada.files));
+    entrada.addEventListener('change', async () => {
+        const deCamara = ultimaFueCamara;
+        ultimaFueCamara = false;
+
+        if (!deCamara) {
+            agregar(entrada.files);
+            return;
+        }
+
+        const estampadas = await Promise.all(
+            Array.from(entrada.files).map((archivo) =>
+                archivo.type.startsWith('image/') ? estamparFoto(archivo) : archivo),
+        );
+
+        agregar(estampadas);
+    });
 
     if (zona) {
         // El resaltado al arrastrar lo trae 'liquid-dropzone.active' del CSS

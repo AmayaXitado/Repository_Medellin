@@ -8,6 +8,7 @@ use App\Enums\EstadoRecepcion;
 use App\Models\Documento;
 use App\Models\EnlaceCarga;
 use App\Models\Recepcion;
+use App\Notifications\RecepcionRecibida;
 use App\Services\AlmacenamientoDocumentos;
 use App\Services\Auditor;
 use App\Services\CalendarioHabil;
@@ -88,6 +89,7 @@ class EnvioPublicoController extends Controller
             'remitente_nombre' => ['required', 'string', 'max:255'],
             'remitente_email' => ['required', 'email', 'max:255'],
             'remitente_entidad' => ['required', 'string', 'max:255'],
+            'nodo' => ['required', 'integer', 'between:1,6'],
 
             'archivo' => ['required', 'array', 'max:'.self::MAXIMO_ARCHIVOS],
             'archivo.*' => [
@@ -173,6 +175,7 @@ class EnvioPublicoController extends Controller
                         'remitente_nombre' => $datos['remitente_nombre'],
                         'remitente_email' => $datos['remitente_email'],
                         'remitente_entidad' => $datos['remitente_entidad'],
+                        'nodo' => $datos['nodo'],
 
                         // El archivo vive bajo documentos/, con su versión.
                         // Aquí se apunta la misma ruta para no perder la
@@ -209,6 +212,12 @@ class EnvioPublicoController extends Controller
             }
 
             throw $e;
+        }
+
+        // Una notificación por envío, no por archivo: nadie quiere tres
+        // correos porque alguien mandó tres fotos a la vez.
+        if ($enlace->creador) {
+            $enlace->creador->notify(new RecepcionRecibida($enlace, count($recepciones), $datos['remitente_nombre']));
         }
 
         // Una entrada por documento: la auditoría sigue documentos, no envíos.
