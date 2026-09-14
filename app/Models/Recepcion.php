@@ -34,6 +34,7 @@ class Recepcion extends Model
         'remitente_nombre',
         'remitente_email',
         'remitente_entidad',
+        'nodo',
         'nombre_original',
         'ruta',
         'mime',
