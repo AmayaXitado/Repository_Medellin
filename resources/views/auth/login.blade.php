@@ -102,9 +102,13 @@
             </div>
 
             <h1 class="text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl" style="color: var(--text);">
-                {{-- El nombre sale de APP_NAME; «Medellín» va aparte porque
-                     es lo que lleva el color de acento. --}}
-                {{ config('app.name') }} <span style="color: var(--primary);">Medellín</span>
+                {{--
+                    El nombre entero sale de APP_NAME, sin una sola palabra
+                    escrita aquí: la primera va en el color del texto y el
+                    resto en el de acento, que es lo único que pone la vista.
+                --}}
+                @php([$primera, $resto] = array_pad(explode(' ', config('app.name'), 2), 2, null))
+                {{ $primera }}@if($resto) <span style="color: var(--primary);">{{ $resto }}</span>@endif
             </h1>
 
             <p class="mx-auto max-w-xl text-sm leading-relaxed sm:text-base lg:mx-0" style="color: var(--muted);">

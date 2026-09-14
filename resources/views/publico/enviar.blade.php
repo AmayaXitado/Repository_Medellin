@@ -66,7 +66,7 @@
             Cada uno se guarda por separado, con el nombre que le pongas.
         </p>
 
-        <x-campo-archivo requerido varios con-nombres camara :maximo="$maximoArchivos" />
+        <x-campo-archivo requerido varios con-nombres camara formatos="publico" :maximo="$maximoArchivos" />
     </fieldset>
 
     <div>

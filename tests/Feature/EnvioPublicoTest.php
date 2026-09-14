@@ -317,13 +317,25 @@ class EnvioPublicoTest extends TestCase
         // El propósito sí, porque es lo que el remitente necesita saber.
         $respuesta->assertSee('Actas del comité 2026');
 
-        // La carpeta de destino, la dependencia y el resto de la estructura, no.
+        // La carpeta de destino, la estructura y las rutas de dentro, no.
         $respuesta->assertDontSee('Actas de comité');
-        $respuesta->assertDontSee('Inclusión Social');
         $respuesta->assertDontSee('inclusion-social');
         $respuesta->assertDontSee(route('login'), false);
         $respuesta->assertDontSee(route('documentos.index'), false);
         $respuesta->assertDontSee(EnlaceCarga::hashDe($token), false);
+
+        // Y la dependencia tampoco. Hay que quitar antes el nombre del
+        // sistema, porque el oficial —«Documenta Inclusión Social»— lleva
+        // dentro el de la dependencia: sin descontarlo, la marca del pie
+        // haría fallar la prueba sin que se filtre nada. Lo que se exige es
+        // que fuera de la marca no quede ni rastro del inquilino.
+        $sinLaMarca = str_replace(config('app.name'), '', $respuesta->getContent());
+
+        $this->assertStringNotContainsString(
+            $this->dependencia->nombre,
+            $sinLaMarca,
+            'La pantalla pública revela a qué dependencia pertenece el enlace.',
+        );
     }
 
     public function test_el_formulario_deja_tomar_la_foto_o_elegir_un_archivo(): void
@@ -344,6 +356,10 @@ class EnvioPublicoTest extends TestCase
         // Y cada tarjeta trae su caja de nombre.
         $respuesta->assertSee('name="nombres[]"', false);
         $respuesta->assertSee('data-quitar', false);
+
+        // El selector de archivos ni siquiera ofrece hojas de cálculo: el
+        // campo es el mismo de dentro, pero aquí se le pasa la lista corta.
+        $respuesta->assertSee('accept=".pdf,.jpg,.jpeg,.png,.webp"', false);
     }
 
     /*
@@ -358,6 +374,24 @@ class EnvioPublicoTest extends TestCase
 
         $this->post(route('envio.recibir', ['token' => $token]), $this->envio([
             'archivo' => [$this->archivo('informe.pdf', "MZ\x90\x00\x03".str_repeat("\x00", 200), 'application/pdf')],
+        ]))->assertSessionHasErrors('archivo.0');
+
+        $this->assertDatabaseCount('documentos', 0);
+        $this->assertEmpty(Storage::disk(config('repositorio.disco'))->allFiles());
+    }
+
+    /**
+     * La aplicación acepta hojas de cálculo; esta puerta no. Son dos listas
+     * distintas en config/repositorio.php justamente para que ampliar la de
+     * dentro no abra también la que da a internet. Si esta prueba se pone
+     * roja, alguien unió las dos listas otra vez.
+     */
+    public function test_un_excel_valido_se_rechaza_aunque_la_aplicacion_lo_acepte(): void
+    {
+        [, $token] = $this->enlace();
+
+        $this->post(route('envio.recibir', ['token' => $token]), $this->envio([
+            'archivo' => [$this->archivoXlsx('inventario.xlsx')],
         ]))->assertSessionHasErrors('archivo.0');
 
         $this->assertDatabaseCount('documentos', 0);

@@ -113,9 +113,26 @@ class User extends Authenticatable
         return $this->belongsToMany(Carpeta::class, 'carpeta_lider')->withTimestamps();
     }
 
+    /**
+     * Ids de las carpetas que lidera, resueltos una sola vez por petición.
+     *
+     * @var list<int>|null
+     */
+    protected ?array $idsDeCarpetasLideradas = null;
+
+    /**
+     * Se responde con la lista ya en memoria y no con un exists() por llamada:
+     * el listado de enlaces pregunta esto una vez por fila, y con veinticinco
+     * enlaces eran veinticinco consultas para lo que cabe en una.
+     */
     public function lideraCarpeta(Carpeta $carpeta): bool
     {
-        return $this->carpetasLideradas()->whereKey($carpeta->id)->exists();
+        $this->idsDeCarpetasLideradas ??= $this->carpetasLideradas()
+            ->pluck('carpetas.id')
+            ->map(intval(...))
+            ->all();
+
+        return in_array((int) $carpeta->id, $this->idsDeCarpetasLideradas, true);
     }
 
     /** Rol del usuario dentro de una dependencia, o null si no pertenece a ella. */

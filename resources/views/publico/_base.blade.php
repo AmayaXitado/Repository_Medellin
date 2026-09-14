@@ -9,7 +9,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
-    <title>@yield('titulo', 'Envío de documentos')</title>
+    <title>@yield('titulo', 'Envío de documentos') · {{ config('app.name') }}</title>
 
     <link rel="icon" type="image/png" href="{{ asset('img/favicon-cem.png') }}">
     <link rel="apple-touch-icon" href="{{ asset('img/favicon-cem.png') }}">
@@ -45,7 +45,7 @@
             </div>
 
             <p class="mt-6 text-center text-xs text-[var(--muted)]">
-                Comité de Estudios Médicos · Repositorio documental
+                Comité de Estudios Médicos · {{ config('app.name') }}
             </p>
         </main>
     </div>

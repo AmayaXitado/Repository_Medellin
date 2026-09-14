@@ -10,6 +10,7 @@ use App\Models\EnlaceCarga;
 use App\Models\Recepcion;
 use App\Services\AlmacenamientoDocumentos;
 use App\Services\Auditor;
+use App\Services\CalendarioHabil;
 use App\Services\ContextoDependencia;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -37,6 +38,7 @@ class EnvioPublicoController extends Controller
         protected AlmacenamientoDocumentos $almacenamiento,
         protected Auditor $auditor,
         protected ContextoDependencia $contexto,
+        protected CalendarioHabil $calendario,
     ) {
     }
 
@@ -91,11 +93,12 @@ class EnvioPublicoController extends Controller
             'archivo.*' => [
                 'bail',
                 'file',
-                // Las mismas reglas que por dentro, leídas de la misma
-                // configuración: la lista de formatos vive en un solo sitio.
+                // Esta puerta da a internet, y por eso no acepta lo mismo que
+                // la de dentro: aquí solo entran PDF y fotografía. Las hojas
+                // de cálculo son cosa de quien ya tiene cuenta.
                 'max:'.config('repositorio.tamano_maximo_kb'),
-                'mimes:'.implode(',', config('repositorio.extensiones_permitidas')),
-                'mimetypes:'.implode(',', config('repositorio.mimetypes_permitidos')),
+                'mimes:'.implode(',', config('repositorio.formatos.publico.extensiones')),
+                'mimetypes:'.implode(',', config('repositorio.formatos.publico.mimetypes')),
             ],
 
             // Lista paralela a archivo[]: casan por posición.
@@ -121,12 +124,18 @@ class EnvioPublicoController extends Controller
 
         $archivos = array_values($peticion->file('archivo'));
 
+        // El juicio se hace una sola vez y se congela en cada fila. Una vez
+        // porque los archivos de un mismo envío llegaron juntos y no pueden
+        // discrepar; congelado porque el horario hábil es configurable y
+        // esto tiene que seguir diciendo lo que era cierto hoy.
+        $fueraDeHorario = ! $this->calendario->esHabil(now());
+
         // Si la transacción se cae después de escribir algún archivo, las
         // filas se deshacen solas pero los archivos no: hay que borrarlos.
         $rutasGuardadas = [];
 
         try {
-            $recepciones = DB::transaction(function () use ($peticion, $enlace, $archivos, $datos, &$rutasGuardadas) {
+            $recepciones = DB::transaction(function () use ($peticion, $enlace, $archivos, $datos, $fueraDeHorario, &$rutasGuardadas) {
                 $creadas = [];
 
                 foreach ($archivos as $indice => $archivo) {
@@ -184,6 +193,7 @@ class EnvioPublicoController extends Controller
 
                         'ip_remitente' => $peticion->ip(),
                         'agente' => substr((string) $peticion->userAgent(), 0, 255),
+                        'fuera_de_horario' => $fueraDeHorario,
                     ]);
                 }
 

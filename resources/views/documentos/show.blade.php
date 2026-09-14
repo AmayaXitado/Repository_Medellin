@@ -206,7 +206,39 @@
                     </div>
                     <div class="flex justify-between gap-3">
                         <dt class="text-[var(--muted)]">Recibido el</dt>
-                        <dd class="text-right text-[var(--text)]">{{ $recepcion->created_at->format('d/m/Y H:i') }}</dd>
+                        <dd class="text-right text-[var(--text)]">
+                            {{ $recepcion->created_at->format('d/m/Y H:i') }}
+
+                            {{--
+                                El juicio de horario es el que se hizo ese día,
+                                no el que daría la configuración de hoy: por eso
+                                se lee de la fila y no se recalcula aquí.
+                            --}}
+                            @if($recepcion->fuera_de_horario)
+                                <span class="mt-0.5 block text-xs text-[var(--warning)]">Fuera del horario hábil</span>
+                            @endif
+                        </dd>
+                    </div>
+
+                    {{--
+                        Cuánto tardó en responder desde que se le entregó el
+                        enlace. Puede no haberlo: el enlace se borró, o es
+                        anterior a que se registrara la fecha de entrega.
+                    --}}
+                    @php($minutos = $recepcion->minutosDesdeEnvio())
+                    <div class="flex justify-between gap-3">
+                        <dt class="text-[var(--muted)]">Tardó en responder</dt>
+                        <dd class="text-right text-[var(--text)]">
+                            @if($minutos === null)
+                                —
+                            @elseif($minutos < 60)
+                                {{ $minutos }} min
+                            @elseif($minutos < 60 * 24)
+                                {{ intdiv($minutos, 60) }} h {{ $minutos % 60 }} min
+                            @else
+                                {{ intdiv($minutos, 60 * 24) }} d {{ intdiv($minutos % (60 * 24), 60) }} h
+                            @endif
+                        </dd>
                     </div>
                     <div class="flex justify-between gap-3">
                         <dt class="text-[var(--muted)]">IP de origen</dt>

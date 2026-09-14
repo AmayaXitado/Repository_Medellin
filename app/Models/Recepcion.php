@@ -47,6 +47,7 @@ class Recepcion extends Model
         'documento_id',
         'ip_remitente',
         'agente',
+        'fuera_de_horario',
     ];
 
     protected function casts(): array
@@ -56,6 +57,7 @@ class Recepcion extends Model
             'estado_escaneo' => EstadoEscaneo::class,
             'tamano' => 'integer',
             'escaneado_at' => 'datetime',
+            'fuera_de_horario' => 'boolean',
         ];
     }
 
@@ -69,6 +71,29 @@ class Recepcion extends Model
     public function getRouteKeyName(): string
     {
         return 'uuid';
+    }
+
+    /**
+     * Cuánto tardó el remitente en responder, en minutos, desde que se le
+     * entregó el enlace hasta que llegó el archivo.
+     *
+     * No es columna a propósito: es una resta de dos fechas que ya están
+     * guardadas, y tenerla duplicada solo abre la puerta a que un día no
+     * coincidan. Devuelve null cuando no hay con qué restar: el enlace se
+     * borró —la recepción le sobrevive por 'nullOnDelete'— o es anterior a
+     * que se registrara la fecha de envío.
+     */
+    public function minutosDesdeEnvio(): ?int
+    {
+        $enviado = $this->enlace?->enviado_at;
+
+        if ($enviado === null || $this->created_at === null) {
+            return null;
+        }
+
+        // Sin signo: un enlace con la fecha corregida hacia adelante no
+        // debe producir tiempos de respuesta negativos.
+        return (int) abs($enviado->diffInMinutes($this->created_at));
     }
 
     /*

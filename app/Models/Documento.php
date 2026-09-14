@@ -135,6 +135,35 @@ class Documento extends Model
         return $query->where('activo', true);
     }
 
+    /**
+     * El carácter con el que se neutralizan los comodines dentro del término.
+     *
+     * No es la barra invertida a propósito. MySQL la toma por defecto, pero
+     * SQLite no toma ninguna, así que un «50%» buscaba literalmente «50\%» y
+     * no encontraba nada. Nombrar el escape explícitamente hace que los dos
+     * motores —y Postgres— entiendan lo mismo, y «!» no necesita a su vez ser
+     * escapado en el literal SQL, que es donde la barra invertida se enreda.
+     */
+    protected const ESCAPE_LIKE = '!';
+
+    /** Convierte lo tecleado en un patrón LIKE donde %, _ y ! son texto llano. */
+    protected static function patronLike(string $termino): string
+    {
+        $escape = self::ESCAPE_LIKE;
+
+        return '%'.str_replace(
+            [$escape, '%', '_'],
+            [$escape.$escape, $escape.'%', $escape.'_'],
+            $termino,
+        ).'%';
+    }
+
+    /** El fragmento SQL de una comparación LIKE con su escape declarado. */
+    protected static function comparacionLike(string $columna): string
+    {
+        return $columna." like ? escape '".self::ESCAPE_LIKE."'";
+    }
+
     /** Buscador por nombre, descripción, nombre de archivo y etiquetas. */
     public function scopeBuscar(Builder $query, ?string $termino): Builder
     {
@@ -142,13 +171,13 @@ class Documento extends Model
             return $query;
         }
 
-        $like = '%'.str_replace(['%', '_'], ['\%', '\_'], $termino).'%';
+        $like = static::patronLike($termino);
 
         return $query->where(function (Builder $q) use ($like) {
-            $q->where('nombre', 'like', $like)
-                ->orWhere('descripcion', 'like', $like)
-                ->orWhereHas('versiones', fn (Builder $v) => $v->where('nombre_original', 'like', $like))
-                ->orWhereHas('etiquetas', fn (Builder $e) => $e->where('nombre', 'like', $like));
+            $q->whereRaw(static::comparacionLike('documentos.nombre'), [$like])
+                ->orWhereRaw(static::comparacionLike('documentos.descripcion'), [$like])
+                ->orWhereHas('versiones', fn (Builder $v) => $v->whereRaw(static::comparacionLike('documento_versiones.nombre_original'), [$like]))
+                ->orWhereHas('etiquetas', fn (Builder $e) => $e->whereRaw(static::comparacionLike('etiquetas.nombre'), [$like]));
         });
     }
 

@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Testing\TestResponse;
+use Tests\Fixtures\HojasDeCalculo;
 
 abstract class TestCase extends BaseTestCase
 {
@@ -92,6 +93,25 @@ abstract class TestCase extends BaseTestCase
     protected function archivoJpg(string $nombre = 'foto.jpg'): UploadedFile
     {
         return $this->archivo($nombre, base64_decode(self::JPEG_1X1), 'image/jpeg');
+    }
+
+    /**
+     * Los dos Excel que acepta la aplicación por dentro (nunca la puerta
+     * pública). Van armados de verdad, byte a byte, porque la validación
+     * mira el contenido: ver Tests\Fixtures\HojasDeCalculo.
+     */
+    protected function archivoXlsx(string $nombre = 'inventario.xlsx'): UploadedFile
+    {
+        return $this->archivo(
+            $nombre,
+            HojasDeCalculo::xlsx(),
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        );
+    }
+
+    protected function archivoXls(string $nombre = 'inventario.xls'): UploadedFile
+    {
+        return $this->archivo($nombre, HojasDeCalculo::xls(), 'application/vnd.ms-excel');
     }
 
     /*

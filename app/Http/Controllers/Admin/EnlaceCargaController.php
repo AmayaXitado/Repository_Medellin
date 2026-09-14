@@ -105,6 +105,46 @@ class EnlaceCargaController extends Controller
             ->with('exito', 'Enlace creado.');
     }
 
+    /**
+     * La fecha de envío se pone sola al crear el enlace, porque generarlo
+     * suele ser entregarlo. Cuando no —se generó un viernes y se entregó el
+     * lunes—, el tiempo de respuesta del remitente saldría inflado en tres
+     * días. Esto es el arreglo, y queda auditado porque de ese dato salen
+     * informes.
+     */
+    public function corregirFechaEnvio(Request $peticion, EnlaceCarga $enlace): RedirectResponse
+    {
+        $this->authorize('corregirEnvio', $enlace);
+
+        $datos = $peticion->validate([
+            'enviado_at' => [
+                'required',
+                'date',
+                // No se pudo entregar antes de existir ni se entrega mañana.
+                'after_or_equal:'.$enlace->created_at->toDateTimeString(),
+                'before_or_equal:now',
+            ],
+        ], [
+            'enviado_at.required' => 'Escribe la fecha en que se entregó el enlace.',
+            'enviado_at.date' => 'La fecha de envío no es una fecha válida.',
+            'enviado_at.after_or_equal' => 'El enlace no pudo entregarse antes de haberse creado.',
+            'enviado_at.before_or_equal' => 'La fecha de envío no puede estar en el futuro.',
+        ]);
+
+        $antes = $enlace->enviado_at?->format('d/m/Y H:i') ?? 'sin fecha';
+
+        $enlace->update(['enviado_at' => $datos['enviado_at']]);
+
+        $this->auditor->registrar(
+            AccionAuditoria::EnlaceFechaEnvioCorregida,
+            $enlace,
+            "Corrigió la fecha de envío del enlace hacia «{$enlace->carpeta?->nombre}»",
+            ['antes' => $antes, 'despues' => $enlace->enviado_at->format('d/m/Y H:i')],
+        );
+
+        return back()->with('exito', 'Fecha de envío corregida.');
+    }
+
     public function revocar(EnlaceCarga $enlace): RedirectResponse
     {
         $this->authorize('revocar', $enlace);

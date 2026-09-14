@@ -138,6 +138,8 @@ Route::middleware(['auth', 'usuario.activo', 'dependencia'])->group(function () 
         Route::get('enlaces/nuevo', [EnlaceCargaController::class, 'create'])->name('enlaces.create');
         Route::post('enlaces', [EnlaceCargaController::class, 'store'])->name('enlaces.store');
         Route::patch('enlaces/{enlace}/revocar', [EnlaceCargaController::class, 'revocar'])->name('enlaces.revocar');
+        Route::patch('enlaces/{enlace}/fecha-envio', [EnlaceCargaController::class, 'corregirFechaEnvio'])
+            ->name('enlaces.fecha-envio');
     });
 
     Route::get('auditoria', [AuditoriaController::class, 'index'])->name('auditoria.index');

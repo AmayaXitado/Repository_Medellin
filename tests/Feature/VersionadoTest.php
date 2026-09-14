@@ -68,6 +68,33 @@ class VersionadoTest extends TestCase
             ->assertRedirect();
     }
 
+    /**
+     * El formulario de nueva versión valida por su cuenta, con otra clase
+     * de petición. Si solo se hubiera ampliado la de la carga inicial, un
+     * documento podría nacer en Excel y luego no poder actualizarse.
+     */
+    public function test_una_version_nueva_tambien_puede_ser_una_hoja_de_calculo(): void
+    {
+        $documento = $this->subirDocumento();
+
+        $this->actingAs($this->editor)
+            ->post(route('documentos.versiones.store', $documento), [
+                'archivo' => $this->archivoXlsx('manual-anexos.xlsx'),
+                'comentario' => 'Los anexos pasan a hoja de cálculo',
+            ])
+            ->assertSessionHasNoErrors()
+            ->assertRedirect();
+
+        $v2 = $documento->versiones()->where('numero', 2)->firstOrFail();
+
+        $this->assertSame(
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            $v2->mime,
+        );
+
+        $this->disco()->assertExists($v2->ruta);
+    }
+
     public function test_subir_un_documento_crea_una_sola_version_con_el_numero_uno(): void
     {
         $documento = $this->subirDocumento();

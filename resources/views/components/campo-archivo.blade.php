@@ -7,10 +7,16 @@
     'conNombres' => false,
     'camara' => false,
     'maximo' => null,
+
+    // De qué conjunto de config/repositorio.php salen los formatos: el de
+    // dentro ('aplicacion', que incluye hojas de cálculo) o el de la puerta
+    // pública ('publico', solo PDF y fotos). El mismo campo sirve a los dos
+    // formularios, así que la lista tiene que venirle dada.
+    'formatos' => 'aplicacion',
 ])
 
 @php
-    $extensiones = collect(config('repositorio.extensiones_permitidas'));
+    $extensiones = collect(config('repositorio.formatos.'.$formatos.'.extensiones'));
     $acepta = $extensiones->map(fn ($e) => '.'.$e)->join(',');
     $maximoMb = round(config('repositorio.tamano_maximo_kb') / 1024);
 
@@ -82,7 +88,7 @@
 
             @unless($compacto)
                 <p class="mt-1 text-xs text-[var(--muted)]">
-                    Solo PDF e imágenes · {{ $extensiones->map(fn ($e) => strtoupper($e))->join(', ') }} ·
+                    Se aceptan {{ $extensiones->map(fn ($e) => strtoupper($e))->join(', ') }} ·
                     máximo {{ $maximoMb }} MB cada uno
                     @if($maximo) · hasta {{ $maximo }} archivos @endif
                 </p>

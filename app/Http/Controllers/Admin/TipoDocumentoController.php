@@ -23,7 +23,10 @@ class TipoDocumentoController extends Controller
 
         return view('admin.tipos.index', [
             'tipos' => TipoDocumento::disponiblesPara($this->contexto->id())
-                ->withCount('documentos')
+                // Igual que en el explorador: el contador no promete documentos
+                // que quien mira no puede abrir. Coordinación gestiona tipos
+                // pero no ve los inactivos.
+                ->withCount(['documentos' => fn ($q) => $q->visiblesPara(request()->user())])
                 ->orderBy('nombre')
                 ->get(),
         ]);

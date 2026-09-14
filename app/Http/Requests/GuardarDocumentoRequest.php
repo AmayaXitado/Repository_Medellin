@@ -58,8 +58,8 @@ class GuardarDocumentoRequest extends FormRequest
                 'bail',
                 'file',
                 'max:'.config('repositorio.tamano_maximo_kb'),
-                'mimes:'.implode(',', config('repositorio.extensiones_permitidas')),
-                'mimetypes:'.implode(',', config('repositorio.mimetypes_permitidos')),
+                'mimes:'.implode(',', config('repositorio.formatos.aplicacion.extensiones')),
+                'mimetypes:'.implode(',', config('repositorio.formatos.aplicacion.mimetypes')),
             ],
 
             'comentario_version' => ['nullable', 'string', 'max:255'],
@@ -108,8 +108,8 @@ class GuardarDocumentoRequest extends FormRequest
             // Con varios, el mensaje dice cuál falló: «archivo 3» a secas no
             // le sirve a nadie para saber qué quitar.
             'archivo.*.max' => 'El archivo :position supera el tamaño máximo permitido ('.$maximoMb.' MB).',
-            'archivo.*.mimes' => 'El archivo :position no es un PDF ni una imagen (JPG, PNG, WEBP).',
-            'archivo.*.mimetypes' => 'El contenido del archivo :position no corresponde a un PDF ni a una imagen.',
+            'archivo.*.mimes' => 'El archivo :position no es un PDF, ni una imagen (JPG, PNG, WEBP), ni una hoja de cálculo (XLSX, XLS).',
+            'archivo.*.mimetypes' => 'El contenido del archivo :position no corresponde a un PDF, ni a una imagen, ni a una hoja de cálculo.',
         ];
     }
 }

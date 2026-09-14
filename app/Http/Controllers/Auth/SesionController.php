@@ -35,8 +35,15 @@ class SesionController extends Controller
         // eligió el administrador que lo dio de alta.
         $usuario = User::porIdentificador($request->input('identificador'));
 
-        $entro = $usuario !== null && Auth::attempt(
-            ['id' => $usuario->id, 'password' => $request->input('password')],
+        // Se entra en Auth::attempt siempre, también cuando el identificador no
+        // existe: es él quien envuelve el intento en el «timebox» de Laravel,
+        // que iguala la duración de todos los fallos. Un `$usuario !== null &&`
+        // delante cortocircuitaría y se saltaría esa igualación —el intento con
+        // un documento inexistente volvía en 2 ms y el de uno real en 200—, con
+        // lo que el propio reloj diría qué cuentas están dadas de alta.
+        // El id 0 no lo tiene nadie: la secuencia empieza en 1.
+        $entro = Auth::attempt(
+            ['id' => $usuario?->id ?? 0, 'password' => $request->input('password')],
             $request->boolean('recordarme'),
         );
 

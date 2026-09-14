@@ -40,6 +40,7 @@
                 <th class="px-4 py-3 font-medium">Carpeta de destino</th>
                 <th class="px-4 py-3 font-medium">Creado por</th>
                 <th class="px-4 py-3 font-medium">Usos</th>
+                <th class="px-4 py-3 font-medium">Enviado</th>
                 <th class="px-4 py-3 font-medium">Vence</th>
                 <th class="px-4 py-3 font-medium">Estado</th>
                 <th class="px-4 py-3"></th>
@@ -57,6 +58,42 @@
                     <td class="px-4 py-3 text-[var(--text)]">{{ $enlace->creador?->name ?? '—' }}</td>
                     <td class="px-4 py-3 text-[var(--text)]">
                         {{ $enlace->usos }}{{ $enlace->max_usos ? ' / '.$enlace->max_usos : '' }}
+                    </td>
+                    <td class="px-4 py-3 text-[var(--text)]">
+                        {{ $enlace->enviado_at?->format('d/m/Y H:i') ?? '—' }}
+
+                        @can('corregirEnvio', $enlace)
+                            {{--
+                                Un <details> y no un modal montado a mano: se
+                                abre solo, sin JavaScript, igual que el menú de
+                                la cuenta. Corregir esto es raro, así que no
+                                merece ocupar sitio hasta que hace falta.
+                            --}}
+                            <details class="mt-1">
+                                <summary class="cursor-pointer text-xs text-[var(--muted)] hover:text-[var(--text)]">
+                                    Corregir fecha de envío
+                                </summary>
+
+                                <form method="POST" action="{{ route('admin.enlaces.fecha-envio', $enlace) }}"
+                                      class="mt-2 flex flex-wrap items-center gap-2">
+                                    @csrf @method('PATCH')
+
+                                    <input type="datetime-local" name="enviado_at" required
+                                           value="{{ $enlace->enviado_at?->format('Y-m-d\TH:i') }}"
+                                           min="{{ $enlace->created_at->format('Y-m-d\TH:i') }}"
+                                           max="{{ now()->format('Y-m-d\TH:i') }}"
+                                           class="liquid-input py-1 text-xs">
+
+                                    <button class="liquid-button-primary rounded-md px-2.5 py-1 text-xs font-medium">
+                                        Guardar
+                                    </button>
+                                </form>
+
+                                <p class="mt-1 text-xs text-[var(--muted)]">
+                                    Úsalo solo si el enlace se generó un día y se entregó otro.
+                                </p>
+                            </details>
+                        @endcan
                     </td>
                     <td class="px-4 py-3 text-[var(--text)]">
                         {{ $enlace->expira_at?->format('d/m/Y H:i') ?? 'Sin vencimiento' }}
@@ -85,7 +122,7 @@
                     </td>
                 </tr>
             @empty
-                <tr><td colspan="6" class="px-4 py-10 text-center text-[var(--muted)]">Aún no hay enlaces de carga.</td></tr>
+                <tr><td colspan="7" class="px-4 py-10 text-center text-[var(--muted)]">Aún no hay enlaces de carga.</td></tr>
             @endforelse
         </tbody>
     </table>
