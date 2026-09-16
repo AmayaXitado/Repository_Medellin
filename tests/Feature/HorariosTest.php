@@ -68,6 +68,7 @@ class HorariosTest extends TestCase
             'remitente_nombre' => 'Ana Ramírez',
             'remitente_email' => 'ana@entidad-externa.co',
             'remitente_entidad' => 'Contratista Uno',
+            'nodo' => 3,
             'archivo' => [$this->archivoPdf('acta.pdf', 'CONTENIDO')],
         ])->assertRedirect(route('envio.confirmacion'));
     }
