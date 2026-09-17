@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\EnlaceCargaController;
 use App\Http\Controllers\Admin\TipoDocumentoController;
 use App\Http\Controllers\Admin\UsuarioController;
 use App\Http\Controllers\AuditoriaController;
+use App\Http\Controllers\Auth\AuthentikController;
 use App\Http\Controllers\Auth\PerfilController;
 use App\Http\Controllers\Auth\SesionController;
 use App\Http\Controllers\CarpetaController;
@@ -52,6 +53,9 @@ Route::middleware('guest')->group(function () {
     Route::get('/', fn () => redirect()->route('login'));
     Route::get('ingresar', [SesionController::class, 'create'])->name('login');
     Route::post('ingresar', [SesionController::class, 'store'])->middleware('throttle:6,1');
+
+    Route::get('auth/authentik/redirect', [AuthentikController::class, 'redirect'])->name('authentik.redirect');
+    Route::get('auth/authentik/callback', [AuthentikController::class, 'callback'])->name('authentik.callback');
 });
 
 Route::middleware(['auth', 'usuario.activo', 'dependencia'])->group(function () {

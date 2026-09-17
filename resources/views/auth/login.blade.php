@@ -219,6 +219,22 @@
                     </button>
                 </form>
 
+                <div class="flex items-center gap-3" style="margin-top: clamp(0.5rem, 2vh, 1rem);">
+                    <span class="h-px flex-1" style="background-color: var(--border);"></span>
+                    <span class="text-[11px] font-semibold" style="color: var(--muted);">o</span>
+                    <span class="h-px flex-1" style="background-color: var(--border);"></span>
+                </div>
+
+                <a href="{{ route('authentik.redirect') }}"
+                   class="flex w-full items-center justify-center gap-2 rounded-xl border text-sm font-bold transition-colors"
+                   style="border-color: var(--border); color: var(--text); margin-top: clamp(0.5rem, 2vh, 1rem); padding-top: clamp(0.5rem, 1.6vh, 0.75rem); padding-bottom: clamp(0.5rem, 1.6vh, 0.75rem);">
+                    <svg class="size-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M12 3 4.5 6v5.25c0 4.28 3.2 8.28 7.5 9.75 4.3-1.47 7.5-5.47 7.5-9.75V6L12 3Z"/>
+                    </svg>
+                    Entrar con Authentik
+                </a>
+
                 <div class="border-t text-center" style="border-color: var(--border); margin-top: clamp(0.5rem, 2vh, 1.5rem); padding-top: clamp(0.4rem, 1.5vh, 1rem);">
                     <p class="text-[11px] leading-relaxed" style="color: var(--muted);">
                         El acceso lo habilita un administrador de la dependencia. Cada inicio de sesión queda

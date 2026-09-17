@@ -5,9 +5,12 @@ namespace App\Providers;
 use App\Services\ContextoDependencia;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
+use SocialiteProviders\Authentik\Provider as AuthentikProvider;
+use SocialiteProviders\Manager\SocialiteWasCalled;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -23,6 +26,12 @@ class AppServiceProvider extends ServiceProvider
         Vite::prefetch(concurrency: 3);
 
         $this->limitarRecepcionExterna();
+
+        // SocialiteProviders no se autodescubre: el driver 'authentik' solo
+        // existe si se engancha aquí.
+        Event::listen(function (SocialiteWasCalled $evento) {
+            $evento->extendSocialite('authentik', AuthentikProvider::class);
+        });
     }
 
     /**
