@@ -50,6 +50,19 @@
                         @else
                             <span class="text-[var(--danger)]">Desactivado</span>
                         @endif
+
+                        {{--
+                            Sin identidad en Authentik no hay ingreso, por más
+                            que la cuenta esté activa aquí. Es la única señal
+                            permanente de que a esa persona le falta algo: el
+                            aviso al guardar es un toast y se va solo.
+                        --}}
+                        @if($usuario->activo && blank($usuario->authentik_id))
+                            <span class="mt-0.5 block text-xs text-[var(--danger)]"
+                                  title="Documenta no pudo crear esta cuenta en Authentik. Edita la ficha y ponle una contraseña para reintentarlo.">
+                                Sin acceso · falta en Authentik
+                            </span>
+                        @endif
                     </td>
                     <td class="px-4 py-3 text-[var(--muted)]">
                         {{ $usuario->ultimo_acceso_at?->format('d/m/Y H:i') ?? 'Nunca' }}

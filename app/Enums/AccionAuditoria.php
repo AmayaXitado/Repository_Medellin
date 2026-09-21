@@ -19,6 +19,8 @@ enum AccionAuditoria: string
     case UsuarioCreado = 'usuario.creado';
     case UsuarioActualizado = 'usuario.actualizado';
     case UsuarioDesactivado = 'usuario.desactivado';
+    case AuthentikAprovisionado = 'authentik.aprovisionado';
+    case AuthentikFallo = 'authentik.fallo';
     case RecepcionRecibida = 'recepcion.recibida';
     case RecepcionArchivada = 'recepcion.archivada';
     case RecepcionDescartada = 'recepcion.descartada';
@@ -45,6 +47,8 @@ enum AccionAuditoria: string
             self::UsuarioCreado => 'Creó un usuario',
             self::UsuarioActualizado => 'Actualizó un usuario',
             self::UsuarioDesactivado => 'Desactivó un usuario',
+            self::AuthentikAprovisionado => 'Creó la identidad en Authentik',
+            self::AuthentikFallo => 'Falló una operación con Authentik',
             self::RecepcionRecibida => 'Recibió un archivo por un enlace de carga',
             self::RecepcionArchivada => 'Archivó un recibido en el repositorio',
             self::RecepcionDescartada => 'Descartó un recibido',

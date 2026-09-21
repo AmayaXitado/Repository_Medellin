@@ -66,9 +66,19 @@ class GuardarUsuarioRequest extends FormRequest
                 $this->noChocarConOtraColumna('documento', $usuario?->id),
             ],
 
-            // El correo ya no es la llave: es un dato de contacto y puede
-            // faltar. Hay funcionarios que sencillamente no tienen uno.
-            'email' => ['nullable', 'email', 'max:255'],
+            // El correo no interviene en el ingreso: lo que empareja esta
+            // cuenta con su identidad en Authentik es el documento. Queda
+            // como dato de contacto, y puede faltar —hay funcionarios que
+            // sencillamente no tienen uno.
+            //
+            // Único porque la columna lleva ese índice desde la primera
+            // migración: sin esta regla, repetir un correo no sale como un
+            // error del campo sino como un error 500. Vacío no choca con
+            // vacío, así que los que no tienen correo conviven sin problema.
+            'email' => [
+                'nullable', 'email', 'max:255',
+                Rule::unique('users', 'email')->ignore($usuario?->id ?? $this->cuentaExistente()?->id),
+            ],
 
             'cargo' => ['nullable', 'string', 'max:150'],
 
@@ -78,12 +88,17 @@ class GuardarUsuarioRequest extends FormRequest
             // que impide el ascenso de verdad es esta regla.
             'rol' => ['required', Rule::in($this->rolesQuePuedeAsignar())],
             'activo' => ['boolean'],
+
+            // Sin exigencias de composición: la clave la elige libremente
+            // quien da de alta, y la escribe tal cual en los dos lados. Queda
+            // el largo mínimo, que es lo único que separa una contraseña de
+            // no tener ninguna.
             'password' => [
                 // Solo hace falta cuando de verdad se está creando la cuenta:
                 // a quien ya la tiene no se le toca la suya.
                 $esEdicion || $this->cuentaExistente() !== null ? 'nullable' : 'required',
                 'confirmed',
-                Password::min(8)->letters()->numbers(),
+                Password::min(8),
             ],
         ];
     }
@@ -92,11 +107,11 @@ class GuardarUsuarioRequest extends FormRequest
      * Impide que el valor de un campo coincida con el de la otra columna de
      * acceso en otra cuenta.
      *
-     * Documento y usuario se teclean en el mismo campo al entrar, así que si
-     * alguien pusiera como alias la cédula de un compañero, ese valor dejaría
-     * de resolver a una sola persona. No permite suplantar —la contraseña
-     * sigue siendo la del dueño de la cédula— pero deja al del alias sin
-     * poder usarlo, sin que nadie entienda por qué.
+     * Los dos identifican a la misma persona y el alias es, además, el
+     * nombre con el que nace su identidad en Authentik. Si alguien pusiera
+     * como alias la cédula de un compañero, ese valor dejaría de resolver a
+     * una sola persona: no alcanza para suplantar a nadie, pero sí para
+     * dejar a uno de los dos fuera sin que nadie entienda por qué.
      */
     protected function noChocarConOtraColumna(string $columna, ?int $ignorarId): \Closure
     {

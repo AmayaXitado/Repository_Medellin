@@ -18,7 +18,7 @@
         <input id="documento" name="documento" type="text" inputmode="numeric" required maxlength="30"
                value="{{ old('documento', $u?->documento) }}" class="{{ $campo }}">
         <p class="{{ $ayuda }}">
-            Es con lo que la persona inicia sesión. Sin puntos ni espacios.
+            Es con lo que la persona inicia sesión, aquí y en Authentik. Sin puntos ni espacios.
             @if($esNuevo)
                 Si ya tiene cuenta en otra dependencia, se le suma el acceso a esta.
             @endif
@@ -41,7 +41,7 @@
             Correo <span class="font-normal text-[var(--muted)]">(opcional)</span>
         </label>
         <input id="email" name="email" type="email" value="{{ old('email', $u?->email) }}" class="{{ $campo }}">
-        <p class="{{ $ayuda }}">Solo como dato de contacto: no sirve para entrar.</p>
+        <p class="{{ $ayuda }}">Dato de contacto. No hace falta para entrar.</p>
     </div>
 
     <div>
@@ -66,12 +66,20 @@
         </div>
     </fieldset>
 
+    {{--
+        La contraseña que se ponga aquí es la misma con la que la persona
+        entrará por Authentik: Documenta la crea allá tal cual. Por eso el
+        texto de ayuda lo dice, y no habla de «esta plataforma».
+    --}}
     <div>
         <label for="password" class="{{ $etiqueta }}">
             Contraseña {{ $esNuevo ? '*' : '(dejar vacío para no cambiarla)' }}
         </label>
         <input id="password" name="password" type="password" {{ $esNuevo ? 'required' : '' }} class="{{ $campo }}">
-        <p class="{{ $ayuda }}">Mínimo 8 caracteres, con letras y números.</p>
+        <p class="{{ $ayuda }}">
+            Mínimo 8 caracteres, sin más reglas. Es la que la persona usará para entrar:
+            se crea igual en Authentik. Entrégasela por un medio seguro.
+        </p>
     </div>
 
     <div>
