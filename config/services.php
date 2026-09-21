@@ -33,6 +33,11 @@ return [
         'client_id' => env('AUTHENTIK_CLIENT_ID'),
         'client_secret' => env('AUTHENTIK_CLIENT_SECRET'),
         'redirect' => env('AUTHENTIK_REDIRECT_URI', 'http://localhost:8000/auth/authentik/callback'),
+
+        // Cuenta de servicio con permiso para crear y editar usuarios, nada
+        // más. Sin ella la app sigue funcionando: el aprovisionamiento
+        // simplemente no se intenta.
+        'api_token' => env('AUTHENTIK_API_TOKEN'),
     ],
 
     'slack' => [

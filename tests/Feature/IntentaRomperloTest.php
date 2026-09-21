@@ -163,6 +163,7 @@ class IntentaRomperloTest extends TestCase
             ->put(route('admin.usuarios.update', $companero), [
                 'name' => $companero->name,
                 'documento' => '1234567890',
+                'email' => $companero->email,
                 'rol' => RolDependencia::Lectura->value,
                 'activo' => 1,
             ])
@@ -176,6 +177,7 @@ class IntentaRomperloTest extends TestCase
             ->put(route('admin.usuarios.update', $companero), [
                 'name' => 'Nombre corregido',
                 'documento' => $documentoOriginal,
+                'email' => $companero->email,
                 'rol' => RolDependencia::Lectura->value,
                 'activo' => 1,
             ])

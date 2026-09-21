@@ -80,6 +80,7 @@ class CoordinacionTest extends TestCase
             ->post(route('admin.usuarios.store'), [
                 'name' => 'Nueva Auxiliar',
                 'documento' => '1122334455',
+                'email' => 'nueva.auxiliar@medellin.gov.co',
                 'rol' => RolDependencia::Edicion->value,
                 'activo' => 1,
                 'password' => 'ClaveNueva123',
@@ -190,10 +191,9 @@ class CoordinacionTest extends TestCase
             ->post(route('admin.usuarios.store'), [
                 'name' => 'Aspirante',
                 'documento' => '5566778899',
+                'email' => 'aspirante@medellin.gov.co',
                 'rol' => RolDependencia::Administracion->value,
                 'activo' => 1,
-                'password' => 'ClaveNueva123',
-                'password_confirmation' => 'ClaveNueva123',
             ])
             ->assertSessionHasErrors('rol');
 
@@ -219,6 +219,7 @@ class CoordinacionTest extends TestCase
             ->put(route('admin.usuarios.update', $admin), [
                 'name' => 'Degradado',
                 'documento' => $admin->documento,
+                'email' => $admin->email,
                 'rol' => RolDependencia::Lectura->value,
                 'activo' => 1,
             ])
