@@ -19,19 +19,45 @@ function cargarImagen(src) {
     });
 }
 
-function ubicacion() {
-    return new Promise((resolve) => {
-        if (!navigator.geolocation) {
-            resolve(null);
-            return;
-        }
+/**
+ * Última posición conocida. Se pide al entrar al módulo y no al tomar la foto:
+ * en iPhone el aviso de permiso aparecía justo al volver de la cámara, y
+ * mientras la persona tocaba «Permitir» se agotaba la espera y la foto salía
+ * sin coordenadas. Además la primera lectura de GPS en iOS tarda varios
+ * segundos; empezando antes, ya está lista cuando se estampa.
+ */
+let ultima = null;
+let primera = null;
 
-        navigator.geolocation.getCurrentPosition(
-            (pos) => resolve(pos.coords),
-            () => resolve(null),
-            { timeout: 5000 },
+export function prepararUbicacion() {
+    if (primera || !navigator.geolocation) {
+        return;
+    }
+
+    // ponytail: watchPosition mantiene el GPS activo mientras la página esté
+    // abierta; si el consumo de batería importa, pararlo con clearWatch al enviar.
+    primera = new Promise((resolve) => {
+        navigator.geolocation.watchPosition(
+            (pos) => {
+                ultima = pos.coords;
+                resolve();
+            },
+            () => resolve(), // negada o sin señal: la foto se estampa igual, sin coordenadas
+            { enableHighAccuracy: true, maximumAge: 60000 },
         );
     });
+}
+
+function ubicacion() {
+    prepararUbicacion();
+
+    if (ultima || !primera) {
+        return Promise.resolve(ultima);
+    }
+
+    // Aún no llega la primera lectura: se le da un margen amplio antes de
+    // rendirse, que un GPS en frío en exteriores puede tardar.
+    return Promise.race([primera, new Promise((r) => setTimeout(r, 15000))]).then(() => ultima);
 }
 
 export async function estamparFoto(archivo) {

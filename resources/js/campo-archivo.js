@@ -8,7 +8,7 @@
  * una tarjeta por archivo con su nombre editable, y la X para quitarlo.
  */
 
-import { estamparFoto } from './foto-georreferencial';
+import { estamparFoto, prepararUbicacion } from './foto-georreferencial';
 
 function pesoLegible(bytes) {
     const unidades = ['B', 'KB', 'MB', 'GB'];
@@ -257,7 +257,18 @@ function iniciar(campo) {
         entrada.click();
     };
 
-    campo.querySelector('[data-camara]')?.addEventListener('click', () => abrir(true));
+    const botonCamara = campo.querySelector('[data-camara]');
+
+    // Donde se pueden tomar fotos, el permiso de ubicación se pide al entrar
+    // y se vuelve a intentar al tocar el botón, por si el navegador exige un
+    // gesto de la persona para mostrar el aviso.
+    if (botonCamara) {
+        prepararUbicacion();
+        botonCamara.addEventListener('click', () => {
+            prepararUbicacion();
+            abrir(true);
+        });
+    }
     campo.querySelector('[data-galeria]')?.addEventListener('click', () => abrir(false));
 
     zona?.addEventListener('click', () => abrir(false));
