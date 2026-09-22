@@ -20,44 +20,80 @@ function cargarImagen(src) {
 }
 
 /**
- * Última posición conocida. Se pide al entrar al módulo y no al tomar la foto:
- * en iPhone el aviso de permiso aparecía justo al volver de la cámara, y
- * mientras la persona tocaba «Permitir» se agotaba la espera y la foto salía
- * sin coordenadas. Además la primera lectura de GPS en iOS tarda varios
- * segundos; empezando antes, ya está lista cuando se estampa.
+ * Última posición conocida. Se pide al entrar al módulo y otra vez en cada
+ * toque de «Tomar foto», no al estampar: en iPhone el aviso de permiso salía
+ * justo al volver de la cámara y la espera se agotaba mientras la persona
+ * tocaba «Permitir». Volver a pedirla en cada toque es también lo que deja
+ * recuperarse sin recargar a quien la negó y luego la activó en Ajustes.
  */
 let ultima = null;
-let primera = null;
+let pedido = null;
+let avisar = () => {};
 
-export function prepararUbicacion() {
-    if (primera || !navigator.geolocation) {
-        return;
+// Sin esto la foto solo decía «Ubicación no disponible» y nadie sabía por qué.
+// Dónde se devuelve el permiso cambia según el teléfono, y es lo único útil
+// que se puede decir: ningún navegador deja volver a preguntar una vez negado.
+const esIphone = /iPhone|iPad|iPod/.test(navigator.userAgent)
+    || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); // iPad que se anuncia como Mac
+const esAndroid = /Android/.test(navigator.userAgent);
+
+const COMO_PERMITIR = esIphone
+    ? 'toca «aA» en la barra de direcciones → Configuración del sitio web → Ubicación → Permitir. Revisa también Ajustes → Privacidad → Localización.'
+    : esAndroid
+        ? 'toca el candado junto a la dirección de la página → Permisos → Ubicación → Permitir. Si no aparece, revisa Ajustes del teléfono → Aplicaciones → tu navegador → Permisos → Ubicación.'
+        : 'haz clic en el ícono junto a la dirección de la página y permite la ubicación.';
+
+const MOTIVOS = {
+    1: 'No hay permiso de ubicación: ' + COMO_PERMITIR + ' Luego vuelve a tomar la foto.',
+    2: 'El teléfono no está entregando la ubicación. Revisa que la ubicación (GPS) esté activada en los ajustes del teléfono.',
+    3: 'La ubicación está tardando en llegar. Al aire libre la señal mejora.',
+};
+
+function pedir() {
+    if (!window.isSecureContext || !navigator.geolocation) {
+        avisar('Este navegador no permite leer la ubicación en esta página.');
+        return null;
     }
 
-    // ponytail: watchPosition mantiene el GPS activo mientras la página esté
-    // abierta; si el consumo de batería importa, pararlo con clearWatch al enviar.
-    primera = new Promise((resolve) => {
-        navigator.geolocation.watchPosition(
+    return new Promise((resolve) => {
+        navigator.geolocation.getCurrentPosition(
             (pos) => {
                 ultima = pos.coords;
+                avisar('');
                 resolve();
             },
-            () => resolve(), // negada o sin señal: la foto se estampa igual, sin coordenadas
-            { enableHighAccuracy: true, maximumAge: 60000 },
+            (error) => {
+                avisar(MOTIVOS[error.code] ?? MOTIVOS[2]);
+                resolve();
+            },
+            { enableHighAccuracy: true, maximumAge: 60000, timeout: 20000 },
         );
+    }).finally(() => {
+        pedido = null;
     });
 }
 
-function ubicacion() {
-    prepararUbicacion();
+/** @param {(texto: string) => void} [alAvisar] recibe el motivo cuando no hay ubicación, y '' cuando la hay. */
+export function prepararUbicacion(alAvisar) {
+    if (alAvisar) {
+        avisar = alAvisar;
+    }
 
-    if (ultima || !primera) {
+    pedido ??= pedir();
+}
+
+function ubicacion() {
+    if (ultima) {
         return Promise.resolve(ultima);
     }
 
-    // Aún no llega la primera lectura: se le da un margen amplio antes de
-    // rendirse, que un GPS en frío en exteriores puede tardar.
-    return Promise.race([primera, new Promise((r) => setTimeout(r, 15000))]).then(() => ultima);
+    prepararUbicacion();
+
+    if (!pedido) {
+        return Promise.resolve(null);
+    }
+
+    return Promise.race([pedido, new Promise((r) => setTimeout(r, 20000))]).then(() => ultima);
 }
 
 export async function estamparFoto(archivo) {

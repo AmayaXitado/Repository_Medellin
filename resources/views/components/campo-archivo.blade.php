@@ -67,6 +67,9 @@
                 Elegir archivo
             </button>
         </div>
+
+        {{-- El motivo de que las fotos salgan sin coordenadas, y cómo arreglarlo. --}}
+        <p data-aviso-ubicacion class="mt-2 hidden text-xs font-medium text-[var(--warning)]"></p>
     @else
         {{-- Zona para soltar. Oculta de entrada: la enseña el script. --}}
         <div data-zona

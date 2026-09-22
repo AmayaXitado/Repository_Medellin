@@ -263,7 +263,14 @@ function iniciar(campo) {
     // y se vuelve a intentar al tocar el botón, por si el navegador exige un
     // gesto de la persona para mostrar el aviso.
     if (botonCamara) {
-        prepararUbicacion();
+        const avisoUbicacion = campo.querySelector('[data-aviso-ubicacion]');
+
+        prepararUbicacion((texto) => {
+            if (avisoUbicacion) {
+                avisoUbicacion.textContent = texto;
+                avisoUbicacion.classList.toggle('hidden', texto === '');
+            }
+        });
         botonCamara.addEventListener('click', () => {
             prepararUbicacion();
             abrir(true);
