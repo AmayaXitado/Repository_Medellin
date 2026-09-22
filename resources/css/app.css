@@ -232,6 +232,29 @@
     }
 
     /*
+     * Confirmación de «copiado». El verde dura lo que dura el aviso y luego
+     * el botón vuelve a su color: es una respuesta, no un estado nuevo.
+     */
+    .boton-copiado,
+    .boton-copiado:hover:not(:disabled) {
+        background-color: var(--success);
+        animation: copiado-brinco 0.3s ease;
+    }
+
+    @keyframes copiado-brinco {
+        0% { transform: scale(1); }
+        45% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+
+    /* A quien pidió menos movimiento le queda el color, que ya dice todo. */
+    @media (prefers-reduced-motion: reduce) {
+        .boton-copiado {
+            animation: none;
+        }
+    }
+
+    /*
      * Fondos de tinte suave para resaltar una fila u otro elemento sin
      * necesitar una clase clara y otra oscura por separado (bg-rose-50 +
      * dark:bg-rose-950, etc.): el valor ya viene calculado para los dos temas.

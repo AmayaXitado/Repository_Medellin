@@ -24,8 +24,14 @@
             <div class="mt-2 flex items-center gap-2">
                 <input id="url-enlace" type="text" readonly value="{{ session('enlace_url') }}"
                        class="liquid-input w-full text-xs" onclick="this.select()">
-                <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('url-enlace').value)"
-                        class="liquid-button-primary shrink-0 rounded-md px-3 py-1.5 text-xs font-medium">
+                {{--
+                    El comportamiento vive en resources/js/copiar.js: copia,
+                    confirma en el propio botón, y si el navegador no deja
+                    —pasa en cualquier sitio servido por http— deja la URL
+                    seleccionada y lo dice, en vez de fallar en silencio.
+                --}}
+                <button type="button" data-copiar="#url-enlace" aria-live="polite"
+                        class="liquid-button-primary flex shrink-0 items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium">
                     Copiar
                 </button>
             </div>
