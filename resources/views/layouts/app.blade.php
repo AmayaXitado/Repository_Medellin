@@ -1,5 +1,12 @@
 <!DOCTYPE html>
-<html lang="es" class="h-full">
+{{--
+    El tema elegido viaja en un atributo y no interpolado dentro del bloque
+    de JavaScript de abajo:
+    así el bloque de abajo es JavaScript válido tal cual y el editor deja de
+    marcarlo como error. Es además como el resto del proyecto le pasa datos al
+    JS (data-maximo, data-copiar, data-base).
+--}}
+<html lang="es" class="h-full" data-tema="{{ auth()->user()?->tema?->value ?? 'sistema' }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -27,7 +34,7 @@
             }
 
             const oscuroDelSistema = window.matchMedia('(prefers-color-scheme: dark)');
-            let tema = @json(auth()->user()?->tema?->value ?? 'sistema');
+            let tema = raiz.dataset.tema || 'sistema';
 
             const pintar = () => raiz.classList.toggle(
                 'dark',
@@ -56,258 +63,13 @@
 
 @include('partials.cargando')
 
-@php
-    $foco = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary)]';
-
-    $enlaces = [
-        'documentos.index' => [
-            'texto' => 'Documentos',
-            'icono' => 'M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z',
-        ],
-    ];
-
-    $notificacionesSinLeer = auth()->user()?->unreadNotifications()->count() ?? 0;
-
-    // Administración ve todos los enlaces de su dependencia; un líder de
-    // carpeta ve y crea los suyos. La visibilidad la decide EnlaceCargaPolicy.
-    if (auth()->user()?->can('viewAny', App\Models\EnlaceCarga::class)) {
-        $enlaces['admin.enlaces.index'] = [
-            'texto' => 'Enlaces de carga',
-            'icono' => 'M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244',
-        ];
-    }
-
-    // Coordinación gestiona personas y estructura, así que ve estas tres.
-    // Lo que no ve —ni tiene— es nada de retirar contenido.
-    if ($rolActual?->puedeGestionar()) {
-        $enlaces['admin.usuarios.index'] = [
-            'texto' => 'Usuarios',
-            'icono' => 'M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z',
-        ];
-        $enlaces['admin.tipos.index'] = [
-            'texto' => 'Tipos de documento',
-            'icono' => 'M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z',
-        ];
-        $enlaces['auditoria.index'] = [
-            'texto' => 'Auditoría',
-            'icono' => 'M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z',
-        ];
-    }
-@endphp
-
 <div class="flex min-h-full">
 
-    {{-- Solo en móvil: atenúa el contenido y captura el clic fuera del menú. --}}
-    <div id="menu-fondo" class="fixed inset-0 z-30 hidden bg-slate-900/60 md:hidden"></div>
-
-    {{--
-        La barra lateral siempre se ve «oscura», sin importar el tema de la
-        página: por eso lleva su propia clase .dark, que aquí no alterna nada
-        por JS, solo fija los valores oscuros de las variables para todo lo
-        que está dentro de este <aside>.
-    --}}
-    <aside id="menu-lateral" aria-label="Menú principal"
-           class="dark fixed inset-y-0 left-0 z-40 flex w-64 -translate-x-full flex-col border-r border-[var(--border)] bg-[var(--card)] text-[var(--text)]
-                  transition-transform duration-200 ease-out
-                  md:sticky md:top-0 md:h-screen md:shrink-0 md:translate-x-0 md:transition-none">
-
-        <div class="flex items-center gap-2 px-4 py-4">
-            {{--
-                El menú lateral es oscuro en los dos temas —lleva su propia
-                clase .dark—, así que aquí siempre va el logotipo blanco.
-            --}}
-            <a href="{{ route('documentos.index') }}"
-               class="flex min-w-0 flex-1 items-center rounded-md {{ $foco }}">
-                <img src="{{ asset('img/logo-cem-oscuro.png') }}" alt="{{ config('app.name') }}"
-                     class="h-8 w-auto">
-            </a>
-
-            {{--
-                Aquí había un segundo botón para cerrar el menú. Se quitó: uno
-                solo lo esconde y lo saca, y es el de la barra superior. Dos
-                controles para lo mismo, en sitios distintos, sobraban.
-            --}}
-        </div>
-
-        <div class="px-4 pb-4">
-            @if($dependenciasDisponibles?->count() > 1)
-                <label for="selector-dependencia" class="mb-1 block text-xs font-medium text-[var(--muted)]">Dependencia</label>
-                <form method="POST" action="#" id="form-dependencia">
-                    @csrf @method('PUT')
-                    <select id="selector-dependencia"
-                            class="w-full rounded-md border-0 bg-[var(--card-soft)] py-1.5 pl-3 pr-8 text-sm text-[var(--text)] focus:ring-2 focus:ring-[var(--primary)]">
-                        @foreach($dependenciasDisponibles as $dep)
-                            <option value="{{ $dep->slug }}" @selected($dep->id === $dependenciaActual?->id)>
-                                {{ $dep->nombre }}
-                            </option>
-                        @endforeach
-                    </select>
-                </form>
-            @elseif($dependenciaActual)
-                <p class="rounded-md bg-[var(--card-soft)] px-2.5 py-1.5 text-sm text-[var(--muted)]">
-                    {{ $dependenciaActual->nombre }}
-                </p>
-            @endif
-        </div>
-
-        <nav class="flex-1 space-y-1 overflow-y-auto px-2">
-            @foreach($enlaces as $ruta => $enlace)
-                @php($activo = request()->routeIs($ruta))
-                <a href="{{ route($ruta) }}" @if($activo) aria-current="page" @endif
-                   class="flex items-center gap-3 rounded-md px-3 py-2 text-sm {{ $foco }}
-                          {{ $activo
-                              ? 'bg-[var(--card-soft)] font-medium text-[var(--text)]'
-                              : 'text-[var(--muted)] hover:bg-[var(--card-soft)] hover:text-[var(--text)]' }}">
-                    <svg class="size-5 shrink-0 {{ $activo ? 'text-[var(--primary)]' : 'text-[var(--muted)]' }}"
-                         fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="{{ $enlace['icono'] }}"/>
-                    </svg>
-                    <span class="truncate">{{ $enlace['texto'] }}</span>
-
-                    {{-- El contador es lo que hace que la gente entre a mirar. --}}
-                    @if(($enlace['contador'] ?? 0) > 0)
-                        <span class="ml-auto shrink-0 rounded-full bg-[var(--primary)] px-2 py-0.5 text-xs font-semibold text-white"
-                              aria-label="{{ $enlace['contador'] }} sin revisar">
-                            {{ $enlace['contador'] > 99 ? '99+' : $enlace['contador'] }}
-                        </span>
-                    @endif
-                </a>
-            @endforeach
-        </nav>
-
-        <div class="border-t border-[var(--border)] p-3">
-            {{-- Solo en móvil: en escritorio la cuenta vive arriba a la derecha. --}}
-            <div class="flex items-center gap-2 md:hidden">
-                <a href="{{ route('perfil.edit') }}"
-                   class="flex min-w-0 flex-1 items-center gap-2 rounded-md p-1 hover:bg-[var(--card-soft)] {{ $foco }}">
-                    <span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-[var(--primary)] text-xs font-semibold text-white">
-                        {{ auth()->user()->iniciales() }}
-                    </span>
-                    <span class="min-w-0">
-                        <span class="block truncate text-sm">{{ auth()->user()->name }}</span>
-                        <span class="block truncate text-xs text-[var(--muted)]">{{ $rolActual?->etiqueta() }}</span>
-                    </span>
-                </a>
-
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button class="rounded-md p-2 text-[var(--muted)] hover:bg-[var(--card-soft)] hover:text-[var(--text)] {{ $foco }}" title="Salir">
-                        <svg class="size-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                  d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75"/>
-                        </svg>
-                        <span class="sr-only">Salir</span>
-                    </button>
-                </form>
-            </div>
-
-            <p class="mt-2 px-1 text-xs text-[var(--muted)]">
-                {{ config('app.name') }} · {{ $dependenciaActual?->nombre }}
-            </p>
-        </div>
-    </aside>
+    <x-sidebar />
 
     <div class="flex min-w-0 flex-1 flex-col">
 
-        <header class="sticky top-0 z-20 flex items-center gap-3 border-b border-[var(--border)] bg-[var(--card)] px-4 py-2">
-            {{--
-                El único control del menú. Hace las dos cosas con el mismo
-                clic: en escritorio lo esconde y lo saca, recordando la
-                elección; en móvil abre y cierra el cajón. Vive en la cabecera
-                y no dentro del menú, que es lo que le permite seguir
-                alcanzable cuando el menú está escondido.
-            --}}
-            <button type="button" id="menu-boton" aria-controls="menu-lateral" aria-expanded="false"
-                    class="-ml-1 shrink-0 rounded-md p-2 text-[var(--muted)] hover:bg-[var(--card-soft)] {{ $foco }}">
-                <svg class="size-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/>
-                </svg>
-                <span class="sr-only" id="menu-boton-texto">Mostrar menú</span>
-            </button>
-
-            <a href="{{ route('notificaciones.index') }}" title="Notificaciones"
-               class="relative ml-auto flex shrink-0 rounded-md p-2 text-[var(--muted)] hover:bg-[var(--card-soft)] {{ $foco }}">
-                <svg class="size-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                          d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"/>
-                </svg>
-                @if($notificacionesSinLeer > 0)
-                    <span class="absolute -right-0.5 -top-0.5 flex min-w-[1.1rem] items-center justify-center rounded-full bg-[var(--danger)] px-1 text-[10px] font-bold leading-tight text-white">
-                        {{ $notificacionesSinLeer > 99 ? '99+' : $notificacionesSinLeer }}
-                    </span>
-                @endif
-                <span class="sr-only">Notificaciones{{ $notificacionesSinLeer > 0 ? " ({$notificacionesSinLeer} sin leer)" : '' }}</span>
-            </a>
-
-            {{--
-                Sin JS es un envío normal que recarga; con JS se intercepta y el
-                tema cambia al instante. Los dos iconos y las dos etiquetas viven
-                en el HTML y los alterna el CSS con la misma clase .dark, así que
-                no hay parpadeo ni riesgo de que se desincronicen.
-            --}}
-            <form method="POST" action="{{ route('perfil.tema') }}" id="interruptor-tema" class="shrink-0">
-                @csrf @method('PUT')
-                <input type="hidden" name="tema" value="{{ auth()->user()?->tema === \App\Enums\TemaInterfaz::Oscuro ? 'claro' : 'oscuro' }}">
-
-                <button type="submit"
-                        class="flex rounded-md p-2 text-[var(--muted)] hover:bg-[var(--card-soft)] {{ $foco }}">
-                    <svg class="size-5 dark:hidden" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                              d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z"/>
-                    </svg>
-                    <svg class="hidden size-5 dark:block" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                              d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z"/>
-                    </svg>
-                    <span class="sr-only dark:hidden">Cambiar a tema oscuro</span>
-                    <span class="hidden sr-only dark:inline">Cambiar a tema claro</span>
-                </button>
-            </form>
-
-            {{--
-                La cuenta, solo en escritorio. En móvil sigue en el pie del
-                menú lateral: aquí arriba competiría por sitio con el
-                hamburguesa en una pantalla estrecha.
-
-                Es un <details> y no un menú montado a mano con JavaScript:
-                así se abre igual si el script falla o todavía no ha cargado.
-                Para llegar a «cerrar sesión» eso no es un lujo.
-            --}}
-            <details id="menu-cuenta" class="relative hidden shrink-0 md:block">
-                <summary class="flex cursor-pointer list-none items-center gap-2 rounded-md p-1 hover:bg-[var(--card-soft)]
-                                [&::-webkit-details-marker]:hidden {{ $foco }}">
-                    <span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-[var(--primary)] text-xs font-semibold text-white">
-                        {{ auth()->user()->iniciales() }}
-                    </span>
-                    <span class="min-w-0 text-left">
-                        <span class="block max-w-40 truncate text-sm text-[var(--text)]">{{ auth()->user()->name }}</span>
-                        <span class="block truncate text-xs text-[var(--muted)]">{{ $rolActual?->etiqueta() }}</span>
-                    </span>
-                    <svg class="size-4 shrink-0 text-[var(--muted)]" fill="none" stroke="currentColor"
-                         stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5"/>
-                    </svg>
-                </summary>
-
-                <div class="absolute right-0 z-30 mt-2 w-56 overflow-hidden rounded-md bg-[var(--card)] py-1 shadow-lg ring-1 ring-[var(--border)]">
-                    <p class="border-b border-[var(--border)] px-4 py-2 text-xs text-[var(--muted)]">
-                        {{ $dependenciaActual?->nombre }}
-                    </p>
-
-                    <a href="{{ route('perfil.edit') }}"
-                       class="block px-4 py-2 text-sm text-[var(--text)] hover:bg-[var(--card-soft)]">
-                        Mi perfil
-                    </a>
-
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <button class="block w-full px-4 py-2 text-left text-sm text-[var(--text)] hover:bg-[var(--card-soft)]">
-                            Cerrar sesión
-                        </button>
-                    </form>
-                </div>
-            </details>
-        </header>
+        <x-navbar />
 
         <main class="mx-auto w-full max-w-7xl flex-1 px-4 py-6">
             @include('partials.alertas')
@@ -444,7 +206,7 @@
     if (selector) {
         selector.addEventListener('change', () => {
             const formulario = document.getElementById('form-dependencia');
-            formulario.action = '{{ url('dependencia') }}/' + selector.value;
+            formulario.action = formulario.dataset.base + '/' + selector.value;
             formulario.submit();
         });
     }

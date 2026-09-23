@@ -359,3 +359,17 @@ dl dd {
         text-align: left;
     }
 }
+
+/*
+ * El anillo de foco del teclado, igual en toda la aplicación. Antes era una
+ * cadena de clases repetida en una variable de Blade que el layout tenía que
+ * pasar a mano a cada enlace y botón; al partirlo en componentes esa variable
+ * habría que duplicarla en cada archivo. En CSS se declara una vez.
+ *
+ * Solo :focus-visible: el anillo aparece para quien navega con el teclado y
+ * no cada vez que alguien hace clic con el ratón.
+ */
+.foco:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}

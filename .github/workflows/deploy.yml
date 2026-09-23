@@ -1,25 +1,45 @@
-name: Desplegar a produccion
+name: Desplegar
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
   workflow_dispatch:
 
 concurrency:
-  group: produccion
+  group: despliegue-${{ github.ref_name }}
   cancel-in-progress: false
-
-env:
-  DEPLOY_PATH: /var/www/documenta
-  SSH_OPTS: -i ~/.ssh/id_deploy -o BatchMode=yes -o StrictHostKeyChecking=accept-new
 
 jobs:
   deploy:
     name: Compilar y desplegar
     runs-on: ubuntu-latest
+    env:
+      SSH_OPTS: -i ~/.ssh/id_deploy -o BatchMode=yes -o StrictHostKeyChecking=accept-new
+
     steps:
       - name: Descargar el codigo
         uses: actions/checkout@v4
+
+      - name: Elegir el servidor segun la rama
+        env:
+          PROD_HOST: ${{ secrets.PROD_HOST }}
+          PROD_USER: ${{ secrets.PROD_USER }}
+          TEST_HOST: ${{ secrets.VPS_HOST }}
+          TEST_USER: ${{ secrets.VPS_USER }}
+        run: |
+          if [ "$GITHUB_REF_NAME" = "main" ]; then
+            echo "ENTORNO=PRODUCCION"                                        >> $GITHUB_ENV
+            echo "SSH_HOST=$PROD_HOST"                                       >> $GITHUB_ENV
+            echo "SSH_USER=$PROD_USER"                                       >> $GITHUB_ENV
+            echo "DEPLOY_PATH=/var/www/html/Repository_Medellin"             >> $GITHUB_ENV
+            echo "SITE_URL=https://documenta.comitedeestudiosmedicos.com.co" >> $GITHUB_ENV
+          else
+            echo "ENTORNO=PRUEBAS"                                           >> $GITHUB_ENV
+            echo "SSH_HOST=$TEST_HOST"                                       >> $GITHUB_ENV
+            echo "SSH_USER=$TEST_USER"                                       >> $GITHUB_ENV
+            echo "DEPLOY_PATH=/var/www/documenta"                            >> $GITHUB_ENV
+            echo "SITE_URL=https://documenta.botenterprise.com.co"           >> $GITHUB_ENV
+          fi
 
       - name: Instalar Node
         uses: actions/setup-node@v4
@@ -34,56 +54,48 @@ jobs:
 
       - name: Configurar acceso SSH
         env:
-          SSH_KEY:  ${{ secrets.VPS_SSH_KEY }}
-          SSH_HOST: ${{ secrets.VPS_HOST }}
+          PROD_KEY: ${{ secrets.PROD_SSH_KEY }}
+          TEST_KEY: ${{ secrets.VPS_SSH_KEY }}
         run: |
+          if [ "$GITHUB_REF_NAME" = "main" ]; then KEY="$PROD_KEY"; else KEY="$TEST_KEY"; fi
+          if [ -z "$KEY" ]; then
+            echo "::error::No hay llave configurada para $ENTORNO"
+            exit 1
+          fi
           mkdir -p ~/.ssh
-          if printf '%s' "$SSH_KEY" | grep -q "BEGIN OPENSSH"; then
-            echo "Formato: PEM"
-            printf '%s\n' "$SSH_KEY" | tr -d '\r' > ~/.ssh/id_deploy
+          if printf '%s' "$KEY" | grep -q "BEGIN OPENSSH"; then
+            printf '%s\n' "$KEY" | tr -d '\r' > ~/.ssh/id_deploy
           else
-            echo "Formato: base64"
-            printf '%s' "$SSH_KEY" | tr -d '\r\n ' | base64 -d > ~/.ssh/id_deploy
+            printf '%s' "$KEY" | tr -d '\r\n ' | base64 -d > ~/.ssh/id_deploy
           fi
           chmod 600 ~/.ssh/id_deploy
           if ! ssh-keygen -y -f ~/.ssh/id_deploy > /dev/null 2>&1; then
-            echo "::error::La llave de VPS_SSH_KEY sigue sin ser valida."
+            echo "::error::La llave de $ENTORNO no es valida"
             exit 1
           fi
-          echo "Llave valida"
           ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+          echo "Desplegando a $ENTORNO -> $SITE_URL"
 
-      - name: Traer el codigo nuevo al VPS
-        env:
-          SSH_HOST: ${{ secrets.VPS_HOST }}
-          SSH_USER: ${{ secrets.VPS_USER }}
+      - name: Traer el codigo nuevo
         run: |
           ssh $SSH_OPTS "$SSH_USER@$SSH_HOST" \
-            "cd '$DEPLOY_PATH' && git fetch --all --prune && git reset --hard origin/main"
+            "cd '$DEPLOY_PATH' && git fetch --all --prune && git reset --hard origin/$GITHUB_REF_NAME"
 
       - name: Subir los assets compilados
-        env:
-          SSH_HOST: ${{ secrets.VPS_HOST }}
-          SSH_USER: ${{ secrets.VPS_USER }}
         run: |
           rsync -avz --delete -e "ssh $SSH_OPTS" \
             public/build/ "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/public/build/"
 
-      - name: Ejecutar el despliegue en el servidor
-        env:
-          SSH_HOST: ${{ secrets.VPS_HOST }}
-          SSH_USER: ${{ secrets.VPS_USER }}
+      - name: Ejecutar el despliegue
         run: |
-          ssh $SSH_OPTS "$SSH_USER@$SSH_HOST" \
-            "cd '$DEPLOY_PATH' && bash bin/deploy.sh"
+          ssh $SSH_OPTS "$SSH_USER@$SSH_HOST" "cd '$DEPLOY_PATH' && bash bin/deploy.sh"
 
       - name: Verificar que el sitio responde
         run: |
-          code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 \
-                 https://documenta.botenterprise.com.co/)
-          echo "HTTP $code"
+          code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "$SITE_URL")
+          echo "$ENTORNO respondio HTTP $code"
           if [ "$code" -ge 400 ]; then
-            echo "::error::El sitio respondio $code despues del despliegue"
+            echo "::error::$SITE_URL respondio $code despues del despliegue"
             exit 1
           fi
 
