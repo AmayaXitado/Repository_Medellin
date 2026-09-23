@@ -3,9 +3,16 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Ingresar · {{ config('app.name') }}</title>
+    <title>{{ config('app.name') }}</title>
 
-    <link rel="icon" type="image/png" href="{{ asset('img/favicon-cem.png') }}">
+    {{--
+        El SVG manda donde se entiende: es nítido en cualquier tamaño y pesa
+        menos de 1 KB. El PNG queda de respaldo para lo que no lo soporta
+        —Safari viejo— y como icono de pantalla de inicio en iOS, que solo
+        acepta mapa de bits.
+    --}}
+    <link rel="icon" type="image/svg+xml" href="{{ asset('img/favicon.svg') }}">
+    <link rel="icon" type="image/png" href="{{ asset('img/favicon-cem.png') }}" sizes="any">
     <link rel="apple-touch-icon" href="{{ asset('img/favicon-cem.png') }}">
 
     {{--

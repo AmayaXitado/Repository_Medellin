@@ -1,59 +1,98 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
-
 <p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
+  <img src="public/img/logo-cem-claro.png" alt="Comité de Estudios Médicos" height="64">
 </p>
 
-## About Laravel
+<h1 align="center">Documenta</h1>
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+<p align="center">
+  Repositorio documental institucional del <strong>Comité de Estudios Médicos</strong><br>
+  Inclusión Social · Medellín
+</p>
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+---
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## El problema
 
-## Learning Laravel
+La información institucional vivía repartida entre carpetas compartidas, correos y
+memorias USB. De ahí salen tres problemas que cuestan tiempo y, a veces, algo peor:
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+- **Se pierden versiones.** Alguien guarda encima del archivo de otro y lo anterior
+  desaparece. Nadie sabe cuál era la buena, ni quién la cambió.
+- **No hay rastro.** No se puede responder quién descargó un documento, quién lo
+  retiró de la vista ni cuándo entró.
+- **Recibir de fuera es un desorden.** Los contratistas y las entidades mandan
+  documentos por correo, sin formato, sin constancia y a la bandeja de quien sea.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Qué hace Documenta
 
-## Laravel Sponsors
+Un sitio único donde cada documento tiene historia, dueño y trazabilidad, y donde lo
+que llega de fuera entra por una puerta controlada.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+| | |
+|---|---|
+| 📁 **Explorador con carpetas** | Árbol de carpetas por dependencia, con búsqueda, etiquetas y tipos documentales |
+| 🕘 **Versiones, nunca sobrescritura** | Cada carga es una versión nueva, con su autor y qué cambió. El historial completo queda descargable |
+| 🔒 **Archivos fuera de la web** | Ninguna descarga sale por URL directa: cada una pasa por un control de permisos y queda registrada |
+| 👥 **Roles por dependencia** | Lectura, Edición, Coordinación y Administración. La misma persona puede ser lectora en una dependencia y administradora en otra |
+| 🧾 **Auditoría completa** | Quién, qué, cuándo, desde qué IP y con qué navegador. Inactivar exige motivo |
+| 📮 **Enlaces de carga** | Un enlace temporal para que alguien de fuera envíe documentos sin tener cuenta. Con vencimiento, tope de usos y revocable |
+| 📸 **Fotos con hora y lugar** | Lo que se fotografía desde el enlace llega con fecha, coordenadas y municipio estampados |
+| 🗂️ **Sin borrar nada** | Retirar un documento lo oculta, no lo destruye. Administración puede devolverlo |
+| 🔑 **Entrada con Authentik** | Inicio de sesión institucional (OpenID Connect), además del formulario propio |
+| 🌗 **Claro y oscuro** | La preferencia vive en la cuenta, no en el navegador |
 
-### Premium Partners
+## Cómo entra un documento
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+```
+Desde dentro                          Desde fuera
+─────────────                         ────────────
+Usuario con cuenta                    Coordinación genera un enlace temporal
+  ↓                                     ↓
+Sube a una carpeta                    Lo envía a la entidad o contratista
+  ↓                                     ↓
+Queda como versión 1                  Quien recibe declara quién es y su nodo,
+  ↓                                   y adjunta PDF o fotografía
+Cada carga posterior                    ↓
+es una versión más                    Entra ya como documento, en la carpeta
+                                      del enlace, con su cadena de custodia
+```
 
-## Contributing
+De todo lo que llega de fuera se guarda quién lo declaró, su correo, entidad y nodo,
+la IP, el navegador, la huella SHA-256 del archivo, si llegó en horario hábil y
+cuánto tardó en responder desde que se le entregó el enlace.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Multi-dependencia desde el primer día
 
-## Code of Conduct
+Nació para **Inclusión Social**, pero está construido para que Salud Mental —o
+cualquier otra dependencia del Comité— entre después sin tocar código y sin ver nada
+de las demás. El aislamiento no depende de que un programador se acuerde de filtrar:
+va en la propia consulta a la base de datos.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Lo que deliberadamente no hace
 
-## Security Vulnerabilities
+Un sistema pequeño que funciona vale más que uno grande a medias. Quedan fuera:
+edición de documentos en línea, chat interno, firmas digitales y flujos de
+aprobación. Documenta guarda, versiona, controla quién ve qué y deja constancia.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Estado
 
-## License
+Funcionando, con **242 pruebas automatizadas** sobre permisos, aislamiento entre
+dependencias, versionado, la vía pública y los horarios.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+**Stack:** Laravel 12 · Blade · Tailwind 4 (Vite) · MySQL · almacenamiento local
+abstraído (migrable a S3 o MinIO cambiando una línea de configuración).
+
+## Documentación
+
+| Documento | Para qué |
+|---|---|
+| [`INICIO.md`](INICIO.md) | Puesta en marcha, decisiones de arquitectura y mapa del código |
+| [`MANUAL-USUARIO.md`](MANUAL-USUARIO.md) | Cómo se usa, para quien no programa |
+| [`GEOLOCALIZACION.md`](GEOLOCALIZACION.md) | Las fotos con hora y lugar: cómo funcionan y hasta dónde sirven como prueba |
+| [`INTERFAZ.md`](INTERFAZ.md) | Convenciones de la capa visual: responsivo, avatar por rol, cabecera |
+
+---
+
+<p align="center">
+  <sub>Comité de Estudios Médicos · Inclusión Social · Medellín</sub>
+</p>
