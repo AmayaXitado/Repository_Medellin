@@ -35,6 +35,7 @@ class Recepcion extends Model
         'remitente_email',
         'remitente_entidad',
         'nodo',
+        'tomada_at',
         'nombre_original',
         'ruta',
         'mime',
@@ -58,6 +59,7 @@ class Recepcion extends Model
             'estado_escaneo' => EstadoEscaneo::class,
             'tamano' => 'integer',
             'escaneado_at' => 'datetime',
+            'tomada_at' => 'datetime',
             'fuera_de_horario' => 'boolean',
         ];
     }

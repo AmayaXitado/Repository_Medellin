@@ -123,6 +123,15 @@
                 </svg>
             </span>
 
+            @if($camara)
+                {{--
+                    Cuándo se tomó la foto, según el reloj del teléfono que la
+                    estampó. Otra lista paralela a archivo[], vacía para lo que
+                    no viene de la cámara.
+                --}}
+                <input type="hidden" name="tomadas[]" data-tomada-campo value="">
+            @endif
+
             <span class="min-w-0 flex-1">
                 @if($conNombres)
                     {{--

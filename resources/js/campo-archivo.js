@@ -80,6 +80,11 @@ function iniciar(campo) {
         elemento.classList.toggle(display, visible);
     };
 
+    // 'sr-only' lo vuelve absoluto y de 1px, pero el 'w-full' que trae del
+    // HTML —el que necesita cuando el script no corre— gana en el ancho: el
+    // input quedaba invisible y midiendo la caja entera, desplazado hacia la
+    // derecha, y era él quien sacaba el scroll horizontal de toda la página.
+    entrada.classList.remove('w-full');
     entrada.classList.add('sr-only');
     alternar(zona, true);
     alternar(selectores, true, 'grid');
@@ -120,6 +125,11 @@ function iniciar(campo) {
         const miniatura = nodo.querySelector('[data-miniatura]');
         const icono = nodo.querySelector('[data-icono]');
         const campoNombre = nodo.querySelector('[data-nombre-campo]');
+        const campoTomada = nodo.querySelector('[data-tomada-campo]');
+
+        if (campoTomada) {
+            campoTomada.value = elemento.tomada ?? '';
+        }
         const textoArchivo = nodo.querySelector('[data-archivo]');
         const peso = nodo.querySelector('[data-peso]');
 
@@ -196,10 +206,15 @@ function iniciar(campo) {
         pintar();
     };
 
-    const agregar = (nuevos) => {
+    const agregar = (nuevos, deCamara = false) => {
         const entrantes = Array.from(nuevos).map((archivo) => ({
             archivo,
             nombre: sinExtension(archivo.name),
+            // Lo estampado se creó con lastModified en el instante del sello,
+            // así que es la misma fecha que se lee en la foto.
+            tomada: deCamara && archivo.type.startsWith('image/')
+                ? new Date(archivo.lastModified).toISOString()
+                : null,
         }));
 
         if (entrantes.length === 0) {
@@ -296,7 +311,7 @@ function iniciar(campo) {
                 archivo.type.startsWith('image/') ? estamparFoto(archivo) : archivo),
         );
 
-        agregar(estampadas);
+        agregar(estampadas, true);
     });
 
     if (zona) {

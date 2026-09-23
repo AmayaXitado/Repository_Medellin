@@ -4,14 +4,28 @@
     vive en resources/js/toasts.js.
 --}}
 @if(session('exito') || session('error'))
+    {{--
+        El mensaje viaja en atributos y el script solo los lee: dentro de un
+        <script> el editor analiza el contenido como JavaScript, y las
+        directivas de Blade lo hacen fallar. Además así el texto lo escapa el
+        atributo, sin depender de que nadie recuerde usar @json.
+    --}}
+    <div data-toast-inicial
+         @if(session('exito')) data-exito="{{ session('exito') }}" @endif
+         @if(session('error')) data-error="{{ session('error') }}" @endif
+         hidden></div>
+
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            @if(session('exito'))
-                window.mostrarToast?.('exito', @json(session('exito')));
-            @endif
-            @if(session('error'))
-                window.mostrarToast?.('error', @json(session('error')));
-            @endif
+            const datos = document.querySelector('[data-toast-inicial]')?.dataset ?? {};
+
+            if (datos.exito) {
+                window.mostrarToast?.('exito', datos.exito);
+            }
+
+            if (datos.error) {
+                window.mostrarToast?.('error', datos.error);
+            }
         });
     </script>
 @endif

@@ -328,9 +328,10 @@ class MenuLateralTemporalTest extends TestCase
         // Persiste en la base, no en el navegador.
         $this->assertSame(TemaInterfaz::Oscuro, $usuario->fresh()->tema);
 
-        // Y el script del <head> lo lleva ya resuelto al HTML.
+        // Y el HTML lo lleva ya resuelto en el <html>, que es de donde lo lee
+        // el script del <head> antes de que el navegador pinte nada.
         $html = $this->actingAs($usuario->fresh())->get(route('documentos.index'))->getContent();
-        $this->assertStringContainsString('let tema = "oscuro"', $html);
+        $this->assertStringContainsString('data-tema="oscuro"', $html);
 
         // Un valor inventado no pasa la validación.
         $this->actingAs($usuario)

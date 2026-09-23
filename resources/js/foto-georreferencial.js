@@ -49,6 +49,57 @@ const MOTIVOS = {
     3: 'La ubicación está tardando en llegar. Al aire libre la señal mejora.',
 };
 
+let ciudad = null;
+let ciudadPedida = null;
+
+/**
+ * El municipio, que en OpenStreetMap no tiene una sola etiqueta. En Colombia
+ * 'county' es el municipio y 'city' puede traer la vereda: en el norte del
+ * Valle de Aburrá, 'city' devolvía «Platanito Parte Baja» donde el municipio
+ * es Barbosa. Y lo que llega viene con los nombres del DANE pegados
+ * —«Perímetro Urbano Medellín», «Bogotá ciudad»—, que en una foto sobran.
+ */
+export function nombreMunicipio(address = {}) {
+    const municipio = address.county || address.city || address.town
+        || address.village || address.municipality;
+
+    return municipio
+        ? municipio
+            .replace(/^(per[ií]metro|zona|[áa]rea)\s+urban[ao]\s+(de\s+)?/i, '')
+            .replace(/\s+ciudad$/i, '')
+            .trim() || null
+        : null;
+}
+
+/**
+ * El nombre del lugar a partir de las coordenadas, contra Nominatim (el
+ * geocodificador de OpenStreetMap): unas cifras no le dicen nada a quien
+ * después revisa la foto, «Medellín, Antioquia» sí. Si no hay red o tarda,
+ * la foto sale igual con las coordenadas solas.
+ */
+async function resolverCiudad({ latitude, longitude }) {
+    const url = 'https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=12&accept-language=es'
+        + `&lat=${latitude}&lon=${longitude}`;
+
+    try {
+        const respuesta = await fetch(url, { signal: AbortSignal.timeout?.(8000) });
+        const { address = {} } = await respuesta.json();
+
+        ciudad = [nombreMunicipio(address), address.state].filter(Boolean).join(', ') || null;
+    } catch {
+        ciudad = null; // sin red, sin permiso de salida o demasiado lento
+    }
+}
+
+/** La ciudad solo se espera si ya hay coordenadas: nunca retrasa la foto por sí sola. */
+function esperarCiudad() {
+    if (ciudad || !ciudadPedida) {
+        return Promise.resolve(ciudad);
+    }
+
+    return Promise.race([ciudadPedida, new Promise((r) => setTimeout(r, 4000))]).then(() => ciudad);
+}
+
 function pedir() {
     if (!window.isSecureContext || !navigator.geolocation) {
         avisar('Este navegador no permite leer la ubicación en esta página.');
@@ -59,6 +110,7 @@ function pedir() {
         navigator.geolocation.getCurrentPosition(
             (pos) => {
                 ultima = pos.coords;
+                ciudadPedida ??= resolverCiudad(pos.coords);
                 avisar('');
                 resolve();
             },
@@ -128,9 +180,13 @@ export async function estamparFoto(archivo) {
         x += w + 14;
     });
 
-    const hora = new Intl.DateTimeFormat('es-CO', { dateStyle: 'short', timeStyle: 'medium' }).format(new Date());
+    // El mismo instante que se estampa viaja en lastModified, para que el
+    // servidor guarde exactamente la fecha que se lee en la foto.
+    const momento = new Date();
+    const hora = new Intl.DateTimeFormat('es-CO', { dateStyle: 'short', timeStyle: 'medium' }).format(momento);
+    const nombreLugar = coords ? await esperarCiudad() : null;
     const lugar = coords
-        ? `${coords.latitude.toFixed(6)}, ${coords.longitude.toFixed(6)}`
+        ? [nombreLugar, `${coords.latitude.toFixed(6)}, ${coords.longitude.toFixed(6)}`].filter(Boolean).join(' · ')
         : 'Ubicación no disponible';
 
     ctx.textAlign = 'right';
@@ -142,5 +198,5 @@ export async function estamparFoto(archivo) {
 
     const blob = await new Promise((resolve) => lienzo.toBlob(resolve, archivo.type || 'image/jpeg', 0.92));
 
-    return blob ? new File([blob], archivo.name, { type: blob.type, lastModified: Date.now() }) : archivo;
+    return blob ? new File([blob], archivo.name, { type: blob.type, lastModified: momento.getTime() }) : archivo;
 }

@@ -23,7 +23,7 @@
             <p class="font-medium">Copia esta URL ahora — no volverá a mostrarse completa:</p>
             <div class="mt-2 flex items-center gap-2">
                 <input id="url-enlace" type="text" readonly value="{{ session('enlace_url') }}"
-                       class="liquid-input w-full text-xs" onclick="this.select()">
+                       class="liquid-input min-w-0 flex-1 text-xs" onclick="this.select()">
                 {{--
                     El comportamiento vive en resources/js/copiar.js: copia,
                     confirma en el propio botón, y si el navegador no deja

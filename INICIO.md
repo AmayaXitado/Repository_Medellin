@@ -6,6 +6,11 @@ dependencias como Salud Mental sin abrir la plataforma a todo el Comité.
 
 **Stack:** Laravel 12 · Blade · Tailwind 4 (Vite) · MySQL · almacenamiento local abstraído
 
+Las fotos que entran por un enlace de carga llevan hora y lugar estampados:
+cómo funciona, qué se guarda y hasta dónde sirve como prueba está en
+[`GEOLOCALIZACION.md`](GEOLOCALIZACION.md). Las convenciones de la capa visual
+—responsivo, avatar por rol, cabecera— están en [`INTERFAZ.md`](INTERFAZ.md).
+
 ---
 
 ## Puesta en marcha

@@ -3,7 +3,7 @@
 
 @section('contenido')
 
-<div class="mb-4 flex items-center gap-1 text-sm text-[var(--muted)]">
+<div class="mb-4 flex flex-wrap items-center gap-x-1 gap-y-0.5 text-sm text-[var(--muted)]">
     <a href="{{ route('documentos.index') }}" class="hover:text-[var(--text)]">Inicio</a>
     @foreach($migas as $miga)
         <span>/</span>
@@ -26,9 +26,16 @@
     </div>
 @endunless
 
+{{--
+    min-w-0 en las dos columnas: por defecto una celda de grid no se encoge
+    por debajo de su contenido, así que la tabla de versiones estiraba la
+    columna y con ella la página entera, y el teléfono acababa con scroll
+    horizontal. Con esto la tabla se queda con su propio scroll, dentro de su
+    tarjeta, que es donde estorba a nadie.
+--}}
 <div class="grid gap-6 lg:grid-cols-3">
 
-    <div class="lg:col-span-2 space-y-6">
+    <div class="min-w-0 lg:col-span-2 space-y-6">
 
         <div class="rounded-lg bg-[var(--card)] p-6 ring-1 ring-[var(--border)]">
             <div class="flex flex-wrap items-start gap-4">
@@ -142,13 +149,19 @@
         </div>
     </div>
 
-    <aside class="space-y-6">
+    <aside class="min-w-0 space-y-6">
         <div class="rounded-lg bg-[var(--card)] p-4 ring-1 ring-[var(--border)]">
             <h2 class="mb-3 text-sm font-medium text-[var(--text)]">Datos</h2>
             <dl class="space-y-2 text-sm">
                 <div class="flex justify-between gap-3">
                     <dt class="text-[var(--muted)]">Tipo</dt>
                     <dd class="text-right text-[var(--text)]">{{ $documento->tipoDocumento?->nombre ?? '—' }}</dd>
+                </div>
+                <div class="flex justify-between gap-3">
+                    <dt class="text-[var(--muted)]">Formato</dt>
+                    <dd class="text-right text-[var(--text)]">
+                        {{ $documento->versionActual?->extension ? strtoupper($documento->versionActual->extension) : '—' }}
+                    </dd>
                 </div>
                 <div class="flex justify-between gap-3">
                     <dt class="text-[var(--muted)]">Fecha del documento</dt>
@@ -160,7 +173,21 @@
                 </div>
                 <div class="flex justify-between gap-3">
                     <dt class="text-[var(--muted)]">Cargado por</dt>
-                    <dd class="text-right text-[var(--text)]">{{ $documento->creador?->name ?? '—' }}</dd>
+                    {{--
+                        Lo que entra por un enlace no tiene autor de dentro: lo
+                        subió quien lo envió, y su nombre es el único que
+                        responde a «quién puso esto aquí».
+                    --}}
+                    <dd class="text-right text-[var(--text)]">
+                        @if($documento->creador)
+                            {{ $documento->creador->name }}
+                        @elseif($documento->recepcion)
+                            {{ $documento->recepcion->remitente_nombre }}
+                            <span class="mt-0.5 block text-xs text-[var(--muted)]">Desde fuera, por enlace</span>
+                        @else
+                            —
+                        @endif
+                    </dd>
                 </div>
                 <div class="flex justify-between gap-3">
                     <dt class="text-[var(--muted)]">Cargado el</dt>
@@ -205,6 +232,12 @@
                         <dd class="text-right text-[var(--text)]">{{ $recepcion->remitente_entidad ?? '—' }}</dd>
                     </div>
                     <div class="flex justify-between gap-3">
+                        <dt class="text-[var(--muted)]">Nodo</dt>
+                        <dd class="text-right text-[var(--text)]">
+                            {{ $recepcion->nodo ? 'Nodo '.$recepcion->nodo : '—' }}
+                        </dd>
+                    </div>
+                    <div class="flex justify-between gap-3">
                         <dt class="text-[var(--muted)]">Recibido el</dt>
                         <dd class="text-right text-[var(--text)]">
                             {{ $recepcion->created_at->format('d/m/Y H:i') }}
@@ -240,6 +273,15 @@
                             @endif
                         </dd>
                     </div>
+                    @if($recepcion->tomada_at)
+                        <div class="flex justify-between gap-3">
+                            <dt class="text-[var(--muted)]">Foto tomada el</dt>
+                            <dd class="text-right text-[var(--text)]">
+                                {{ $recepcion->tomada_at->format('d/m/Y H:i:s') }}
+                                <span class="mt-0.5 block text-xs text-[var(--muted)]">Según el reloj del teléfono</span>
+                            </dd>
+                        </div>
+                    @endif
                     <div class="flex justify-between gap-3">
                         <dt class="text-[var(--muted)]">IP de origen</dt>
                         <dd class="text-right text-[var(--text)]">{{ $recepcion->ip_remitente ?? '—' }}</dd>

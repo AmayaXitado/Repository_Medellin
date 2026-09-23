@@ -16,6 +16,7 @@ use App\Services\ContextoDependencia;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Throwable;
@@ -107,6 +108,11 @@ class EnvioPublicoController extends Controller
             'nombres' => ['nullable', 'array', 'max:'.self::MAXIMO_ARCHIVOS],
             'nombres.*' => ['nullable', 'string', 'max:255'],
 
+            // Igual de paralela: cuándo se tomó cada foto, según el teléfono
+            // que la estampó. Va vacía para los PDF y para lo de galería.
+            'tomadas' => ['nullable', 'array', 'max:'.self::MAXIMO_ARCHIVOS],
+            'tomadas.*' => ['nullable', 'date'],
+
             'mensaje' => ['nullable', 'string', 'max:1000'],
         ], [
             'remitente_nombre.required' => 'Escribe tu nombre para que sepan de quién viene.',
@@ -143,6 +149,24 @@ class EnvioPublicoController extends Controller
                 foreach ($archivos as $indice => $archivo) {
                     $nombreOriginal = Str::limit($archivo->getClientOriginalName(), 250, '');
 
+                    // El reloj de quien envía puede estar en cualquier huso o
+                    // sencillamente mal: se acepta como dato declarado, pero
+                    // una fecha futura no se guarda, que no es una foto de hoy.
+                    // El teléfono manda el instante con su huso (normalmente en
+                    // UTC): hay que traerlo al de la aplicación o la ficha diría
+                    // las cinco de la tarde para una foto de mediodía.
+                    $tomada = rescue(
+                        fn () => ($cruda = $datos['tomadas'][$indice] ?? null)
+                            ? Carbon::parse($cruda)->setTimezone(config('app.timezone'))
+                            : null,
+                        null,
+                        false,
+                    );
+
+                    if ($tomada?->isFuture()) {
+                        $tomada = null;
+                    }
+
                     // El documento se crea en el acto, en la carpeta del
                     // enlace: ya no hay bandeja donde esperar a nadie.
                     $documento = Documento::create([
@@ -150,6 +174,9 @@ class EnvioPublicoController extends Controller
                         'carpeta_id' => $enlace->carpeta_id,
                         'nombre' => $this->nombrePara($datos, $archivo, $indice),
                         'descripcion' => $datos['mensaje'] ?? null,
+                        // Una foto sí tiene fecha propia: la del momento en
+                        // que se tomó, que es la que lleva estampada.
+                        'fecha_documento' => $tomada?->toDateString(),
                         // Nadie de dentro lo subió: queda huérfano de autor a
                         // propósito, y quién lo mandó se lee en la recepción.
                         'creado_por' => null,
@@ -176,6 +203,7 @@ class EnvioPublicoController extends Controller
                         'remitente_email' => $datos['remitente_email'],
                         'remitente_entidad' => $datos['remitente_entidad'],
                         'nodo' => $datos['nodo'],
+                        'tomada_at' => $tomada,
 
                         // El archivo vive bajo documentos/, con su versión.
                         // Aquí se apunta la misma ruta para no perder la

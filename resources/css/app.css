@@ -309,3 +309,53 @@
         display: none;
     }
 }
+
+/*
+ * Fichas de datos (documento, quien lo envió, enlace): una etiqueta a la
+ * izquierda y su valor a la derecha.
+ *
+ * Un correo, el nombre de un archivo o una huella SHA-256 no traen espacios
+ * por donde partir, y en un teléfono se salían de la tarjeta. Se arregla aquí
+ * y no fila por fila porque el problema es de todas las fichas, y una regla se
+ * mantiene sola mientras que treinta clases repetidas no.
+ */
+
+/*
+ * La etiqueta nunca se parte por la mitad: «Cor/reo» no se lee. Se queda
+ * entera y no cede ancho; quien se acomoda es el valor.
+ */
+dl dt {
+    flex-shrink: 0;
+    overflow-wrap: normal;
+}
+
+/*
+ * min-width: 0 es la mitad que suele faltar: sin ella un hijo flex se niega a
+ * encogerse por debajo de su contenido y el corte de palabra no llega a
+ * aplicarse nunca.
+ */
+dl dd {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+/*
+ * Por debajo de sm no hay ancho para dos columnas: un correo largo quedaría
+ * partido en tiras contra el borde. La fila pasa a bloque —etiqueta encima,
+ * valor debajo y a todo lo ancho—, que es como se leen estas fichas en un
+ * teléfono.
+ *
+ * El selector lleva .text-right a propósito: esa utilidad de Tailwind es la
+ * que hay que ganar, y una clase solo la gana otra clase.
+ */
+@media (width < 40rem) {
+    dl > div {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.125rem;
+    }
+
+    dl dd.text-right {
+        text-align: left;
+    }
+}

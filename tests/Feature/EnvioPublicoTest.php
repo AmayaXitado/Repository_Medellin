@@ -81,6 +81,46 @@ class EnvioPublicoTest extends TestCase
     |--------------------------------------------------------------------------
     */
 
+    public function test_la_fecha_estampada_en_la_foto_queda_en_la_recepcion_y_en_el_documento(): void
+    {
+        [, $token] = $this->enlace();
+
+        // Como lo manda el teléfono: el mismo instante, expresado en UTC.
+        $tomada = now()->subMinutes(20);
+        $comoLoMandaElTelefono = $tomada->copy()->utc()->toIso8601String();
+
+        $this->post(route('envio.recibir', ['token' => $token]), $this->envio([
+            'tomadas' => [$comoLoMandaElTelefono],
+        ]))->assertRedirect(route('envio.confirmacion'));
+
+        $recepcion = Recepcion::withoutGlobalScopes()->sole();
+
+        // Al segundo: la columna no guarda fracciones, el sello tampoco las muestra.
+        $this->assertSame(
+            $tomada->format('Y-m-d H:i:s'),
+            $recepcion->tomada_at->format('Y-m-d H:i:s'),
+        );
+
+        // La foto sí tiene fecha propia, y es la única que puede tener un
+        // documento que nadie de dentro fechó a mano.
+        $this->assertSame(
+            $tomada->toDateString(),
+            Documento::withoutGlobalScopes()->sole()->fecha_documento->toDateString(),
+        );
+    }
+
+    public function test_un_reloj_adelantado_no_fecha_el_documento_en_el_futuro(): void
+    {
+        [, $token] = $this->enlace();
+
+        $this->post(route('envio.recibir', ['token' => $token]), $this->envio([
+            'tomadas' => [now()->addYear()->toIso8601String()],
+        ]))->assertRedirect(route('envio.confirmacion'));
+
+        $this->assertNull(Recepcion::withoutGlobalScopes()->sole()->tomada_at);
+        $this->assertNull(Documento::withoutGlobalScopes()->sole()->fecha_documento);
+    }
+
     public function test_un_enlace_vigente_muestra_el_formulario_sin_pedir_sesion(): void
     {
         [, $token] = $this->enlace();
