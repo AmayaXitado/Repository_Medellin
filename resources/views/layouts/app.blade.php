@@ -11,9 +11,21 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('titulo', 'Repositorio') · {{ config('app.name') }}</title>
+    {{--
+        Solo el nombre: la pestaña se lee de un vistazo aunque haya diez
+        abiertas. La sección en la que se está ya la dice el menú lateral, y
+        repetirla aquí solo servía para que el nombre quedara cortado.
+    --}}
+    <title>{{ config('app.name') }}</title>
 
-    <link rel="icon" type="image/png" href="{{ asset('img/favicon-cem.png') }}">
+    {{--
+        El SVG manda donde se entiende: es nítido en cualquier tamaño y pesa
+        menos de 1 KB. El PNG queda de respaldo para lo que no lo soporta
+        —Safari viejo— y como icono de pantalla de inicio en iOS, que solo
+        acepta mapa de bits.
+    --}}
+    <link rel="icon" type="image/svg+xml" href="{{ asset('img/favicon.svg') }}">
+    <link rel="icon" type="image/png" href="{{ asset('img/favicon-cem.png') }}" sizes="any">
     <link rel="apple-touch-icon" href="{{ asset('img/favicon-cem.png') }}">
 
     {{--

@@ -9,3 +9,7 @@
 /.github export-ignore
 CHANGELOG.md export-ignore
 .styleci.yml export-ignore
+
+# Proteger la automatización para que no se mezcle entre ramas
+.github/workflows/deploy.yml merge=ours
+
