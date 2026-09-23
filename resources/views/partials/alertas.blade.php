@@ -5,10 +5,14 @@
 --}}
 @if(session('exito') || session('error'))
     {{--
-        El mensaje viaja en atributos y el script solo los lee: dentro de un
-        <script> el editor analiza el contenido como JavaScript, y las
+        El mensaje viaja en atributos y el script solo los lee: el editor
+        analiza el contenido de un bloque de JavaScript como tal, y las
         directivas de Blade lo hacen fallar. Además así el texto lo escapa el
-        atributo, sin depender de que nadie recuerde usar @json.
+        atributo, sin depender de que nadie recuerde escaparlo a mano.
+
+        Ojo con esto mismo en los comentarios: una etiqueta de apertura escrita
+        aquí dentro el editor la toma por marcado de verdad y a partir de ella
+        lee el resto del archivo como JavaScript.
     --}}
     <div data-toast-inicial
          @if(session('exito')) data-exito="{{ session('exito') }}" @endif
