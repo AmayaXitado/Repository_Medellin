@@ -137,7 +137,7 @@ $enlaces['auditoria.index'] = [
                 </span>
             </a>
 
-            <form method="POST" action="{{ route('logout') }}">
+            <form method="POST" action="{{ route('logout') }}" data-sonido-al-enviar="salida">
                 @csrf
                 <button class="foco rounded-md p-2 text-[var(--muted)] hover:bg-[var(--card-soft)] hover:text-[var(--text)]" title="Salir">
                     <svg class="size-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">

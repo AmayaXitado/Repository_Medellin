@@ -115,6 +115,7 @@ Route::middleware(['auth', 'usuario.activo', 'dependencia'])->group(function () 
     */
 
     Route::get('notificaciones', [NotificacionController::class, 'index'])->name('notificaciones.index');
+    Route::get('notificaciones/contador', [NotificacionController::class, 'contador'])->name('notificaciones.contador');
     Route::post('notificaciones/leidas', [NotificacionController::class, 'marcarLeidas'])->name('notificaciones.leidas');
     Route::patch('notificaciones/{notificacion}', [NotificacionController::class, 'marcarLeida'])->name('notificaciones.leida');
 

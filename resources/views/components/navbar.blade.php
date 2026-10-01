@@ -26,18 +26,24 @@
         <span class="sr-only" id="menu-boton-texto">Mostrar menú</span>
     </button>
 
+    {{--
+        La campana se mantiene al día sola: resources/js/notificaciones.js
+        pregunta cada tanto cuántas hay sin leer y, si suben, suena y
+        actualiza la insignia. Por eso la insignia existe siempre, aunque
+        esté en cero: el script solo la enciende.
+    --}}
     <a href="{{ route('notificaciones.index') }}" title="Notificaciones"
+       data-notificaciones="{{ route('notificaciones.contador') }}" data-sin-leer="{{ $notificacionesSinLeer }}"
        class="foco relative ml-auto flex shrink-0 rounded-md p-2 text-[var(--muted)] hover:bg-[var(--card-soft)]">
         <svg class="size-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round"
                   d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"/>
         </svg>
-        @if($notificacionesSinLeer > 0)
-            <span class="absolute -right-0.5 -top-0.5 flex min-w-[1.1rem] items-center justify-center rounded-full bg-[var(--danger)] px-1 text-[10px] font-bold leading-tight text-white">
-                {{ $notificacionesSinLeer > 99 ? '99+' : $notificacionesSinLeer }}
-            </span>
-        @endif
-        <span class="sr-only">Notificaciones{{ $notificacionesSinLeer > 0 ? " ({$notificacionesSinLeer} sin leer)" : '' }}</span>
+        <span data-insignia
+              class="{{ $notificacionesSinLeer > 0 ? 'flex' : 'hidden' }} absolute -right-0.5 -top-0.5 min-w-[1.1rem] items-center justify-center rounded-full bg-[var(--danger)] px-1 text-[10px] font-bold leading-tight text-white">
+            {{ $notificacionesSinLeer > 99 ? '99+' : $notificacionesSinLeer }}
+        </span>
+        <span class="sr-only" data-insignia-texto>Notificaciones{{ $notificacionesSinLeer > 0 ? " ({$notificacionesSinLeer} sin leer)" : '' }}</span>
     </a>
 
     {{--
@@ -105,7 +111,7 @@
                 Mi perfil
             </a>
 
-            <form method="POST" action="{{ route('logout') }}">
+            <form method="POST" action="{{ route('logout') }}" data-sonido-al-enviar="salida">
                 @csrf
                 <button class="block w-full px-4 py-2 text-left text-sm text-[var(--text)] hover:bg-[var(--card-soft)]">
                     Cerrar sesión

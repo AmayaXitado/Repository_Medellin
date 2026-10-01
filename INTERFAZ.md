@@ -142,6 +142,60 @@ oscuro. Lo cubre `MenuLateralTemporalTest`.
 
 ---
 
+## Sonidos de confirmación
+
+`resources/js/sonidos.js`, con los archivos en `public/media/`. Cada sonido se nombra
+por lo que significa, así que cambiar uno es cambiar una línea de esa lista.
+
+| Cuándo | Archivo | Dónde se engancha |
+|---|---|---|
+| Toast de confirmación | `terminalCommandSucceeded.mp3` | `toasts.js` |
+| Toast de error | `error.mp3` | `toasts.js` |
+| Cerrar sesión | `responseReceived1.mp3` | `data-sonido-al-enviar="salida"` en el formulario |
+| Documentos recibidos por un enlace | `taskCompleted.mp3` | `data-sonido-al-cargar="envio"` en la pantalla de recibido |
+| Llega una notificación con la página abierta | `codeActionApplied.mp3` | `notificaciones.js` |
+
+- **Cerrar sesión espera a que el sonido termine** (1,2 s, con tope de 1,5 s) antes de
+  enviar el formulario. Si se enviara en el acto, la página siguiente cortaría el sonido.
+- **El del envío suena en la pantalla de llegada, no al pulsar «Enviar».** Así solo
+  suena si el servidor aceptó los archivos.
+- **El navegador puede silenciarlos.** Ninguno deja sonar a una página que la persona
+  todavía no ha tocado; Safari en iPhone es el más estricto. Los toasts y la pantalla
+  de recibido aparecen justo después de cargar una página, así que ahí pueden no
+  sonar. Se sigue en silencio, sin error: el sonido acompaña a algo que ya se ve, nunca
+  lo sustituye.
+
+### La campana, al día sin recargar
+
+Antes el contador de la campana solo se calculaba al cargar la página: una
+notificación que llegaba con la página abierta no tenía un momento de «llegada» en
+el que sonar. Ahora `resources/js/notificaciones.js` pregunta cada 30 segundos a
+`GET /notificaciones/contador` cuántas hay sin leer. Si suben, suena y la insignia se
+actualiza; si bajan (se leyeron en otra pestaña), se actualiza en silencio.
+
+- **Deja de preguntar tras 15 minutos sin que nadie toque la página.** Cada consulta
+  renueva la sesión; sin ese tope, una pestaña abierta en un equipo abandonado seguiría
+  con la sesión iniciada para siempre.
+- **No pregunta con la pestaña en segundo plano**, y al volver a ella pregunta en el acto.
+- Se pregunta en vez de recibir avisos empujados (websockets): para una campana basta,
+  y no obliga a montar un servicio más.
+- Una notificación que llega **entre dos páginas** no suena: aparece en la insignia al
+  cargar la siguiente.
+
+### El desbloqueo en iPhone
+
+El sonido de una notificación lo dispara un temporizador, no un toque, y Safari en
+iPhone no deja sonar a nada que no venga de un toque. Al primer toque en la página, cada
+sonido se reproduce en silencio y se detiene; desde ahí iPhone los deja sonar. Por eso
+`sonidos.js` reutiliza un único elemento de audio por sonido: lo que se desbloquea es el
+elemento, no la página.
+
+Si ese primer toque es justo «Cerrar sesión», el desbloqueo no pausa el sonido de
+salida que se acaba de pedir. Comprobado en Chrome con un clic real.
+
+Para que otro formulario suene al enviarse basta el atributo; para otra pantalla al
+abrirse, lo mismo. No hace falta tocar JavaScript.
+
 ## Cómo medir el desbordamiento sin ojo clínico
 
 Adivinar cuál elemento saca el scroll cuesta más que medirlo. Con Chrome sin interfaz
