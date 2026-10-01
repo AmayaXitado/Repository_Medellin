@@ -12,6 +12,7 @@ use App\Models\Recepcion;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
@@ -107,6 +108,47 @@ class EnvioPublicoTest extends TestCase
             $tomada->toDateString(),
             Documento::withoutGlobalScopes()->sole()->fecha_documento->toDateString(),
         );
+    }
+
+    public function test_una_foto_por_encima_del_tope_de_resolucion_se_rechaza_y_no_deja_nada(): void
+    {
+        // El tope va bajito para no tener que fabricar una imagen enorme.
+        config(['repositorio.imagen.lado_maximo_servidor' => 1000]);
+        [, $token] = $this->enlace();
+
+        $this->post(route('envio.recibir', ['token' => $token]), $this->envio([
+            'archivo' => [UploadedFile::fake()->image('panoramica.jpg', 1500, 400)],
+        ]))->assertSessionHasErrors('archivo.0');
+
+        $this->assertSame(0, Documento::withoutGlobalScopes()->count());
+        $this->assertSame(0, Recepcion::withoutGlobalScopes()->count());
+    }
+
+    public function test_el_tope_de_resolucion_mide_el_lado_largo_sea_cual_sea(): void
+    {
+        config(['repositorio.imagen.lado_maximo_servidor' => 1000]);
+        [, $token] = $this->enlace();
+
+        // Vertical: el lado largo es el alto, y es el que se pasa.
+        $this->post(route('envio.recibir', ['token' => $token]), $this->envio([
+            'archivo' => [UploadedFile::fake()->image('vertical.jpg', 400, 1500)],
+        ]))->assertSessionHasErrors('archivo.0');
+    }
+
+    public function test_una_foto_dentro_del_tope_y_un_pdf_no_se_tocan(): void
+    {
+        config(['repositorio.imagen.lado_maximo_servidor' => 1000]);
+        [, $token] = $this->enlace();
+
+        // Un PDF no tiene «lado»: el tope no puede aplicarle nada.
+        $this->post(route('envio.recibir', ['token' => $token]), $this->envio([
+            'archivo' => [
+                UploadedFile::fake()->image('cabe.jpg', 900, 600),
+                $this->archivoPdf('acta.pdf'),
+            ],
+        ]))->assertRedirect(route('envio.confirmacion'));
+
+        $this->assertSame(2, Documento::withoutGlobalScopes()->count());
     }
 
     public function test_un_reloj_adelantado_no_fecha_el_documento_en_el_futuro(): void

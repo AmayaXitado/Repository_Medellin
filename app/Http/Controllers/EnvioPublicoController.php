@@ -16,6 +16,7 @@ use App\Services\ContextoDependencia;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -102,6 +103,7 @@ class EnvioPublicoController extends Controller
                 'max:'.config('repositorio.tamano_maximo_kb'),
                 'mimes:'.implode(',', config('repositorio.formatos.publico.extensiones')),
                 'mimetypes:'.implode(',', config('repositorio.formatos.publico.mimetypes')),
+                $this->ladoMaximoDeImagen(),
             ],
 
             // Lista paralela a archivo[]: casan por posición.
@@ -267,6 +269,33 @@ class EnvioPublicoController extends Controller
      * El nombre de cada documento: el que se escribió en su tarjeta, o el
      * del archivo sin extensión si se dejó en blanco.
      */
+    /**
+     * Rechaza las imágenes con un lado por encima del tope. Solo mira
+     * imágenes: un PDF no tiene «lado» y pasa de largo.
+     *
+     * getimagesize lee la cabecera y no decodifica la imagen, así que sirve
+     * también contra una que declare 60 000 px por lado para agotar la
+     * memoria del servidor al abrirla.
+     */
+    protected function ladoMaximoDeImagen(): \Closure
+    {
+        return function (string $atributo, mixed $archivo, \Closure $fallar): void {
+            if (! $archivo instanceof UploadedFile || ! str_starts_with((string) $archivo->getMimeType(), 'image/')) {
+                return;
+            }
+
+            [$ancho, $alto] = @getimagesize($archivo->getRealPath()) ?: [0, 0];
+            $tope = config('repositorio.imagen.lado_maximo_servidor');
+
+            if (max($ancho, $alto) > $tope) {
+                $posicion = (int) Str::afterLast($atributo, '.') + 1;
+
+                $fallar("La imagen del archivo {$posicion} mide {$ancho} × {$alto} px y el máximo es {$tope} px por lado. "
+                    .'Reduce su tamaño o envíala con menos resolución.');
+            }
+        };
+    }
+
     protected function nombrePara(array $datos, $archivo, int $indice): string
     {
         $deLaTarjeta = trim((string) ($datos['nombres'][$indice] ?? ''));

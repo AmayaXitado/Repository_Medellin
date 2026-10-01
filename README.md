@@ -89,6 +89,7 @@ abstraído (migrable a S3 o MinIO cambiando una línea de configuración).
 | [`INICIO.md`](INICIO.md) | Puesta en marcha, decisiones de arquitectura y mapa del código |
 | [`MANUAL-USUARIO.md`](MANUAL-USUARIO.md) | Cómo se usa, para quien no programa |
 | [`GEOLOCALIZACION.md`](GEOLOCALIZACION.md) | Las fotos con hora y lugar: cómo funcionan y hasta dónde sirven como prueba |
+| [`RESOLUCION-FOTOS.md`](RESOLUCION-FOTOS.md) | Tamaño y calidad de las fotos de evidencia, en lenguaje no técnico |
 | [`INTERFAZ.md`](INTERFAZ.md) | Convenciones de la capa visual: responsivo, avatar por rol, cabecera |
 
 ---

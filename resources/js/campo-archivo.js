@@ -8,7 +8,7 @@
  * una tarjeta por archivo con su nombre editable, y la X para quitarlo.
  */
 
-import { estamparFoto, prepararUbicacion } from './foto-georreferencial';
+import { estamparFoto, hayUbicacion, pedirUbicacionAhora, prepararUbicacion, reducirImagen, ubicacionResuelta } from './foto-georreferencial';
 
 function pesoLegible(bytes) {
     const unidades = ['B', 'KB', 'MB', 'GB'];
@@ -68,6 +68,10 @@ function iniciar(campo) {
     const varios = entrada.multiple;
     const maximo = parseInt(campo.dataset.maximo || '0', 10) || Infinity;
     const formatos = entrada.getAttribute('accept');
+
+    // Solo el formulario con cámara lo trae: es la puerta pública, la que
+    // recibe lo que sea que dispare el teléfono de quien envía.
+    const ladoMaximo = parseInt(campo.dataset.ladoMaximo || '0', 10) || 0;
 
     // 'hidden' y 'flex' o 'grid' son la misma propiedad: se alternan a la
     // vez y a mano, en vez de confiar en cuál gana en la hoja de estilos.
@@ -275,18 +279,46 @@ function iniciar(campo) {
     const botonCamara = campo.querySelector('[data-camara]');
 
     // Donde se pueden tomar fotos, el permiso de ubicación se pide al entrar
-    // y se vuelve a intentar al tocar el botón, por si el navegador exige un
-    // gesto de la persona para mostrar el aviso.
+    // y se vuelve a pedir al tocar el botón.
     if (botonCamara) {
         const avisoUbicacion = campo.querySelector('[data-aviso-ubicacion]');
 
-        prepararUbicacion((texto) => {
-            if (avisoUbicacion) {
-                avisoUbicacion.textContent = texto;
-                avisoUbicacion.classList.toggle('hidden', texto === '');
+        const mostrarAviso = (texto, bien = false) => {
+            if (!avisoUbicacion) {
+                return;
             }
-        });
+
+            avisoUbicacion.textContent = texto;
+            avisoUbicacion.classList.toggle('hidden', texto === '');
+            avisoUbicacion.classList.toggle('text-[var(--warning)]', !bien);
+            avisoUbicacion.classList.toggle('text-[var(--success)]', bien);
+        };
+
+        prepararUbicacion((texto) => mostrarAviso(texto));
+
+        // Primero la ubicación, después la cámara. Pedidas a la vez, en iPhone
+        // la cámara se abre encima del aviso de permiso y el aviso se pierde:
+        // Opera ni siquiera llegaba a mostrarlo. Así que, mientras la persona
+        // no haya contestado, el primer toque solo pide el permiso.
+        //
+        // Solo el primero: el siguiente abre la cámara pase lo que pase. Si
+        // la ubicación tarda o no llega, la foto se toma igual, sin ella.
+        let permisoYaPedido = false;
+
         botonCamara.addEventListener('click', () => {
+            if (!ubicacionResuelta() && !permisoYaPedido) {
+                permisoYaPedido = true;
+                mostrarAviso('Antes de la foto, permite el acceso a tu ubicación para que quede registrada. Después vuelve a tocar «Tomar foto».');
+
+                pedirUbicacionAhora().then(() => {
+                    if (hayUbicacion()) {
+                        mostrarAviso('Ubicación lista. Ya puedes tocar «Tomar foto».', true);
+                    }
+                });
+
+                return;
+            }
+
             prepararUbicacion();
             abrir(true);
         });
@@ -301,17 +333,25 @@ function iniciar(campo) {
         const deCamara = ultimaFueCamara;
         ultimaFueCamara = false;
 
-        if (!deCamara) {
+        if (!deCamara && !ladoMaximo) {
             agregar(entrada.files);
             return;
         }
 
-        const estampadas = await Promise.all(
-            Array.from(entrada.files).map((archivo) =>
-                archivo.type.startsWith('image/') ? estamparFoto(archivo) : archivo),
+        // Cámara o galería, la imagen sale con el lado largo dentro del tope.
+        // La de cámara además se estampa; la de galería no, que no es
+        // evidencia de dónde ni cuándo se tomó.
+        const procesadas = await Promise.all(
+            Array.from(entrada.files).map((archivo) => {
+                if (!archivo.type.startsWith('image/')) {
+                    return archivo;
+                }
+
+                return deCamara ? estamparFoto(archivo, ladoMaximo) : reducirImagen(archivo, ladoMaximo);
+            }),
         );
 
-        agregar(estampadas, true);
+        agregar(procesadas, deCamara);
     });
 
     if (zona) {

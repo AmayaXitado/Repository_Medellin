@@ -1,5 +1,6 @@
 import { Notyf } from 'notyf';
 import 'notyf/notyf.min.css';
+import { reproducir } from './sonidos';
 
 /**
  * Los colores se pasan como la variable CSS en crudo, no como el valor ya
@@ -30,7 +31,9 @@ window.mostrarToast = (tipo, mensaje) => {
 
     if (tipo === 'error') {
         notyf.error(mensaje);
+        reproducir('error');
     } else {
         notyf.success(mensaje);
+        reproducir('exito');
     }
 };

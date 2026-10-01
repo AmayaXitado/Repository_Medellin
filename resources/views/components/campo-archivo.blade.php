@@ -30,7 +30,8 @@
 
 <div data-campo-archivo
      @if($autocompletar) data-autocompletar="{{ $autocompletar }}" @endif
-     @if($maximo) data-maximo="{{ $maximo }}" @endif>
+     @if($maximo) data-maximo="{{ $maximo }}" @endif
+     @if($camara) data-lado-maximo="{{ config('repositorio.imagen.lado_maximo') }}" @endif>
 
     {{--
         El campo nativo. Nunca se quita del HTML: si el script no corre, esto
