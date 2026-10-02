@@ -42,6 +42,28 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Resolución de las fotografías
+    |--------------------------------------------------------------------------
+    | El peso no basta como tope: una foto de 48 MP cabe en 25 MB y aun así se
+    | come el disco, la memoria del navegador y el ancho de banda de quien
+    | revisa. Son dos límites a propósito, no uno:
+    |
+    | - 'lado_maximo': a cuánto se reduce el lado largo EN EL NAVEGADOR, antes
+    |   de enviar. 2560 px son unos 220 puntos por pulgada sobre una hoja
+    |   carta: se lee la letra pequeña de un acta y pesa una fracción.
+    | - 'lado_maximo_servidor': lo que el servidor deja pasar. Es la frontera
+    |   de verdad —el navegador es de quien envía y puede saltárselo—, y va por
+    |   encima del anterior a propósito: si el script no corrió, una foto
+    |   normal de 12 MP (4000 px) entra igual; la de 48 MP no.
+    */
+
+    'imagen' => [
+        'lado_maximo' => (int) env('REPOSITORIO_IMAGEN_LADO_MAXIMO', 2560),
+        'lado_maximo_servidor' => (int) env('REPOSITORIO_IMAGEN_LADO_MAXIMO_SERVIDOR', 4096),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Formatos aceptados
     |--------------------------------------------------------------------------
     | Los dos caminos de carga no reciben lo mismo, y por eso son dos listas:

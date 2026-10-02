@@ -3,7 +3,7 @@
 
 @section('contenido')
 
-<div class="text-center">
+<div class="text-center" data-sonido-al-cargar="envio">
     <div class="mx-auto flex size-14 items-center justify-center rounded-full bg-success-soft">
         <svg class="size-7 text-[var(--success)]" fill="none" stroke="currentColor"
              stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true">

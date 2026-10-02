@@ -6,7 +6,6 @@ use App\Enums\RolDependencia;
 use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Password;
 
 class GuardarUsuarioRequest extends FormRequest
 {
@@ -21,13 +20,6 @@ class GuardarUsuarioRequest extends FormRequest
             $this->merge(['documento' => User::normalizarDocumento($this->input('documento'))]);
         }
 
-        if ($this->filled('usuario')) {
-            $this->merge(['usuario' => User::normalizarUsuario($this->input('usuario'))]);
-        } elseif ($this->has('usuario')) {
-            // Vacío es «sin alias», no cadena vacía: si no, dos personas sin
-            // usuario chocarían contra el índice único.
-            $this->merge(['usuario' => null]);
-        }
     }
 
     public function rules(): array
@@ -55,16 +47,6 @@ class GuardarUsuarioRequest extends FormRequest
             // acceso a esta. Quien impide de verdad las cuentas duplicadas es
             // el índice único de la tabla, del que se encarga el controlador.
             'documento' => $documento,
-
-            // Alias de acceso, opcional. Debe llevar alguna letra: así nunca
-            // puede parecerse a una cédula, que es lo otro que se teclea en
-            // el mismo campo al entrar.
-            'usuario' => [
-                'nullable', 'string', 'min:3', 'max:50',
-                'regex:/^[a-z0-9._-]+$/', 'regex:/[a-z]/',
-                Rule::unique('users', 'usuario')->ignore($usuario?->id),
-                $this->noChocarConOtraColumna('documento', $usuario?->id),
-            ],
 
             // El correo no interviene en el ingreso: lo que empareja esta
             // cuenta con su identidad en Authentik es el documento. Queda
@@ -98,7 +80,7 @@ class GuardarUsuarioRequest extends FormRequest
                 // a quien ya la tiene no se le toca la suya.
                 $esEdicion || $this->cuentaExistente() !== null ? 'nullable' : 'required',
                 'confirmed',
-                Password::min(8),
+                'string', 'max:255',
             ],
         ];
     }

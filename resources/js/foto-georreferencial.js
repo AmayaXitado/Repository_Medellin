@@ -28,6 +28,10 @@ function cargarImagen(src) {
  */
 let ultima = null;
 let pedido = null;
+
+// Si la persona ya contestó al permiso, con un sí o con un no. Mientras no
+// haya contestado, abrir la cámara taparía el aviso.
+let respondida = false;
 let avisar = () => {};
 
 // Sin esto la foto solo decía «Ubicación no disponible» y nadie sabía por qué.
@@ -37,8 +41,15 @@ const esIphone = /iPhone|iPad|iPod/.test(navigator.userAgent)
     || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); // iPad que se anuncia como Mac
 const esAndroid = /Android/.test(navigator.userAgent);
 
-const COMO_PERMITIR = esIphone
-    ? 'toca «aA» en la barra de direcciones → Configuración del sitio web → Ubicación → Permitir. Revisa también Ajustes → Privacidad → Localización.'
+// En iPhone todos los navegadores usan el motor de Safari, pero cada app
+// tiene su propio permiso de ubicación ante el sistema. Si Opera o Chrome no
+// lo tienen, la página no puede ni preguntar: se arregla en Ajustes del iPhone.
+const esSafari = esIphone && !/CriOS|FxiOS|EdgiOS|OPiOS|OPT\/|OPX\/|GSA\//.test(navigator.userAgent);
+
+const COMO_PERMITIR = esSafari
+    ? 'toca «aA» en la barra de direcciones → Configuración del sitio web → Ubicación → Permitir. Revisa también Ajustes → Privacidad → Localización → Sitios web de Safari.'
+    : esIphone
+        ? 'abre Ajustes del iPhone → busca este navegador (Opera, Chrome…) → Ubicación → «Al usar la app». Revisa también Ajustes → Privacidad → Localización, que esté activada.'
     : esAndroid
         ? 'toca el candado junto a la dirección de la página → Permisos → Ubicación → Permitir. Si no aparece, revisa Ajustes del teléfono → Aplicaciones → tu navegador → Permisos → Ubicación.'
         : 'haz clic en el ícono junto a la dirección de la página y permite la ubicación.';
@@ -110,11 +121,13 @@ function pedir() {
         navigator.geolocation.getCurrentPosition(
             (pos) => {
                 ultima = pos.coords;
+                respondida = true;
                 ciudadPedida ??= resolverCiudad(pos.coords);
                 avisar('');
                 resolve();
             },
             (error) => {
+                respondida = true;
                 avisar(MOTIVOS[error.code] ?? MOTIVOS[2]);
                 resolve();
             },
@@ -134,6 +147,22 @@ export function prepararUbicacion(alAvisar) {
     pedido ??= pedir();
 }
 
+/** Si ya se sabe qué pasa con la ubicación: hay coordenadas, o la persona contestó que no. */
+export function ubicacionResuelta() {
+    return ultima !== null || respondida;
+}
+
+export function hayUbicacion() {
+    return ultima !== null;
+}
+
+/** Pide la ubicación y espera la respuesta (o el tope de 20 s del propio navegador). */
+export function pedirUbicacionAhora() {
+    prepararUbicacion();
+
+    return pedido ?? Promise.resolve();
+}
+
 function ubicacion() {
     if (ultima) {
         return Promise.resolve(ultima);
@@ -148,7 +177,59 @@ function ubicacion() {
     return Promise.race([pedido, new Promise((r) => setTimeout(r, 20000))]).then(() => ultima);
 }
 
-export async function estamparFoto(archivo) {
+/** Cuánto hay que encoger una imagen para que su lado largo no pase del tope (1 = déjala como está). */
+export function escalaPara(ancho, alto, ladoMaximo) {
+    const lado = Math.max(ancho, alto);
+
+    return ladoMaximo > 0 && lado > ladoMaximo ? ladoMaximo / lado : 1;
+}
+
+function aLienzo(imagen, escala) {
+    const lienzo = document.createElement('canvas');
+    lienzo.width = Math.round(imagen.width * escala);
+    lienzo.height = Math.round(imagen.height * escala);
+    lienzo.getContext('2d').drawImage(imagen, 0, 0, lienzo.width, lienzo.height);
+
+    return lienzo;
+}
+
+/**
+ * Del lienzo a un archivo. Todo sale JPEG salvo el PNG, que se queda PNG para
+ * no tragarse la transparencia: toBlob devuelve PNG cuando no sabe hacer el
+ * formato pedido (WebP en Safari), y una foto en PNG pesa varias veces más.
+ */
+async function aArchivo(lienzo, original, lastModified = original.lastModified) {
+    const tipo = original.type === 'image/png' ? 'image/png' : 'image/jpeg';
+    const blob = await new Promise((resolve) => lienzo.toBlob(resolve, tipo, 0.92));
+
+    if (!blob) {
+        return original;
+    }
+
+    // El servidor guarda la extensión que dice el nombre: si el contenido pasó
+    // a JPEG, el nombre tiene que decirlo también.
+    const nombre = tipo === original.type ? original.name : original.name.replace(/\.[^.]+$/, '') + '.jpg';
+
+    return new File([blob], nombre, { type: blob.type, lastModified });
+}
+
+/**
+ * Reduce una imagen de galería al tope de resolución. Lo que ya cabe se
+ * devuelve intacto: recomprimir un JPEG que no hace falta tocar solo lo
+ * degrada.
+ */
+export async function reducirImagen(archivo, ladoMaximo) {
+    if (!ladoMaximo || !archivo.type.startsWith('image/')) {
+        return archivo;
+    }
+
+    const imagen = await cargarImagen(URL.createObjectURL(archivo));
+    const escala = imagen ? escalaPara(imagen.width, imagen.height, ladoMaximo) : 1;
+
+    return escala === 1 ? archivo : aArchivo(aLienzo(imagen, escala), archivo);
+}
+
+export async function estamparFoto(archivo, ladoMaximo = 0) {
     const [foto, coords, ...logos] = await Promise.all([
         cargarImagen(URL.createObjectURL(archivo)),
         ubicacion(),
@@ -159,17 +240,17 @@ export async function estamparFoto(archivo) {
         return archivo;
     }
 
-    const lienzo = document.createElement('canvas');
-    lienzo.width = foto.width;
-    lienzo.height = foto.height;
+    // Se dibuja ya a la escala del tope, y la franja se calcula sobre el
+    // lienzo reducido: así el sello conserva siempre las mismas proporciones.
+    const lienzo = aLienzo(foto, escalaPara(foto.width, foto.height, ladoMaximo));
     const ctx = lienzo.getContext('2d');
-    ctx.drawImage(foto, 0, 0);
+    const { width: ancho, height: alto } = lienzo;
 
-    const alturaFranja = Math.max(70, Math.round(foto.height * 0.12));
-    const y0 = foto.height - alturaFranja;
+    const alturaFranja = Math.max(70, Math.round(alto * 0.12));
+    const y0 = alto - alturaFranja;
 
     ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
-    ctx.fillRect(0, y0, foto.width, alturaFranja);
+    ctx.fillRect(0, y0, ancho, alturaFranja);
 
     const logoAlto = alturaFranja * 0.6;
     let x = 16;
@@ -189,14 +270,30 @@ export async function estamparFoto(archivo) {
         ? [nombreLugar, `${coords.latitude.toFixed(6)}, ${coords.longitude.toFixed(6)}`].filter(Boolean).join(' · ')
         : 'Ubicación no disponible';
 
+    // El texto va a la derecha y solo puede ocupar lo que dejan los logos. En
+    // una foto angosta, o con un municipio de nombre largo, a su tamaño normal
+    // se montaba encima de ellos: si no cabe, la letra se achica hasta caber.
+    const margen = 16;
+    const disponible = ancho - margen - (x + margen);
+
+    const escribir = (texto, peso, proporcion, altura) => {
+        let tamano = Math.round(alturaFranja * proporcion);
+        ctx.font = `${peso} ${tamano}px sans-serif`;
+
+        const medido = ctx.measureText(texto).width;
+
+        if (medido > disponible && disponible > 0) {
+            tamano = Math.max(8, Math.floor(tamano * disponible / medido));
+            ctx.font = `${peso} ${tamano}px sans-serif`;
+        }
+
+        ctx.fillText(texto, ancho - margen, y0 + alturaFranja * altura);
+    };
+
     ctx.textAlign = 'right';
     ctx.fillStyle = '#fff';
-    ctx.font = `bold ${Math.round(alturaFranja * 0.26)}px sans-serif`;
-    ctx.fillText(hora, foto.width - 16, y0 + alturaFranja * 0.45);
-    ctx.font = `${Math.round(alturaFranja * 0.22)}px sans-serif`;
-    ctx.fillText(lugar, foto.width - 16, y0 + alturaFranja * 0.78);
+    escribir(hora, 'bold', 0.26, 0.45);
+    escribir(lugar, 'normal', 0.22, 0.78);
 
-    const blob = await new Promise((resolve) => lienzo.toBlob(resolve, archivo.type || 'image/jpeg', 0.92));
-
-    return blob ? new File([blob], archivo.name, { type: blob.type, lastModified: momento.getTime() }) : archivo;
+    return aArchivo(lienzo, archivo, momento.getTime());
 }

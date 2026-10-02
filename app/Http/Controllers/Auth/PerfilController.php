@@ -9,7 +9,6 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
 
 class PerfilController extends Controller
@@ -35,7 +34,7 @@ class PerfilController extends Controller
     {
         $datos = $request->validate([
             'password_actual' => ['required', 'current_password'],
-            'password' => ['required', 'confirmed', Password::min(8)->letters()->numbers()],
+            'password' => ['required', 'confirmed', 'string', 'max:255'],
         ], attributes: [
             'password_actual' => 'contraseña actual',
             'password' => 'contraseña nueva',
