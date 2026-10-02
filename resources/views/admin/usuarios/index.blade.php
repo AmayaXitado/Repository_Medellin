@@ -36,7 +36,7 @@
                     <td class="px-4 py-3">
                         <p class="font-medium text-[var(--text)]">{{ $usuario->name }}</p>
                         <p class="text-xs text-[var(--muted)]">
-                            {{ $usuario->documento ?? 'Sin documento' }}{{ $usuario->usuario ? ' · '.$usuario->usuario : '' }}{{ $usuario->cargo ? ' · '.$usuario->cargo : '' }}
+                            {{ $usuario->documento ?? 'Sin documento' }}{{ $usuario->cargo ? ' · '.$usuario->cargo : '' }}
                         </p>
                     </td>
                     <td class="px-4 py-3">
