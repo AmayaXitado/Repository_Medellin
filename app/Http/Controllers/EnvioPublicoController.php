@@ -32,10 +32,10 @@ use Throwable;
 class EnvioPublicoController extends Controller
 {
     /**
-     * Tope por envío. Es bajo a propósito: esto entra al repositorio sin que
-     * nadie lo revise antes, así que no conviene abrir la puerta a lotes.
+     * Tope por envío. Va a la par de max_file_uploads en php.ini: si PHP
+     * permite menos, descarta los sobrantes en silencio antes de llegar aquí.
      */
-    public const MAXIMO_ARCHIVOS = 3;
+    public const MAXIMO_ARCHIVOS = 50;
 
     public function __construct(
         protected AlmacenamientoDocumentos $almacenamiento,
@@ -108,7 +108,7 @@ class EnvioPublicoController extends Controller
 
             // Lista paralela a archivo[]: casan por posición.
             'nombres' => ['nullable', 'array', 'max:'.self::MAXIMO_ARCHIVOS],
-            'nombres.*' => ['nullable', 'string', 'max:255'],
+            'nombres.*' => ['nullable', 'string', 'max:5000'],
 
             // Igual de paralela: cuándo se tomó cada foto, según el teléfono
             // que la estampó. Va vacía para los PDF y para lo de galería.
@@ -301,12 +301,12 @@ class EnvioPublicoController extends Controller
         $deLaTarjeta = trim((string) ($datos['nombres'][$indice] ?? ''));
 
         if ($deLaTarjeta !== '') {
-            return Str::limit($deLaTarjeta, 250, '');
+            return Str::squish($deLaTarjeta);
         }
 
         $delArchivo = trim(pathinfo($archivo->getClientOriginalName(), PATHINFO_FILENAME));
 
-        return Str::limit($delArchivo ?: 'Documento recibido', 250, '');
+        return $delArchivo ?: 'Documento recibido';
     }
 
     public function confirmacion(Request $peticion): Response

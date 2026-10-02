@@ -87,6 +87,8 @@ Route::middleware(['auth', 'usuario.activo', 'dependencia'])->group(function () 
         ->name('documentos.versiones.descargar');
     Route::get('documentos/{documento}/previsualizar', [DescargaController::class, 'previsualizar'])
         ->name('documentos.previsualizar');
+    Route::post('documentos/{documento}/copiar', [DocumentoController::class, 'copiar'])
+        ->name('documentos.copiar');
 
     Route::patch('documentos/{documento}/inactivar', [DocumentoEstadoController::class, 'inactivar'])
         ->name('documentos.inactivar');
@@ -103,6 +105,8 @@ Route::middleware(['auth', 'usuario.activo', 'dependencia'])->group(function () 
     Route::post('carpetas', [CarpetaController::class, 'store'])->name('carpetas.store');
     Route::get('carpetas/{carpeta}/editar', [CarpetaController::class, 'edit'])->name('carpetas.edit');
     Route::put('carpetas/{carpeta}', [CarpetaController::class, 'update'])->name('carpetas.update');
+    Route::get('carpetas/{carpeta}/descargar', [DescargaController::class, 'descargarCarpeta'])
+        ->name('carpetas.descargar');
     Route::patch('carpetas/{carpeta}/inactivar', [CarpetaController::class, 'inactivar'])
         ->name('carpetas.inactivar');
     Route::patch('carpetas/{carpeta}/reactivar', [CarpetaController::class, 'reactivar'])

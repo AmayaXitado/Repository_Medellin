@@ -9,7 +9,7 @@ use Illuminate\Validation\Rule;
 class GuardarDocumentoRequest extends FormRequest
 {
     /** Tope de una sola carga. Cada archivo se convierte en un documento. */
-    public const MAXIMO_ARCHIVOS = 20;
+    public const MAXIMO_ARCHIVOS = 50;
 
     /** @return list<\Illuminate\Http\UploadedFile> */
     public function archivos(): array
@@ -26,12 +26,12 @@ class GuardarDocumentoRequest extends FormRequest
             // Al subir, el nombre de cada documento viaja en nombres[], una
             // caja por tarjeta. El campo suelto sigue aceptándose como
             // respaldo para una carga de un solo archivo.
-            'nombre' => [$this->routeIs('documentos.store') ? 'nullable' : 'required', 'string', 'max:255'],
+            'nombre' => [$this->routeIs('documentos.store') ? 'nullable' : 'required', 'string', 'max:5000'],
 
             // Lista paralela a archivo[]: casan por posición. Vacío vale,
             // y entonces el documento toma el nombre de su archivo.
             'nombres' => ['nullable', 'array', 'max:'.self::MAXIMO_ARCHIVOS],
-            'nombres.*' => ['nullable', 'string', 'max:255'],
+            'nombres.*' => ['nullable', 'string', 'max:5000'],
             'descripcion' => ['nullable', 'string', 'max:2000'],
             'fecha_documento' => ['nullable', 'date', 'before_or_equal:today'],
             'carpeta_id' => [

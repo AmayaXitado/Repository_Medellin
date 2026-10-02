@@ -140,9 +140,10 @@
                         lista paralela a archivo[]: el orden de las tarjetas
                         es el mismo, así que en el servidor casan por posición.
                     --}}
-                    <input type="text" name="nombres[]" data-nombre-campo maxlength="255"
-                           placeholder="Nombre del documento"
-                           class="liquid-input w-full py-2 text-sm">
+                    {{-- Textarea que crece con el texto: un nombre largo se lee entero. --}}
+                    <textarea name="nombres[]" data-nombre-campo rows="1"
+                              placeholder="Nombre del documento"
+                              class="liquid-input w-full resize-none py-2 text-sm [field-sizing:content]"></textarea>
                     <span data-archivo class="mt-1 block truncate text-xs text-[var(--muted)]"></span>
                 @else
                     <span data-archivo class="block truncate text-sm font-medium text-[var(--text)]"></span>
