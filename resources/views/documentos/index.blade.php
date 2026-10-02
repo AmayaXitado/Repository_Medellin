@@ -16,6 +16,13 @@
     </nav>
 
     <div class="ml-auto flex flex-wrap gap-2">
+        @if($carpetaActual)
+            <a href="{{ route('carpetas.descargar', $carpetaActual) }}"
+               class="rounded-md bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--text)] ring-1 ring-[var(--border)] hover:bg-[var(--card-soft)]">
+                Descargar carpeta
+            </a>
+        @endif
+
         {{--
             Solo dentro de una carpeta: un enlace de carga tiene que decir a
             dónde entrega, y en la raíz no hay carpeta que poner.
@@ -129,7 +136,7 @@
                 <tr class="{{ $documento->activo ? '' : 'bg-danger-soft' }}">
                     <td class="px-4 py-3">
                         <a href="{{ route('documentos.show', $documento) }}"
-                           class="font-medium text-[var(--text)] hover:text-[var(--primary)]">
+                           class="break-words font-medium text-[var(--text)] hover:text-[var(--primary)]">
                             {{ $documento->nombre }}
                         </a>
                         @unless($documento->activo)

@@ -55,6 +55,33 @@ class AlmacenamientoDocumentos
         ]);
     }
 
+    /**
+     * Copia física de una versión como versión 1 de otro documento. Archivo
+     * propio y no la misma ruta: inactivar o versionar uno no toca al otro.
+     */
+    public function copiarVersion(DocumentoVersion $origen, Documento $destino, string $comentario): DocumentoVersion
+    {
+        $ruta = sprintf(
+            'documentos/%d/%d/v1-%s.%s',
+            $destino->dependencia_id, $destino->id, Str::uuid(), $origen->extension ?: 'bin',
+        );
+
+        abort_unless(Storage::disk($this->disco())->copy($origen->ruta, $ruta), 500, 'No se pudo copiar el archivo.');
+
+        return $destino->versiones()->create([
+            'numero' => 1,
+            'ruta' => $ruta,
+            'comentario' => $comentario,
+            'subido_por' => auth()->id(),
+        ] + $origen->only(['nombre_original', 'extension', 'mime', 'tamano', 'hash']));
+    }
+
+    /** Ruta absoluta en disco, para armar el ZIP sin cargar el archivo en memoria. */
+    public function rutaLocal(DocumentoVersion $version): string
+    {
+        return Storage::disk($this->disco())->path($version->ruta);
+    }
+
     public function eliminar(string $ruta): void
     {
         Storage::disk($this->disco())->delete($ruta);
