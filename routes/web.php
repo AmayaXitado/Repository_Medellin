@@ -107,6 +107,7 @@ Route::middleware(['auth', 'usuario.activo', 'dependencia'])->group(function () 
     Route::put('carpetas/{carpeta}', [CarpetaController::class, 'update'])->name('carpetas.update');
     Route::get('carpetas/{carpeta}/descargar', [DescargaController::class, 'descargarCarpeta'])
         ->name('carpetas.descargar');
+    Route::post('carpetas/{carpeta}/copiar', [CarpetaController::class, 'copiar'])->name('carpetas.copiar');
     Route::patch('carpetas/{carpeta}/inactivar', [CarpetaController::class, 'inactivar'])
         ->name('carpetas.inactivar');
     Route::patch('carpetas/{carpeta}/reactivar', [CarpetaController::class, 'reactivar'])

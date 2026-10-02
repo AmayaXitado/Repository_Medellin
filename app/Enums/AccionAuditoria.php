@@ -18,6 +18,7 @@ enum AccionAuditoria: string
     case CarpetaInactivada = 'carpeta.inactivada';
     case CarpetaReactivada = 'carpeta.reactivada';
     case CarpetaDescargada = 'carpeta.descargada';
+    case CarpetaCopiada = 'carpeta.copiada';
     case UsuarioCreado = 'usuario.creado';
     case UsuarioActualizado = 'usuario.actualizado';
     case UsuarioDesactivado = 'usuario.desactivado';
@@ -48,6 +49,7 @@ enum AccionAuditoria: string
             self::CarpetaInactivada => 'Inactivó una carpeta',
             self::CarpetaReactivada => 'Reactivó una carpeta',
             self::CarpetaDescargada => 'Descargó una carpeta completa',
+            self::CarpetaCopiada => 'Copió una carpeta',
             self::UsuarioCreado => 'Creó un usuario',
             self::UsuarioActualizado => 'Actualizó un usuario',
             self::UsuarioDesactivado => 'Desactivó un usuario',

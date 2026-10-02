@@ -48,6 +48,28 @@
     </form>
 
     @if($carpeta->activa)
+        <form method="POST" action="{{ route('carpetas.copiar', $carpeta) }}"
+              class="space-y-3 rounded-lg bg-[var(--card)] p-4 ring-1 ring-[var(--border)]">
+            @csrf
+            <label for="copiar_carpeta" class="{{ $etiqueta }}">Copiar esta carpeta a</label>
+            <p class="text-xs text-[var(--muted)]">
+                Crea una copia con sus subcarpetas y documentos activos. La original no cambia.
+                Para moverla, usa «Dentro de» arriba.
+            </p>
+            <div class="flex gap-2">
+                <select id="copiar_carpeta" name="carpeta_id" class="liquid-input min-w-0 flex-1 text-sm">
+                    <option value="">Raíz de la dependencia</option>
+                    @foreach($carpetas as $opcion)
+                        <option value="{{ $opcion->id }}">{{ $opcion->nombre }}</option>
+                    @endforeach
+                </select>
+                <button class="rounded-md bg-[var(--card)] px-4 py-2 text-sm font-medium text-[var(--text)] ring-1 ring-[var(--border)] hover:bg-[var(--card-soft)]">
+                    Copiar
+                </button>
+            </div>
+            @error('carpeta_id')<p class="text-xs text-[var(--danger)]">{{ $message }}</p>@enderror
+        </form>
+
         @can('inactivar', $carpeta)
             <form method="POST" action="{{ route('carpetas.inactivar', $carpeta) }}"
                   class="rounded-lg bg-[var(--card)] p-4 ring-1 ring-[var(--border)]">

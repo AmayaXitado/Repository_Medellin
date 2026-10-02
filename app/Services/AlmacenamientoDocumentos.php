@@ -76,6 +76,31 @@ class AlmacenamientoDocumentos
         ] + $origen->only(['nombre_original', 'extension', 'mime', 'tamano', 'hash']));
     }
 
+    /**
+     * Documento nuevo en otra carpeta con los mismos datos, etiquetas y un
+     * archivo propio. Null si el original no tiene archivo en disco.
+     */
+    public function copiarDocumento(Documento $documento, ?int $carpetaId): ?Documento
+    {
+        $origen = $documento->versionActual;
+
+        if ($origen === null || ! $this->existe($origen)) {
+            return null;
+        }
+
+        $copia = Documento::create([
+            'carpeta_id' => $carpetaId,
+            'creado_por' => auth()->id(),
+            'actualizado_por' => auth()->id(),
+        ] + $documento->only(['dependencia_id', 'tipo_documento_id', 'nombre', 'descripcion', 'fecha_documento']));
+
+        $copia->etiquetas()->sync($documento->etiquetas()->pluck('etiquetas.id'));
+
+        $this->copiarVersion($origen, $copia, "Copia de «{$documento->nombre}»");
+
+        return $copia;
+    }
+
     /** Ruta absoluta en disco, para armar el ZIP sin cargar el archivo en memoria. */
     public function rutaLocal(DocumentoVersion $version): string
     {
