@@ -83,7 +83,7 @@
                 <label for="password" class="block text-sm font-medium text-[var(--text)]">Contraseña nueva</label>
                 <input id="password" name="password" type="password" required
                        class="liquid-input mt-1 w-full text-sm">
-                <p class="mt-1 text-xs text-[var(--muted)]">Mínimo 8 caracteres, con letras y números.</p>
+                <p class="mt-1 text-xs text-[var(--muted)]">Sin largo mínimo ni más reglas.</p>
             </div>
 
             <div>

@@ -14,25 +14,14 @@
     </div>
 
     <div>
-        <label for="documento" class="{{ $etiqueta }}">Documento de identidad *</label>
+        <label for="documento" class="{{ $etiqueta }}">Número de documento (será el usuario) *</label>
         <input id="documento" name="documento" type="text" inputmode="numeric" required maxlength="30"
                value="{{ old('documento', $u?->documento) }}" class="{{ $campo }}">
         <p class="{{ $ayuda }}">
-            Es con lo que la persona inicia sesión, aquí y en Authentik. Sin puntos ni espacios.
+            <strong>El número de documento es el usuario</strong> con el que la persona inicia sesión, aquí y en Authentik. Sin puntos ni espacios.
             @if($esNuevo)
                 Si ya tiene cuenta en otra dependencia, se le suma el acceso a esta.
             @endif
-        </p>
-    </div>
-
-    <div>
-        <label for="usuario" class="{{ $etiqueta }}">
-            Nombre de usuario <span class="font-normal text-[var(--muted)]">(opcional)</span>
-        </label>
-        <input id="usuario" name="usuario" type="text" maxlength="50" autocapitalize="none"
-               placeholder="jamaya" value="{{ old('usuario', $u?->usuario) }}" class="{{ $campo }}">
-        <p class="{{ $ayuda }}">
-            Atajo para no teclear la cédula al entrar. Minúsculas, sin espacios, con alguna letra.
         </p>
     </div>
 
@@ -77,7 +66,7 @@
         </label>
         <input id="password" name="password" type="password" {{ $esNuevo ? 'required' : '' }} class="{{ $campo }}">
         <p class="{{ $ayuda }}">
-            Mínimo 8 caracteres, sin más reglas. Es la que la persona usará para entrar:
+            Sin largo mínimo ni más reglas (puede ser el documento menos el último dígito). Es la que la persona usará para entrar:
             se crea igual en Authentik. Entrégasela por un medio seguro.
         </p>
     </div>

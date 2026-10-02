@@ -74,7 +74,6 @@ class UsuarioController extends Controller
         // dando de alta el mismo documento a la vez.
         $usuario = User::firstOrCreate(['documento' => $request->string('documento')->toString()], [
             'name' => $request->string('name')->toString(),
-            'usuario' => $request->input('usuario'),
             'email' => $request->input('email'),
             'cargo' => $request->input('cargo'),
             'activo' => $request->boolean('activo', true),
@@ -144,7 +143,6 @@ class UsuarioController extends Controller
         $usuario->fill([
             'name' => $request->string('name'),
             'documento' => $request->string('documento'),
-            'usuario' => $request->input('usuario'),
             'email' => $request->input('email'),
             'cargo' => $request->input('cargo'),
             'activo' => $request->boolean('activo'),

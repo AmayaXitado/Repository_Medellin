@@ -120,19 +120,19 @@ class AuthentikProvisioningTest extends TestCase
         }
     }
 
-    /** Ocho caracteres siguen siendo el piso. */
-    public function test_una_clave_demasiado_corta_se_rechaza(): void
+    /** La clave es la cédula sin el último dígito: no hay largo mínimo. */
+    public function test_una_clave_corta_se_acepta(): void
     {
         $this->authentikContesta();
 
         $datos = $this->altaDe('1122334455');
-        $datos['password'] = $datos['password_confirmation'] = 'corta';
+        $datos['password'] = $datos['password_confirmation'] = '1234';
 
         $this->actingAs($this->admin)
             ->post(route('admin.usuarios.store'), $datos)
-            ->assertSessionHasErrors('password');
+            ->assertSessionHasNoErrors();
 
-        $this->assertDatabaseMissing('users', ['documento' => '1122334455']);
+        $this->assertDatabaseHas('users', ['documento' => '1122334455']);
     }
 
     /**
