@@ -216,22 +216,10 @@ class DocumentoController extends Controller
             ],
         ]);
 
-        $origen = $documento->versionActual;
-        abort_if($origen === null || ! $this->almacenamiento->existe($origen), 404, 'El documento no tiene archivo.');
-
-        $copia = DB::transaction(function () use ($documento, $origen, $datos, $request) {
-            $copia = Documento::create([
-                'carpeta_id' => $datos['carpeta_id'] ?? null,
-                'creado_por' => $request->user()->id,
-                'actualizado_por' => $request->user()->id,
-            ] + $documento->only(['dependencia_id', 'tipo_documento_id', 'nombre', 'descripcion', 'fecha_documento']));
-
-            $copia->etiquetas()->sync($documento->etiquetas()->pluck('etiquetas.id'));
-
-            $this->almacenamiento->copiarVersion($origen, $copia, "Copia de «{$documento->nombre}»");
-
-            return $copia;
-        });
+        $copia = DB::transaction(
+            fn () => $this->almacenamiento->copiarDocumento($documento, $datos['carpeta_id'] ?? null)
+        );
+        abort_if($copia === null, 404, 'El documento no tiene archivo.');
 
         $destino = $copia->carpeta?->nombre ?? 'Raíz';
 

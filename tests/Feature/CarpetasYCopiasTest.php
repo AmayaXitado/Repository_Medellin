@@ -107,6 +107,69 @@ class CarpetasYCopiasTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_edicion_copia_una_carpeta_con_todo_su_arbol(): void
+    {
+        $origen = $this->carpeta('Evidencias');
+        $sub = $this->carpeta('Octubre', $origen);
+        $destino = $this->carpeta('Archivo 2026');
+
+        $this->subir('Acta', $origen);
+        $this->subir('Foto', $sub);
+        $this->subir('Retirado', $origen)->update(['activo' => false]);
+
+        $this->actingAs($this->editor)
+            ->post(route('carpetas.copiar', $origen), ['carpeta_id' => $destino->id])
+            ->assertSessionHasNoErrors();
+
+        $copia = Carpeta::where('carpeta_id', $destino->id)->sole();
+        $subCopia = Carpeta::where('carpeta_id', $copia->id)->sole();
+
+        $this->assertSame('Evidencias', $copia->nombre);
+        $this->assertSame('Octubre', $subCopia->nombre);
+        $this->assertSame(['Acta'], Documento::where('carpeta_id', $copia->id)->pluck('nombre')->all());
+        $this->assertSame(['Foto'], Documento::where('carpeta_id', $subCopia->id)->pluck('nombre')->all());
+        $this->assertSame(2, Documento::where('carpeta_id', $origen->id)->count());
+    }
+
+    public function test_no_se_copia_una_carpeta_dentro_de_si_misma(): void
+    {
+        $origen = $this->carpeta('Evidencias');
+        $sub = $this->carpeta('Octubre', $origen);
+
+        $this->actingAs($this->editor)
+            ->post(route('carpetas.copiar', $origen), ['carpeta_id' => $sub->id])
+            ->assertSessionHasErrors('carpeta_id');
+
+        $this->assertSame(2, Carpeta::count());
+    }
+
+    public function test_edicion_mueve_una_carpeta(): void
+    {
+        $carpeta = $this->carpeta('Evidencias');
+        $destino = $this->carpeta('Archivo');
+
+        $this->actingAs($this->editor)
+            ->put(route('carpetas.update', $carpeta), ['nombre' => 'Evidencias', 'carpeta_id' => $destino->id])
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame($destino->id, $carpeta->fresh()->carpeta_id);
+    }
+
+    public function test_edicion_genera_enlaces_y_revoca_solo_los_suyos(): void
+    {
+        $carpeta = $this->carpeta('Evidencias');
+        $otroEditor = $this->usuarioCon(RolDependencia::Edicion, $this->dependencia);
+
+        $this->actingAs($this->editor)
+            ->post(route('admin.enlaces.store'), ['carpeta_id' => $carpeta->id])
+            ->assertSessionHasNoErrors();
+
+        $enlace = \App\Models\EnlaceCarga::sole();
+
+        $this->assertFalse($otroEditor->can('revocar', $enlace));
+        $this->assertTrue($this->editor->can('revocar', $enlace));
+    }
+
     public function test_la_carpeta_se_descarga_en_zip_con_subcarpetas_y_sin_lo_inactivo(): void
     {
         $raiz = $this->carpeta('Evidencias');

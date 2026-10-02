@@ -5,10 +5,13 @@ namespace App\Http\Controllers;
 use App\Enums\AccionAuditoria;
 use App\Http\Requests\GuardarCarpetaRequest;
 use App\Models\Carpeta;
+use App\Services\AlmacenamientoDocumentos;
 use App\Services\Auditor;
 use App\Services\ContextoDependencia;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class CarpetaController extends Controller
@@ -16,6 +19,7 @@ class CarpetaController extends Controller
     public function __construct(
         protected ContextoDependencia $contexto,
         protected Auditor $auditor,
+        protected AlmacenamientoDocumentos $almacenamiento,
     ) {
     }
 
@@ -92,6 +96,74 @@ class CarpetaController extends Controller
         return redirect()
             ->route('documentos.index', ['carpeta' => $carpeta->uuid])
             ->with('exito', 'Carpeta actualizada.');
+    }
+
+    /**
+     * Copia la carpeta con sus subcarpetas y documentos dentro de otra. Solo
+     * lo activo: copiar no resucita lo que alguien retiró de la vista.
+     */
+    public function copiar(Request $request, Carpeta $carpeta): RedirectResponse
+    {
+        $this->authorize('view', $carpeta);
+        $this->authorize('update', $carpeta);
+
+        $datos = $request->validate([
+            'carpeta_id' => [
+                'nullable',
+                Rule::exists('carpetas', 'id')
+                    ->where('dependencia_id', $carpeta->dependencia_id)
+                    ->where('activa', true),
+            ],
+        ]);
+
+        $destino = isset($datos['carpeta_id']) ? Carpeta::find($datos['carpeta_id']) : null;
+
+        // Dentro de sí misma se copiaría sin fin.
+        if ($destino && ($destino->id === $carpeta->id || $carpeta->esAncestroDe($destino))) {
+            return back()->withErrors([
+                'carpeta_id' => 'No puedes copiar una carpeta dentro de sí misma o de una de sus subcarpetas.',
+            ]);
+        }
+
+        [$copia, $documentos] = DB::transaction(function () use ($carpeta, $destino) {
+            $documentos = 0;
+            $raiz = null;
+            $pendientes = [[$carpeta, $destino?->id]];
+
+            while ($pendientes) {
+                [$original, $padreId] = array_shift($pendientes);
+
+                $nueva = Carpeta::create([
+                    'dependencia_id' => $original->dependencia_id,
+                    'carpeta_id' => $padreId,
+                    'nombre' => $original->nombre,
+                    'descripcion' => $original->descripcion,
+                    'creado_por' => auth()->id(),
+                ]);
+                $raiz ??= $nueva;
+
+                foreach ($original->documentos()->activos()->with('versionActual', 'etiquetas')->get() as $documento) {
+                    $documentos += $this->almacenamiento->copiarDocumento($documento, $nueva->id) ? 1 : 0;
+                }
+
+                foreach ($original->hijas()->activas()->get() as $hija) {
+                    $pendientes[] = [$hija, $nueva->id];
+                }
+            }
+
+            return [$raiz, $documentos];
+        });
+
+        $this->auditor->registrar(
+            AccionAuditoria::CarpetaCopiada,
+            $copia,
+            "Copió la carpeta «{$carpeta->nombre}» a «".($destino?->nombre ?? 'Raíz')."» ({$documentos} documentos)",
+            ['origen' => $carpeta->uuid, 'documentos' => $documentos],
+        );
+
+        return redirect()
+            ->route('documentos.index', ['carpeta' => $copia->uuid])
+            ->with('exito', "Carpeta copiada con {$documentos} documentos.");
     }
 
     public function inactivar(Carpeta $carpeta): RedirectResponse
