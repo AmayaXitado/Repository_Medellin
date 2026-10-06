@@ -301,13 +301,13 @@ class EnvioPublicoTest extends TestCase
         $this->assertDatabaseMissing('documentos', ['nombre' => 'IMG_20260908']);
     }
 
-    public function test_no_se_pueden_enviar_mas_de_tres_archivos(): void
+    public function test_no_se_pueden_enviar_mas_archivos_que_el_tope(): void
     {
         [, $token] = $this->enlace();
 
         $archivos = [];
 
-        for ($i = 1; $i <= 4; $i++) {
+        for ($i = 1; $i <= \App\Http\Controllers\EnvioPublicoController::MAXIMO_ARCHIVOS + 1; $i++) {
             $archivos[] = $this->archivoPdf("acta-{$i}.pdf", "CONTENIDO {$i}");
         }
 

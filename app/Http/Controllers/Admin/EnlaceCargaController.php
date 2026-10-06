@@ -55,7 +55,8 @@ class EnlaceCargaController extends Controller
 
         $usuario = auth()->user();
         $dependencia = $this->contexto->requerida();
-        $esAdministrador = $usuario->puedeGestionarEn($dependencia->id);
+        // Edición elige cualquier carpeta; un líder sin rol de edición, solo las suyas.
+        $esAdministrador = $usuario->puedeEditarEn($dependencia->id);
 
         $carpetas = $esAdministrador
             ? Carpeta::activas()->orderBy('nombre')->get()

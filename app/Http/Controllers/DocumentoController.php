@@ -15,6 +15,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class DocumentoController extends Controller
@@ -167,10 +168,10 @@ class DocumentoController extends Controller
         $deLaTarjeta = trim((string) $request->input('nombres.'.$indice, ''));
 
         if ($deLaTarjeta !== '') {
-            return Str::limit($deLaTarjeta, 250, '');
+            return Str::squish($deLaTarjeta);
         }
 
-        $suelto = $request->string('nombre')->trim()->toString();
+        $suelto = $request->string('nombre')->squish()->toString();
 
         if ($total === 1 && $suelto !== '') {
             return $suelto;
@@ -178,7 +179,7 @@ class DocumentoController extends Controller
 
         $delArchivo = trim(pathinfo($archivo->getClientOriginalName(), PATHINFO_FILENAME));
 
-        return Str::limit($delArchivo ?: 'Documento sin nombre', 250, '');
+        return $delArchivo ?: 'Documento sin nombre';
     }
 
     public function show(Documento $documento): View
@@ -193,7 +194,45 @@ class DocumentoController extends Controller
         return view('documentos.show', [
             'documento' => $documento,
             'migas' => $documento->carpeta?->ruta() ?? collect(),
+            'carpetas' => Carpeta::activas()->orderBy('nombre')->get(),
         ]);
+    }
+
+    /**
+     * Copia el documento a otra carpeta: documento nuevo con su propio
+     * archivo y sus mismos datos. El original no se toca.
+     */
+    public function copiar(Request $request, Documento $documento): RedirectResponse
+    {
+        // Copiar es crear contenido: lo mismo que editar.
+        $this->authorize('update', $documento);
+
+        $datos = $request->validate([
+            'carpeta_id' => [
+                'nullable',
+                Rule::exists('carpetas', 'id')
+                    ->where('dependencia_id', $documento->dependencia_id)
+                    ->where('activa', true),
+            ],
+        ]);
+
+        $copia = DB::transaction(
+            fn () => $this->almacenamiento->copiarDocumento($documento, $datos['carpeta_id'] ?? null)
+        );
+        abort_if($copia === null, 404, 'El documento no tiene archivo.');
+
+        $destino = $copia->carpeta?->nombre ?? 'Raíz';
+
+        $this->auditor->registrar(
+            AccionAuditoria::DocumentoCopiado,
+            $copia,
+            "Copió «{$documento->nombre}» a la carpeta «{$destino}»",
+            ['origen' => $documento->uuid],
+        );
+
+        return redirect()
+            ->route('documentos.show', $copia)
+            ->with('exito', "Copiado a «{$destino}».");
     }
 
     public function edit(Documento $documento): View
@@ -214,7 +253,7 @@ class DocumentoController extends Controller
         $documento->update([
             'carpeta_id' => $request->input('carpeta_id'),
             'tipo_documento_id' => $request->input('tipo_documento_id'),
-            'nombre' => $request->string('nombre'),
+            'nombre' => $request->string('nombre')->squish(),
             'descripcion' => $request->input('descripcion'),
             'fecha_documento' => $request->input('fecha_documento'),
             'actualizado_por' => $request->user()->id,

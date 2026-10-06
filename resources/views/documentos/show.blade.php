@@ -40,7 +40,7 @@
         <div class="rounded-lg bg-[var(--card)] p-6 ring-1 ring-[var(--border)]">
             <div class="flex flex-wrap items-start gap-4">
                 <div class="min-w-0 flex-1">
-                    <h1 class="text-lg font-semibold text-[var(--text)]">{{ $documento->nombre }}</h1>
+                    <h1 class="break-words text-lg font-semibold text-[var(--text)]">{{ $documento->nombre }}</h1>
                     @if($documento->descripcion)
                         <p class="mt-2 whitespace-pre-line text-sm text-[var(--muted)]">{{ $documento->descripcion }}</p>
                     @endif
@@ -69,6 +69,24 @@
                     @endcan
                 </div>
             </div>
+
+            @can('update', $documento)
+                <form method="POST" action="{{ route('documentos.copiar', $documento) }}"
+                      class="mt-4 flex flex-wrap items-center gap-2 border-t border-[var(--border)] pt-4">
+                    @csrf
+                    <label for="copiar_carpeta" class="text-sm text-[var(--muted)]">Copiar a</label>
+                    <select id="copiar_carpeta" name="carpeta_id" class="liquid-input min-w-0 flex-1 text-sm">
+                        <option value="">Raíz</option>
+                        @foreach($carpetas as $carpeta)
+                            <option value="{{ $carpeta->id }}" @selected($carpeta->id === $documento->carpeta_id)>{{ $carpeta->nombre }}</option>
+                        @endforeach
+                    </select>
+                    <button class="rounded-md bg-[var(--card)] px-4 py-2 text-sm font-medium text-[var(--text)] ring-1 ring-[var(--border)] hover:bg-[var(--card-soft)]">
+                        Copiar
+                    </button>
+                    @error('carpeta_id')<p class="w-full text-xs text-[var(--danger)]">{{ $message }}</p>@enderror
+                </form>
+            @endcan
         </div>
 
         @if($documento->esPrevisualizable())

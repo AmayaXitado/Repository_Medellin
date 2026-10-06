@@ -41,7 +41,8 @@ class GuardarEnlaceCargaRequest extends FormRequest
     {
         $dependenciaId = app(ContextoDependencia::class)->id();
         $usuario = $this->user();
-        $esAdministrador = $usuario->puedeGestionarEn($dependenciaId);
+        // Edición ya puede subir a cualquier carpeta: delegar hacia ella no le da más.
+        $puedeCualquierCarpeta = $usuario->puedeEditarEn($dependenciaId);
 
         return [
             /*
@@ -53,8 +54,8 @@ class GuardarEnlaceCargaRequest extends FormRequest
             'carpeta_id' => [
                 'required',
                 Rule::exists('carpetas', 'id')->where('dependencia_id', $dependenciaId),
-                function (string $atributo, mixed $valor, Closure $falla) use ($esAdministrador, $usuario) {
-                    if ($esAdministrador || $valor === null) {
+                function (string $atributo, mixed $valor, Closure $falla) use ($puedeCualquierCarpeta, $usuario) {
+                    if ($puedeCualquierCarpeta || $valor === null) {
                         return;
                     }
 

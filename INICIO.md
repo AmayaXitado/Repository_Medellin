@@ -178,5 +178,7 @@ entre ellas con el selector del encabezado.
 - [ ] `APP_DEBUG=false` y `APP_ENV=production`
 - [ ] Ajustar `upload_max_filesize` y `post_max_size` en `php.ini` para que
       acompañen a `tamano_maximo_kb` (25 MB por defecto)
+- [ ] `max_file_uploads = 50` en `php.ini` (tandas de hasta 50 archivos) y,
+      si hay nginx, `client_max_body_size` acorde a 50 × 25 MB
 - [ ] Respaldos de la base de datos y de `storage/app/private/documentos`
 - [ ] Pruebas automatizadas de las Policies (es donde vive la seguridad)

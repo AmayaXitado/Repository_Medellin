@@ -7,10 +7,11 @@ use App\Models\User;
 use App\Services\ContextoDependencia;
 
 /**
- * Quién crea y revoca enlaces de carga: administración de la dependencia,
- * o un líder pero solo para las carpetas que lidera y solo los enlaces que
- * él mismo creó. Ser líder no da visibilidad sobre el resto de la
- * dependencia — por eso esto vive aparte de RolDependencia.
+ * Quién crea y revoca enlaces de carga: Coordinación y Administración, todos
+ * los de la dependencia; Edición, hacia cualquier carpeta pero solo los
+ * enlaces que creó; y un líder, solo hacia las carpetas que lidera y solo
+ * los suyos. Ser líder no da visibilidad sobre el resto de la dependencia —
+ * por eso esto vive aparte de RolDependencia.
  */
 class EnlaceCargaPolicy
 {
@@ -18,7 +19,7 @@ class EnlaceCargaPolicy
     {
         $dependenciaId = app(ContextoDependencia::class)->id();
 
-        return $usuario->puedeGestionarEn($dependenciaId) || $this->lideraAlgunaCarpeta($usuario, $dependenciaId);
+        return $usuario->puedeEditarEn($dependenciaId) || $this->lideraAlgunaCarpeta($usuario, $dependenciaId);
     }
 
     public function create(User $usuario): bool
@@ -35,16 +36,19 @@ class EnlaceCargaPolicy
         return $usuario->puedeGestionarEn($enlace->dependencia_id) || $enlace->creado_por === $usuario->id;
     }
 
-    /** Administración revoca cualquiera de su dependencia; un líder solo los suyos. */
+    /** Coordinación revoca cualquiera de su dependencia; Edición y un líder, solo los suyos. */
     public function revocar(User $usuario, EnlaceCarga $enlace): bool
     {
         if ($usuario->puedeGestionarEn($enlace->dependencia_id)) {
             return true;
         }
 
-        return $enlace->creado_por === $usuario->id
-            && $enlace->carpeta_id !== null
-            && $usuario->lideraCarpeta($enlace->carpeta);
+        if ($enlace->creado_por !== $usuario->id) {
+            return false;
+        }
+
+        return $usuario->puedeEditarEn($enlace->dependencia_id)
+            || ($enlace->carpeta_id !== null && $usuario->lideraCarpeta($enlace->carpeta));
     }
 
     /**

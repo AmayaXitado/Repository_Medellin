@@ -13,9 +13,8 @@
     @if($conNombre)
         <div class="sm:col-span-2">
             <label for="nombre" class="{{ $etiqueta }}">Nombre del documento *</label>
-            <input id="nombre" name="nombre" type="text" required maxlength="255"
-                   value="{{ old('nombre', $doc?->nombre) }}"
-                   class="{{ $campo }}">
+            <textarea id="nombre" name="nombre" required rows="1"
+                      class="{{ $campo }} resize-none [field-sizing:content]">{{ old('nombre', $doc?->nombre) }}</textarea>
         </div>
     @endif
 
