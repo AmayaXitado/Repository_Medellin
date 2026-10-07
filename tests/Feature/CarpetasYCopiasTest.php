@@ -170,6 +170,48 @@ class CarpetasYCopiasTest extends TestCase
         $this->assertTrue($this->editor->can('revocar', $enlace));
     }
 
+    public function test_lo_que_cuelga_de_una_carpeta_inactiva_no_sale_ni_buscandolo(): void
+    {
+        $raiz = $this->carpeta('Evidencias');
+        $sub = $this->carpeta('Octubre', $raiz);
+        $documento = $this->subir('Acta secreta', $sub);
+        $raiz->update(['activa' => false]);
+
+        $this->actingAs($this->editor)
+            ->get(route('documentos.index', ['q' => 'secreta']))
+            ->assertOk()
+            ->assertDontSee('Acta secreta');
+
+        $this->actingAs($this->editor)->get(route('documentos.show', $documento))->assertForbidden();
+        $this->actingAs($this->editor)->get(route('documentos.index', ['carpeta' => $sub->uuid]))->assertForbidden();
+
+        $coordinador = $this->usuarioCon(RolDependencia::Coordinacion, $this->dependencia);
+        $this->actingAs($coordinador)
+            ->get(route('documentos.index', ['q' => 'secreta']))
+            ->assertSee('Acta secreta');
+    }
+
+    public function test_edicion_reemplaza_el_archivo_sin_ver_el_historial(): void
+    {
+        $documento = $this->subir('Foto visita', null, 'ORIGINAL');
+
+        $this->actingAs($this->editor)
+            ->post(route('documentos.versiones.store', $documento), [
+                'archivo' => $this->archivoPdf('nueva.pdf', 'NUEVA'),
+            ])
+            ->assertSessionHas('exito', 'Archivo reemplazado.');
+
+        $ficha = $this->actingAs($this->editor)->get(route('documentos.show', $documento));
+        $ficha->assertSee('Reemplazar archivo')->assertDontSee('Historial de archivos');
+
+        $descarga = $this->actingAs($this->editor)->get(route('documentos.descargar', $documento));
+        $this->assertStringContainsString('NUEVA', $descarga->streamedContent());
+
+        // Lo anterior sigue ahí, para quien audita.
+        $coordinador = $this->usuarioCon(RolDependencia::Coordinacion, $this->dependencia);
+        $this->actingAs($coordinador)->get(route('documentos.show', $documento))->assertSee('Historial de archivos (2)');
+    }
+
     public function test_la_carpeta_se_descarga_en_zip_con_subcarpetas_y_sin_lo_inactivo(): void
     {
         $raiz = $this->carpeta('Evidencias');

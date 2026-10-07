@@ -160,7 +160,13 @@ class VersionadoTest extends TestCase
 
         $v1 = $documento->versiones()->where('numero', 1)->firstOrFail();
 
-        $respuesta = $this->actingAs($this->editor)
+        // Para Edición el archivo se reemplazó: lo anterior es de auditoría.
+        $this->actingAs($this->editor)
+            ->get(route('documentos.versiones.descargar', [$documento, $v1]))
+            ->assertForbidden();
+
+        $coordinador = $this->usuarioCon(RolDependencia::Coordinacion, $this->dependencia);
+        $respuesta = $this->actingAs($coordinador)
             ->get(route('documentos.versiones.descargar', [$documento, $v1]));
 
         $respuesta->assertOk();

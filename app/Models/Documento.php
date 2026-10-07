@@ -128,11 +128,22 @@ class Documento extends Model
      */
     public function scopeVisiblesPara(Builder $query, ?User $usuario): Builder
     {
-        if ($usuario?->puedeAdministrarEn(app(\App\Services\ContextoDependencia::class)->id())) {
+        $dependenciaId = app(\App\Services\ContextoDependencia::class)->id();
+
+        if ($usuario?->puedeAdministrarEn($dependenciaId)) {
             return $query;
         }
 
-        return $query->where('activo', true);
+        $query->where('activo', true);
+
+        // Lo que está dentro de una carpeta retirada lo ve quien ve la
+        // carpeta retirada: Coordinación. El resto, ni buscándolo.
+        if (! $usuario?->puedeGestionarEn($dependenciaId)) {
+            $retiradas = Carpeta::idsRetiradas($dependenciaId);
+            $query->where(fn ($q) => $q->whereNull('carpeta_id')->orWhereNotIn('carpeta_id', $retiradas));
+        }
+
+        return $query;
     }
 
     /**

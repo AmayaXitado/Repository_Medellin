@@ -106,14 +106,43 @@
             </div>
         @endif
 
+        {{--
+            Para quien sube, el archivo se reemplaza. Por debajo cada reemplazo
+            es una versión: lo anterior no se borra, y el historial lo ve
+            Coordinación para auditoría.
+        --}}
+        @canany(['subirVersion', 'verVersiones'], $documento)
         <div class="overflow-hidden rounded-lg bg-[var(--card)] ring-1 ring-[var(--border)]">
-            <div class="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
-                <h2 class="text-sm font-medium text-[var(--text)]">
-                    Historial de versiones ({{ $documento->versiones->count() }})
-                </h2>
-            </div>
+            @can('subirVersion', $documento)
+                <form method="POST" action="{{ route('documentos.versiones.store', $documento) }}"
+                      enctype="multipart/form-data"
+                      class="flex flex-wrap items-end gap-3 px-4 py-3">
+                    @csrf
+                    <h2 class="w-full text-sm font-medium text-[var(--text)]">Reemplazar archivo</h2>
+                    <div class="flex-1 min-w-48">
+                        <label for="archivo" class="block text-xs font-medium text-[var(--muted)]">Archivo nuevo</label>
+                        <x-campo-archivo requerido compacto />
+                    </div>
+                    <div class="flex-1 min-w-48">
+                        <label class="block text-xs font-medium text-[var(--muted)]">Motivo del reemplazo (opcional)</label>
+                        <input type="text" name="comentario" maxlength="255" placeholder="Ej: la foto no era la correcta"
+                               class="liquid-input mt-1 w-full text-sm">
+                    </div>
+                    <button class="liquid-button-primary rounded-md px-4 py-2 text-sm font-medium">
+                        Reemplazar archivo
+                    </button>
+                </form>
+            @endcan
 
-            <div class="overflow-x-auto">
+            @can('verVersiones', $documento)
+                <div class="border-t border-[var(--border)] px-4 py-3">
+                    <h2 class="text-sm font-medium text-[var(--text)]">
+                        Historial de archivos ({{ $documento->versiones->count() }})
+                    </h2>
+                    <p class="text-xs text-[var(--muted)]">Los archivos reemplazados se conservan para auditoría.</p>
+                </div>
+
+                <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-[var(--border)] text-sm">
                     <tbody class="divide-y divide-[var(--border)]">
                         @foreach($documento->versiones as $version)
@@ -145,26 +174,9 @@
                 </table>
             </div>
 
-            @can('subirVersion', $documento)
-                <form method="POST" action="{{ route('documentos.versiones.store', $documento) }}"
-                      enctype="multipart/form-data"
-                      class="flex flex-wrap items-end gap-3 border-t border-[var(--border)] bg-[var(--card-soft)] px-4 py-3">
-                    @csrf
-                    <div class="flex-1 min-w-48">
-                        <label for="archivo" class="block text-xs font-medium text-[var(--muted)]">Archivo de la nueva versión</label>
-                        <x-campo-archivo requerido compacto />
-                    </div>
-                    <div class="flex-1 min-w-48">
-                        <label class="block text-xs font-medium text-[var(--muted)]">Qué cambió</label>
-                        <input type="text" name="comentario" maxlength="255" placeholder="Ej: corrección de firmas"
-                               class="liquid-input mt-1 w-full text-sm">
-                    </div>
-                    <button class="liquid-button-primary rounded-md px-4 py-2 text-sm font-medium">
-                        Publicar versión
-                    </button>
-                </form>
             @endcan
         </div>
+        @endcanany
     </div>
 
     <aside class="min-w-0 space-y-6">
