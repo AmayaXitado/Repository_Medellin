@@ -7,7 +7,10 @@
 | se lea abajo como lo que es: este mismo, más lo que se añada.
 */
 $formatosPublicos = [
-    'extensiones' => ['pdf', 'jpg', 'jpeg', 'png', 'webp'],
+    // 'jfif' es un JPEG con otro nombre, el que a veces pone Windows o Chrome
+    // al guardar una imagen. El servidor ya lo aceptaba, porque mira el
+    // contenido; faltaba aquí para que el selector de archivos lo enseñe.
+    'extensiones' => ['pdf', 'jpg', 'jpeg', 'jfif', 'png', 'webp'],
 
     'mimetypes' => [
         'application/pdf',
