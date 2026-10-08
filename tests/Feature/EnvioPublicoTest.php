@@ -442,7 +442,7 @@ class EnvioPublicoTest extends TestCase
 
         // El selector de archivos ni siquiera ofrece hojas de cálculo: el
         // campo es el mismo de dentro, pero aquí se le pasa la lista corta.
-        $respuesta->assertSee('accept=".pdf,.jpg,.jpeg,.png,.webp"', false);
+        $respuesta->assertSee('accept=".pdf,.jpg,.jpeg,.jfif,.png,.webp"', false);
     }
 
     /*
@@ -457,6 +457,34 @@ class EnvioPublicoTest extends TestCase
 
         $this->post(route('envio.recibir', ['token' => $token]), $this->envio([
             'archivo' => [$this->archivo('informe.pdf', "MZ\x90\x00\x03".str_repeat("\x00", 200), 'application/pdf')],
+        ]))->assertSessionHasErrors('archivo.0');
+
+        $this->assertDatabaseCount('documentos', 0);
+        $this->assertEmpty(Storage::disk(config('repositorio.disco'))->allFiles());
+    }
+
+    /** Un .jfif es un JPEG: entra por el enlace y se guarda con su nombre. */
+    public function test_una_foto_jfif_entra_por_el_enlace_tal_como_llego(): void
+    {
+        [, $token] = $this->enlace();
+
+        $this->post(route('envio.recibir', ['token' => $token]), $this->envio([
+            'archivo' => [$this->archivoJpg('foto.jfif')],
+        ]))->assertRedirect(route('envio.confirmacion'));
+
+        $recepcion = Recepcion::withoutGlobalScopes()->firstOrFail();
+
+        $this->assertSame('foto.jfif', $recepcion->nombre_original);
+        $this->assertSame('jfif', $recepcion->extension);
+        $this->assertSame('image/jpeg', $recepcion->mime);
+    }
+
+    public function test_un_exe_renombrado_a_jfif_se_rechaza(): void
+    {
+        [, $token] = $this->enlace();
+
+        $this->post(route('envio.recibir', ['token' => $token]), $this->envio([
+            'archivo' => [$this->archivo('foto.jfif', "MZ\x90\x00\x03".str_repeat("\x00", 200), 'image/jpeg')],
         ]))->assertSessionHasErrors('archivo.0');
 
         $this->assertDatabaseCount('documentos', 0);

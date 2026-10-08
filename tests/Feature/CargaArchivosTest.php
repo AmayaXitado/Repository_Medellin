@@ -276,6 +276,48 @@ class CargaArchivosTest extends TestCase
     }
 
     /**
+     * Un .jfif es un JPEG con otro nombre, el que a veces pone Windows o
+     * Chrome al guardar una imagen. Entra, se guarda tal como llegó —sin
+     * convertirlo ni renombrarlo— y se sirve como lo que es: image/jpeg, para
+     * que la vista previa lo muestre en vez de descargarlo.
+     */
+    public function test_un_jfif_se_acepta_se_guarda_tal_cual_y_se_sirve_como_jpeg(): void
+    {
+        $foto = $this->archivoJpg('foto.jfif');
+        $hash = hash_file('sha256', $foto->getRealPath());
+
+        $this->subir($foto, 'Foto JFIF')->assertRedirect()->assertSessionHasNoErrors();
+
+        $documento = Documento::withoutGlobalScopes()->where('nombre', 'Foto JFIF')->firstOrFail();
+        $version = $documento->versiones()->firstOrFail();
+
+        $this->assertSame('foto.jfif', $version->nombre_original);
+        $this->assertSame('jfif', $version->extension);
+        $this->assertStringEndsWith('.jfif', $version->ruta);
+        $this->assertSame('image/jpeg', $version->mime);
+        $this->assertSame($hash, $version->hash);
+
+        $previa = $this->actingAs($this->editor)->get(route('documentos.previsualizar', $documento))->assertOk();
+        $this->assertStringStartsWith('image/jpeg', $previa->headers->get('content-type'));
+
+        $descarga = $this->actingAs($this->editor)->get(route('documentos.descargar', $documento))->assertOk();
+        $this->assertStringStartsWith('image/jpeg', $descarga->headers->get('content-type'));
+        $this->assertStringContainsString('foto.jfif', $descarga->headers->get('content-disposition'));
+    }
+
+    /** Abrir .jfif no abre la puerta a lo que solo se llame así. */
+    public function test_un_ejecutable_con_nombre_de_jfif_se_rechaza(): void
+    {
+        $this->subir(
+            $this->archivo('foto.jfif', "MZ\x90\x00\x03".str_repeat("\x00", 200), 'image/jpeg'),
+            'Foto falsa',
+        )->assertSessionHasErrors('archivo.0');
+
+        $this->assertDatabaseCount('documentos', 0);
+        $this->assertEmpty(Storage::disk(config('repositorio.disco'))->allFiles());
+    }
+
+    /**
      * Quien ya entró al repositorio también sube hojas de cálculo: los
      * inventarios y las programaciones del comité viven en Excel, no en PDF.
      */
@@ -285,7 +327,7 @@ class CargaArchivosTest extends TestCase
         $this->actingAs($this->editor)
             ->get(route('documentos.create'))
             ->assertOk()
-            ->assertSee('accept=".pdf,.jpg,.jpeg,.png,.webp,.xlsx,.xls"', false);
+            ->assertSee('accept=".pdf,.jpg,.jpeg,.jfif,.png,.webp,.xlsx,.xls"', false);
     }
 
     public function test_se_aceptan_los_dos_formatos_de_excel(): void
