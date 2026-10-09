@@ -86,11 +86,14 @@ abstraído (migrable a S3 o MinIO cambiando una línea de configuración).
 
 | Documento | Para qué |
 |---|---|
-| [`INICIO.md`](INICIO.md) | Puesta en marcha, decisiones de arquitectura y mapa del código |
-| [`MANUAL-USUARIO.md`](MANUAL-USUARIO.md) | Cómo se usa, para quien no programa |
-| [`GEOLOCALIZACION.md`](GEOLOCALIZACION.md) | Las fotos con hora y lugar: cómo funcionan y hasta dónde sirven como prueba |
-| [`RESOLUCION-FOTOS.md`](RESOLUCION-FOTOS.md) | Tamaño y calidad de las fotos de evidencia, en lenguaje no técnico |
-| [`INTERFAZ.md`](INTERFAZ.md) | Convenciones de la capa visual: responsivo, avatar por rol, cabecera |
+| [`INICIO.md`](docs/INICIO.md) | Puesta en marcha, decisiones de arquitectura y mapa del código |
+| [`MANUAL-USUARIO.md`](docs/MANUAL-USUARIO.md) | Cómo se usa, para quien no programa |
+| [`GEOLOCALIZACION.md`](docs/GEOLOCALIZACION.md) | Las fotos con hora y lugar: cómo funcionan y hasta dónde sirven como prueba |
+| [`RESOLUCION-FOTOS.md`](docs/RESOLUCION-FOTOS.md) | Tamaño y calidad de las fotos de evidencia, en lenguaje no técnico |
+| [`INTERFAZ.md`](docs/INTERFAZ.md) | Convenciones de la capa visual: responsivo, avatar por rol, cabecera |
+| [`turnos/`](docs/turnos/) | Módulo de turnos por componente: plan y reparto del desarrollo (en planificación) |
+
+Los prompts de desarrollo están en [`docs/prompts/`](docs/prompts/) y las notas de reunión en [`docs/reuniones/`](docs/reuniones/).
 
 ---
 
