@@ -35,10 +35,36 @@
             <input id="entidad" name="entidad" type="text" maxlength="255"
                    value="{{ old('entidad', $c?->entidad) }}" class="{{ $campo }}">
         </div>
+        {{--
+            Los cargos salen de cada componente, agrupados como los nodos. Si
+            ningún componente tiene lista, queda el campo libre de siempre.
+        --}}
+        @php
+            $cargoActual = old('cargo', $c?->cargo);
+            $conCargos = $componentes->filter(fn ($componente) => $componente->cargos() !== []);
+            $cargoEnLista = $conCargos->contains(fn ($componente) => in_array($cargoActual, $componente->cargos(), true));
+        @endphp
         <div>
             <label for="cargo" class="{{ $etiqueta }}">Cargo {!! $opcional !!}</label>
-            <input id="cargo" name="cargo" type="text" maxlength="255" placeholder="Ej: Orientador"
-                   value="{{ old('cargo', $c?->cargo) }}" class="{{ $campo }}">
+            @if($conCargos->isEmpty())
+                <input id="cargo" name="cargo" type="text" maxlength="255"
+                       value="{{ $cargoActual }}" class="{{ $campo }}">
+            @else
+                <select id="cargo" name="cargo" class="{{ $campo }}">
+                    <option value="">Sin cargo</option>
+                    @foreach($conCargos as $componente)
+                        <optgroup label="{{ $componente->nombre }}">
+                            @foreach($componente->cargos() as $cargo)
+                                <option value="{{ $cargo }}" @selected($cargoActual === $cargo)>{{ $cargo }}</option>
+                            @endforeach
+                        </optgroup>
+                    @endforeach
+                    {{-- Un cargo viejo, escrito a mano, no se pierde al editar otro dato. --}}
+                    @if($cargoActual && ! $cargoEnLista)
+                        <option value="{{ $cargoActual }}" selected>{{ $cargoActual }} (actual)</option>
+                    @endif
+                </select>
+            @endif
         </div>
     </div>
 

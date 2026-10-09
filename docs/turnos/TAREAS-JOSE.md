@@ -29,6 +29,11 @@ La usan el enlace de turno y el de evidencias, así que va como pieza aparte.
       cargo y nodo. Los campos definitivos salen del formulario de Forms actual
       (ver `PLAN.md` §7).
 - [ ] `<x-campos.selector-nodo :componente>`: reemplaza el `range(1, 6)` fijo.
+- [ ] **Cargo como lista, no texto libre:** en `<x-campos.registro-colaborador>`, el
+      campo `colaborador[cargo]` pasa a ser un `<select>` con `$componente->cargos()`. Si
+      el componente no tiene cargos, queda el texto libre. Al guardar, valida con
+      `Rule::in($componente->cargos())`, como en la administración
+      (`GuardarColaboradorRequest`).
 - [ ] Endpoint de consulta `POST /t/{token}/cedula`:
   - devuelve **solo** `{existe: bool, saludo: "Jos…"}`;
   - nunca devuelve correo, teléfono ni nombre completo;

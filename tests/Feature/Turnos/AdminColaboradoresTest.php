@@ -114,6 +114,44 @@ class AdminColaboradoresTest extends TestCase
             ->assertSessionHasErrors('nodo_id');
     }
 
+    public function test_el_cargo_se_elige_de_la_lista_del_componente(): void
+    {
+        $this->calle->update(['config' => ['cargos' => ['Conductor camioneta', 'Monitor de ruta']]]);
+
+        $this->actingAs($this->coordinador)
+            ->get(route('admin.turnos.colaboradores.create'))
+            ->assertSee('<option value="Monitor de ruta"', false);
+
+        $this->actingAs($this->coordinador)
+            ->post(route('admin.turnos.colaboradores.store'), [
+                'documento' => '80111222', 'nombre' => 'Con cargo', 'componente_id' => $this->calle->id,
+                'cargo' => 'Monitor de ruta',
+            ])
+            ->assertSessionHasNoErrors();
+
+        $this->actingAs($this->coordinador)
+            ->post(route('admin.turnos.colaboradores.store'), [
+                'documento' => '80111333', 'nombre' => 'Inventado', 'componente_id' => $this->calle->id,
+                'cargo' => 'Astronauta',
+            ])
+            ->assertSessionHasErrors('cargo');
+    }
+
+    public function test_un_cargo_viejo_fuera_de_la_lista_no_impide_editar_otro_dato(): void
+    {
+        $persona = $this->persona(['cargo' => 'Orientador']);
+        $this->calle->update(['config' => ['cargos' => ['Monitor de ruta']]]);
+
+        $this->actingAs($this->coordinador)
+            ->put(route('admin.turnos.colaboradores.update', $persona), [
+                'documento' => $persona->documento, 'nombre' => 'Nombre nuevo',
+                'componente_id' => $this->calle->id, 'cargo' => 'Orientador',
+            ])
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame('Nombre nuevo', $persona->fresh()->nombre);
+    }
+
     public function test_verificar_y_desactivar_quedan_en_la_auditoria(): void
     {
         $persona = Colaborador::factory()->en($this->calle)->autoregistrado()->create();

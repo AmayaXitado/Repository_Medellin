@@ -52,6 +52,25 @@ class AdminComponentesTest extends TestCase
         $this->assertSame(12, $componente->regla('horas_max_turno'));
     }
 
+    public function test_los_cargos_se_escriben_uno_por_linea_sin_vacios_ni_repetidos(): void
+    {
+        $this->actingAs($this->admin)
+            ->post(route('admin.turnos.componentes.store'), $this->reglas([
+                'nombre' => 'Básica',
+                'cargos' => "Conductor  camioneta
+
+Monitor de ruta
+Monitor de ruta
+",
+            ]))
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame(
+            ['Conductor camioneta', 'Monitor de ruta'],
+            Componente::where('slug', 'basica')->sole()->cargos(),
+        );
+    }
+
     public function test_no_se_repite_el_nombre_en_la_misma_dependencia(): void
     {
         Componente::factory()->create(['dependencia_id' => $this->dependencia->id, 'nombre' => 'Calle', 'slug' => 'calle']);

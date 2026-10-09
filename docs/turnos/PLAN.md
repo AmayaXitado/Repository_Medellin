@@ -172,6 +172,9 @@ Las ramas siguen siendo `eduDev` y `josedev`, y el destino de los PR es `develop
 - Calle con Nodo 1 a Nodo 6: `CalleSeeder`, que también corre como migración para que
   exista en producción.
 - `Marcacion` lanza `LogicException` si se intenta editar o borrar.
+- `Componente::cargos(): array`: los cargos del componente, que se eligen de una lista.
+  Calle trae Conductor camioneta, Conductor microbús, Operador terapéutico y Monitor de
+  ruta. Administración los edita, uno por línea, en «Componentes y nodos».
 
 **José entrega, y Edwar lo usa en su parte de administración:**
 - `Marcador::marcar(Colaborador $c, array $datos): Marcacion`. Decide entrada o salida.

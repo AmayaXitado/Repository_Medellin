@@ -32,6 +32,7 @@ class GuardarComponenteRequest extends FormRequest
             'foto_obligatoria' => ['boolean'],
             'ubicacion_obligatoria' => ['boolean'],
             'autoregistro' => ['boolean'],
+            'cargos' => ['nullable', 'string', 'max:2000'],
         ];
     }
 
@@ -46,10 +47,29 @@ class GuardarComponenteRequest extends FormRequest
         $reglas = [];
 
         foreach (Componente::REGLAS as $clave => $defecto) {
-            $reglas[$clave] = is_bool($defecto) ? $this->boolean($clave) : (int) $this->input($clave);
+            $reglas[$clave] = match (true) {
+                is_bool($defecto) => $this->boolean($clave),
+                is_array($defecto) => $this->lista($clave),
+                default => (int) $this->input($clave),
+            };
         }
 
         return $reglas;
+    }
+
+    /**
+     * Un textarea, un elemento por línea: sin vacíos ni repetidos.
+     *
+     * @return list<string>
+     */
+    protected function lista(string $clave): array
+    {
+        $lineas = preg_split('/\R/', (string) $this->input($clave));
+
+        return array_values(array_unique(array_filter(array_map(
+            fn (string $linea) => trim(preg_replace('/\s+/', ' ', $linea)),
+            $lineas,
+        ))));
     }
 
     public function attributes(): array

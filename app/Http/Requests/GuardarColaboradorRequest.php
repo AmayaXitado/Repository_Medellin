@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Componente;
 use App\Models\Nodo;
 use App\Models\User;
 use App\Services\ContextoDependencia;
@@ -41,7 +42,13 @@ class GuardarColaboradorRequest extends FormRequest
             'correo' => ['nullable', 'email', 'max:255'],
             'telefono' => ['nullable', 'string', 'max:30'],
             'entidad' => ['nullable', 'string', 'max:255'],
-            'cargo' => ['nullable', 'string', 'max:255'],
+            // Si el componente tiene su lista de cargos, solo vale uno de ella.
+            // El cargo que la persona ya tenía se acepta aunque no esté: así
+            // editar otro dato no obliga a cambiarle el cargo.
+            'cargo' => array_filter([
+                'nullable', 'string', 'max:255',
+                ($cargos = $this->cargosPermitidos()) !== null ? Rule::in($cargos) : null,
+            ]),
             'componente_id' => [
                 'nullable',
                 Rule::exists('componentes', 'id')->where('dependencia_id', $dependenciaId),
@@ -53,6 +60,20 @@ class GuardarColaboradorRequest extends FormRequest
                 Rule::exists('nodos', 'id')->where('componente_id', $this->input('componente_id')),
             ],
         ];
+    }
+
+    /** @return list<string>|null null cuando el componente no restringe los cargos */
+    protected function cargosPermitidos(): ?array
+    {
+        $cargos = Componente::find($this->input('componente_id'))?->cargos() ?? [];
+
+        if ($cargos === []) {
+            return null;
+        }
+
+        $actual = $this->route('colaborador')?->cargo;
+
+        return $actual !== null ? [...$cargos, $actual] : $cargos;
     }
 
     public function attributes(): array
@@ -70,6 +91,7 @@ class GuardarColaboradorRequest extends FormRequest
             'documento.unique' => 'Ya hay una persona registrada con esa cédula.',
             'documento.regex' => 'La cédula solo puede tener números y letras, sin puntos ni espacios.',
             'nodo_id.exists' => 'Ese nodo no pertenece al componente elegido.',
+            'cargo.in' => 'Ese cargo no es de los del componente elegido.',
         ];
     }
 }

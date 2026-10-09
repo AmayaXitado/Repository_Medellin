@@ -12,6 +12,13 @@
                value="{{ old('nombre', $componente->nombre) }}" class="{{ $campo }}">
     </div>
 
+    <div>
+        <label for="cargos" class="{{ $etiqueta }}">Cargos</label>
+        <textarea id="cargos" name="cargos" rows="4" maxlength="2000" placeholder="Uno por línea"
+                  class="{{ $campo }}">{{ old('cargos', implode("\n", $componente->cargos())) }}</textarea>
+        <p class="{{ $ayuda }}">Uno por línea. Son los que se eligen de una lista al registrar a una persona de este componente.</p>
+    </div>
+
     <fieldset class="space-y-3">
         <legend class="text-sm font-medium text-[var(--text)]">Reglas de turno</legend>
 
