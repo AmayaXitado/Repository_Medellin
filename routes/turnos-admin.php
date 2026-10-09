@@ -13,6 +13,8 @@
 
 use App\Http\Controllers\Admin\Turnos\ColaboradorController;
 use App\Http\Controllers\Admin\Turnos\ComponenteController;
+use App\Http\Controllers\Admin\Turnos\EnlaceTurnoController;
+use App\Http\Controllers\Admin\Turnos\EnTurnoController;
 use App\Http\Controllers\Admin\Turnos\NodoController;
 use Illuminate\Support\Facades\Route;
 
@@ -38,3 +40,12 @@ Route::scopeBindings()->group(function () {
     Route::post('componentes/{componente}/nodos', [NodoController::class, 'store'])->name('nodos.store');
     Route::put('componentes/{componente}/nodos/{nodo}', [NodoController::class, 'update'])->name('nodos.update');
 });
+
+// Enlaces de turno (link + QR) y quién está en turno ahora (Coordinación).
+Route::get('enlaces', [EnlaceTurnoController::class, 'index'])->name('enlaces.index');
+Route::get('enlaces/nuevo', [EnlaceTurnoController::class, 'create'])->name('enlaces.create');
+Route::post('enlaces', [EnlaceTurnoController::class, 'store'])->name('enlaces.store');
+Route::get('enlaces/{enlace}', [EnlaceTurnoController::class, 'show'])->name('enlaces.show');
+Route::get('enlaces/{enlace}/imprimir', [EnlaceTurnoController::class, 'imprimir'])->name('enlaces.imprimir');
+Route::patch('enlaces/{enlace}/revocar', [EnlaceTurnoController::class, 'revocar'])->name('enlaces.revocar');
+Route::get('en-turno', [EnTurnoController::class, 'index'])->name('en-turno');

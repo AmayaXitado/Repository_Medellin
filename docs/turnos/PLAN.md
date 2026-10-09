@@ -185,6 +185,15 @@ Las ramas siguen siendo `eduDev` y `josedev`, y el destino de los PR es `develop
 Mientras José no entregue el `Marcador`, Edwar programa contra estas firmas y lo
 reemplaza por un *stub* en sus tests.
 
+**Ya disponible en el modelo para el `Marcador`** (fase 2b de Edwar):
+- `Marcacion::entradasAbiertas()`: scope con la última marca de cada persona cuando es
+  una entrada. Lo usa «En turno ahora». `estadoDe($c)` puede ser
+  `Marcacion::entradasAbiertas()->where('colaborador_id', $c->id)->first()`, y
+  `cerrarAbiertas()` puede partir de ese mismo scope.
+- `Marcacion::minutosDesde()`: los minutos desde que marcó, para «llevas 5 h 20 min».
+- `EnlaceTurno::url()` apunta a `/t/{token}`. Los QR impresos ya llevan esa URL, así que
+  la ruta `turno.enlace` **tiene que** quedar en `/t/{token}`.
+
 ## 6. Orden de trabajo
 
 | Paso | Quién | Entrega | Bloquea a |
