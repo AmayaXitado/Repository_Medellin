@@ -30,6 +30,7 @@ class Recepcion extends Model
     protected $fillable = [
         'dependencia_id',
         'enlace_carga_id',
+        'colaborador_id',
         'carpeta_sugerida_id',
         'remitente_nombre',
         'remitente_email',
@@ -113,6 +114,12 @@ class Recepcion extends Model
     public function enlace(): BelongsTo
     {
         return $this->belongsTo(EnlaceCarga::class, 'enlace_carga_id');
+    }
+
+    /** La persona de campo que envió, si se identificó con su cédula. */
+    public function colaborador(): BelongsTo
+    {
+        return $this->belongsTo(Colaborador::class);
     }
 
     public function carpetaSugerida(): BelongsTo

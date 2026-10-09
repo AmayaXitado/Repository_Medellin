@@ -128,21 +128,21 @@ class CoordinacionTest extends TestCase
     |--------------------------------------------------------------------------
     */
 
-    public function test_no_puede_inactivar_ni_reactivar_carpetas(): void
+    public function test_puede_inactivar_y_reactivar_carpetas(): void
     {
         $activa = Carpeta::factory()->create(['dependencia_id' => $this->dependencia->id]);
         $inactiva = Carpeta::factory()->inactiva()->create(['dependencia_id' => $this->dependencia->id]);
 
         $this->actingAs($this->coordinador)
             ->patch(route('carpetas.inactivar', $activa))
-            ->assertForbidden();
+            ->assertRedirect();
 
         $this->actingAs($this->coordinador)
             ->patch(route('carpetas.reactivar', $inactiva))
-            ->assertForbidden();
+            ->assertRedirect();
 
-        $this->assertDatabaseHas('carpetas', ['id' => $activa->id, 'activa' => true]);
-        $this->assertDatabaseHas('carpetas', ['id' => $inactiva->id, 'activa' => false]);
+        $this->assertDatabaseHas('carpetas', ['id' => $activa->id, 'activa' => false]);
+        $this->assertDatabaseHas('carpetas', ['id' => $inactiva->id, 'activa' => true]);
     }
 
     public function test_no_puede_inactivar_ni_reactivar_documentos(): void

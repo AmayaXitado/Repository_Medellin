@@ -46,7 +46,7 @@ class DescargaController extends Controller
 
     public function descargarVersion(Documento $documento, DocumentoVersion $version): StreamedResponse
     {
-        $this->authorize('download', $documento);
+        $this->authorize('verVersiones', $documento);
         abort_unless($version->documento_id === $documento->id, 404);
 
         $this->auditor->registrar(

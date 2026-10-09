@@ -18,8 +18,8 @@ class DocumentoVersionController extends Controller
     }
 
     /**
-     * Sube una versión nueva. El archivo anterior no se toca: queda
-     * consultable en el historial.
+     * «Reemplazar archivo». Por debajo es una versión nueva: el archivo
+     * anterior no se borra y queda en el historial para auditoría.
      */
     public function store(SubirVersionRequest $request, Documento $documento): RedirectResponse
     {
@@ -36,10 +36,10 @@ class DocumentoVersionController extends Controller
         $this->auditor->registrar(
             AccionAuditoria::DocumentoVersionSubida,
             $documento,
-            "Subió la versión {$version->numero} de «{$documento->nombre}»",
+            "Reemplazó el archivo de «{$documento->nombre}» (versión {$version->numero})",
             ['version' => $version->numero, 'archivo' => $version->nombre_original],
         );
 
-        return back()->with('exito', "Versión {$version->numero} publicada.");
+        return back()->with('exito', 'Archivo reemplazado.');
     }
 }

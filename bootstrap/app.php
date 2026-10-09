@@ -5,12 +5,22 @@ use App\Http\Middleware\VerificarUsuarioActivo;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Support\Facades\Route;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
+        // Turnos en dos archivos, uno por dueño, para que no choquen en git.
+        then: function () {
+            Route::middleware(['web', 'auth', 'usuario.activo', 'dependencia'])
+                ->prefix('admin/turnos')
+                ->name('admin.turnos.')
+                ->group(base_path('routes/turnos-admin.php'));
+
+            Route::middleware('web')->group(base_path('routes/turnos-publico.php'));
+        },
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([

@@ -72,6 +72,8 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
+        $this->call(CalleSeeder::class);
+
         $this->command?->info('Usuario inicial — documento: 1234567890 / contraseña: Cambiar2026');
         $this->command?->warn('Cambia ese documento y esa contraseña antes de exponer la plataforma.');
     }

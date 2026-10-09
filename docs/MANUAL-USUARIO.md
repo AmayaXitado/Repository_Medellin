@@ -83,7 +83,7 @@ entidad) no tiene ni necesita una cuenta:
    *recepción pendiente* — todavía **no es un documento del repositorio**.
 4. El funcionario revisa la bandeja. **Archivar, descartar y reasignar** una
    recepción —convertirla en documento del repositorio— están especificadas
-   en `PROMPT-BANDEJA.md` pero aún no tienen ruta ni vista.
+   en `prompts/PROMPT-BANDEJA.md` pero aún no tienen ruta ni vista.
 
 ### Quién puede crear enlaces
 
@@ -111,7 +111,7 @@ puedan enumerar tokens válidos por prueba y error.
 **Estado actual:** la ruta pública de envío y la bandeja (listar, ver,
 previsualizar) ya funcionan. **Archivar, descartar y reasignar** una
 recepción, y la pantalla de administración para **crear y revocar enlaces**
-desde la interfaz, están especificadas en `PROMPT-BANDEJA.md` pero aún no
+desde la interfaz, están especificadas en `prompts/PROMPT-BANDEJA.md` pero aún no
 tienen ruta ni vista — hoy un enlace solo puede crearse por consola
 (`php artisan tinker` o un seeder).
 
