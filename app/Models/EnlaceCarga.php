@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\TieneTokenSecreto;
 use App\Models\Scopes\DependenciaScope;
 use Illuminate\Database\Eloquent\Attributes\ScopedBy;
 use Illuminate\Database\Eloquent\Builder;
@@ -9,7 +10,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Str;
 
 /**
  * Enlace de carga: una URL que permite a alguien externo subir un archivo a
@@ -23,6 +23,7 @@ use Illuminate\Support\Str;
 class EnlaceCarga extends Model
 {
     use HasFactory;
+    use TieneTokenSecreto;
 
     protected $table = 'enlaces_carga';
 
@@ -31,6 +32,7 @@ class EnlaceCarga extends Model
         'token_cifrado',
         'dependencia_id',
         'carpeta_id',
+        'componente_id',
         'proposito',
         'activo',
         'expira_at',
@@ -75,42 +77,9 @@ class EnlaceCarga extends Model
     | El token
     |--------------------------------------------------------------------------
     | No es un identificador, es un secreto: quien lo tenga puede subir en
-    | nombre de ese remitente.
+    | nombre de ese remitente. generarToken, hashDe, porToken y token() viven
+    | en TieneTokenSecreto, compartido con los enlaces de turno.
     */
-
-    /** Str::random usa random_bytes(): criptográficamente seguro. */
-    public static function generarToken(): string
-    {
-        return Str::random(48);
-    }
-
-    /**
-     * SHA-256 y no bcrypt: Hash::make() usa una sal distinta cada vez, así que
-     * no se puede consultar con WHERE, y es lento a propósito. Eso tiene
-     * sentido para contraseñas, que son cortas y adivinables; para un token de
-     * 48 caracteres aleatorios no hay nada que ralentizar.
-     */
-    public static function hashDe(string $token): string
-    {
-        return hash('sha256', $token);
-    }
-
-    /**
-     * La ruta pública no tiene sesión ni dependencia en contexto, así que el
-     * Global Scope se aparta aquí explícitamente.
-     */
-    public static function porToken(string $token): ?self
-    {
-        return static::withoutGlobalScope(DependenciaScope::class)
-            ->where('token_hash', static::hashDe($token))
-            ->first();
-    }
-
-    /** El token en claro, recuperable para que administración lo vuelva a copiar. */
-    public function token(): string
-    {
-        return (string) $this->token_cifrado;
-    }
 
     /**
      * URL completa que se le entrega al remitente.
@@ -176,6 +145,12 @@ class EnlaceCarga extends Model
     public function carpeta(): BelongsTo
     {
         return $this->belongsTo(Carpeta::class);
+    }
+
+    /** De qué componente son los nodos que ofrece el formulario. */
+    public function componente(): BelongsTo
+    {
+        return $this->belongsTo(Componente::class);
     }
 
     public function creador(): BelongsTo

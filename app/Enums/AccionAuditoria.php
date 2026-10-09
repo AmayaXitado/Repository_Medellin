@@ -32,6 +32,17 @@ enum AccionAuditoria: string
     case EnlaceRevocado = 'enlace.revocado';
     case EnlaceFechaEnvioCorregida = 'enlace.fecha_envio_corregida';
 
+    // Turnos. Todas de una vez, para que nadie más tenga que tocar este archivo.
+    case ColaboradorRegistrado = 'colaborador.registrado';
+    case ColaboradorActualizado = 'colaborador.actualizado';
+    case ColaboradorVerificado = 'colaborador.verificado';
+    case TurnoEntrada = 'turno.entrada';
+    case TurnoSalida = 'turno.salida';
+    case TurnoCorreccion = 'turno.correccion';
+    case TurnoCierreAutomatico = 'turno.cierre_automatico';
+    case EnlaceTurnoCreado = 'enlace_turno.creado';
+    case EnlaceTurnoRevocado = 'enlace_turno.revocado';
+
     public function etiqueta(): string
     {
         return match ($this) {
@@ -62,6 +73,15 @@ enum AccionAuditoria: string
             self::EnlaceCreado => 'Creó un enlace de carga',
             self::EnlaceRevocado => 'Revocó un enlace de carga',
             self::EnlaceFechaEnvioCorregida => 'Corrigió la fecha de envío de un enlace',
+            self::ColaboradorRegistrado => 'Registró una persona de campo',
+            self::ColaboradorActualizado => 'Actualizó una persona de campo',
+            self::ColaboradorVerificado => 'Verificó una persona de campo',
+            self::TurnoEntrada => 'Marcó entrada de turno',
+            self::TurnoSalida => 'Marcó salida de turno',
+            self::TurnoCorreccion => 'Corrigió una marcación de turno',
+            self::TurnoCierreAutomatico => 'Cerró un turno sin salida',
+            self::EnlaceTurnoCreado => 'Creó un enlace de turno',
+            self::EnlaceTurnoRevocado => 'Revocó un enlace de turno',
         };
     }
 }
