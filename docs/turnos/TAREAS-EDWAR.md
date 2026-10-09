@@ -9,31 +9,31 @@ y Administración). **No tocas** nada de `resources/views/publico`, `resources/j
 
 ---
 
-## Fase 0 — la base (va primero: José arranca encima)
+## Fase 0 — la base (va primero: José arranca encima) ✅
 
 Un solo PR, pequeño, que se mezcle rápido.
 
-- [ ] Migraciones: `componentes`, `nodos`, `colaboradores`, `enlaces_turno`,
+- [x] Migraciones: `componentes`, `nodos`, `colaboradores`, `enlaces_turno`,
       `marcaciones`, y las columnas `recepciones.colaborador_id` y
       `enlaces_carga.componente_id`. Columnas exactas en `PLAN.md` §3.
-- [ ] Índices:
+- [x] Índices:
   - único `(dependencia_id, documento)` en `colaboradores`;
   - `(colaborador_id, marcada_at)` en `marcaciones`;
   - `(componente_id, marcada_at)` en `marcaciones`.
-- [ ] Modelos con `#[ScopedBy([DependenciaScope::class])]` donde aplique, sus relaciones
+- [x] Modelos con `#[ScopedBy([DependenciaScope::class])]` donde aplique, sus relaciones
       y factories.
-- [ ] `Colaborador::porDocumento()`. Normaliza con `User::normalizarDocumento()`.
-- [ ] `Componente::config($clave, $defecto)`, leyendo el JSON.
-- [ ] Trait `app/Models/Concerns/TieneTokenSecreto.php`: saca de `EnlaceCarga`
+- [x] `Colaborador::porDocumento()`. Normaliza con `User::normalizarDocumento()`.
+- [x] `Componente::regla($clave, $defecto)`, leyendo el JSON.
+- [x] Trait `app/Models/Concerns/TieneTokenSecreto.php`: saca de `EnlaceCarga`
       `generarToken`, `hashDe`, `porToken` y `token`, y aplícalo a `EnlaceCarga` y
       `EnlaceTurno`. Los tests de enlaces de carga actuales deben seguir verdes **sin
       tocarlos**.
-- [ ] `Marcacion`: impide `update` y `delete` en el modelo (lanza una excepción).
+- [x] `Marcacion`: impide `update` y `delete` en el modelo (lanza una excepción).
       Inmutable de verdad, no por convención.
-- [ ] Seeder: componente **Calle** y **Nodo 1 a Nodo 6**.
-- [ ] Rutas: crea `routes/turnos-admin.php` y `routes/turnos-publico.php` (este vacío,
+- [x] Seeder: componente **Calle** y **Nodo 1 a Nodo 6**.
+- [x] Rutas: crea `routes/turnos-admin.php` y `routes/turnos-publico.php` (este vacío,
       es de José) y regístralos en `bootstrap/app.php`.
-- [ ] `AccionAuditoria`: agrega **ahora** todas las acciones del módulo, para que José
+- [x] `AccionAuditoria`: agrega **ahora** todas las acciones del módulo, para que José
       no tenga que tocar ese archivo:
       `colaborador.registrado`, `colaborador.actualizado`, `colaborador.verificado`,
       `turno.entrada`, `turno.salida`, `turno.correccion`, `turno.cierre_automatico`,

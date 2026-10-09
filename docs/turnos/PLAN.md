@@ -153,13 +153,25 @@ Las ramas siguen siendo `eduDev` y `josedev`, y el destino de los PR es `develop
 
 ## 5. Contrato entre los dos (lo que uno le promete al otro)
 
-**Edwar entrega en la fase 0, y José arranca encima:**
-- Migraciones y modelos de la sección 3, con relaciones y factories.
-- `Colaborador::porDocumento(int $dependenciaId, string $cc): ?Colaborador`
-- `Componente::config(string $clave, mixed $defecto = null)`
-- El trait `TieneTokenSecreto`, aplicado a `EnlaceCarga` y `EnlaceTurno`, con los mismos
-  métodos que hoy tiene `EnlaceCarga`.
-- El seeder: componente **Calle** con **Nodo 1 a Nodo 6**.
+**Edwar entrega en la fase 0, y José arranca encima** (✅ entregado):
+- Migraciones y modelos de la sección 3, con relaciones y factories
+  (`Componente`, `Nodo`, `Colaborador`, `EnlaceTurno`, `Marcacion`).
+- `Colaborador::porDocumento(int $dependenciaId, string $cc): ?Colaborador`. Normaliza la
+  cédula y aparta el scope, porque en la vía pública la dependencia la da el enlace.
+- `Colaborador::saludo(): string`, que da «Jos…». **Es lo único que la vía pública puede
+  mostrar** de una persona.
+- `Componente::regla(string $clave, mixed $defecto = null)`. Lee `config` y, si falta la
+  clave, cae en `Componente::REGLAS`. (Se llama `regla` y no `config` porque `config` es
+  el nombre de la columna.)
+- El trait `TieneTokenSecreto` (`generarToken`, `hashDe`, `porToken`, `token`), aplicado
+  a `EnlaceCarga` y `EnlaceTurno`. `EnlaceTurno` además tiene `estaVigente()`.
+- `EnlaceTurno::url()` usa la ruta **`turno.enlace`** con `{token}`. **José la define** en
+  `routes/turnos-publico.php`.
+- Enums: `TipoMarcacion` (entrada, salida), `OrigenMarcacion` (enlace, manual,
+  cierre_automatico) y `OrigenColaborador` (autoregistro, admin).
+- Calle con Nodo 1 a Nodo 6: `CalleSeeder`, que también corre como migración para que
+  exista en producción.
+- `Marcacion` lanza `LogicException` si se intenta editar o borrar.
 
 **José entrega, y Edwar lo usa en su parte de administración:**
 - `Marcador::marcar(Colaborador $c, array $datos): Marcacion`. Decide entrada o salida.
