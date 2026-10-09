@@ -95,7 +95,22 @@ abstraído (migrable a S3 o MinIO cambiando una línea de configuración).
 
 Los prompts de desarrollo están en [`docs/prompts/`](docs/prompts/) y las notas de reunión en [`docs/reuniones/`](docs/reuniones/).
 
+
 ---
+
+## Contacto
+
+**Jorge Eduardo Muñoz Quintero**  
+*Desarrollador*
+
+* 📧 Eduard.munoz@comitedeestudiosmedicos.com
+* 📱 3003766780  
+
+**José Amaya**  
+*Desarrollador*
+
+* 📧 Sistemas@comitedeestudiosmedicos.com
+* 📱 3024296365
 
 <p align="center">
   <sub>Comité de Estudios Médicos · Inclusión Social · Medellín</sub>
