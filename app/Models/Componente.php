@@ -32,6 +32,8 @@ class Componente extends Model
         'tolerancia_min' => 15,
         'horas_max_turno' => 14,
         'autoregistro' => true,
+        // Los cargos que se pueden elegir para sus personas de campo.
+        'cargos' => [],
     ];
 
     protected $fillable = ['dependencia_id', 'nombre', 'slug', 'activo', 'config'];
@@ -48,6 +50,12 @@ class Componente extends Model
     public function regla(string $clave, mixed $defecto = null): mixed
     {
         return $this->config[$clave] ?? self::REGLAS[$clave] ?? $defecto;
+    }
+
+    /** @return list<string> los cargos de este componente, en el orden en que se escribieron */
+    public function cargos(): array
+    {
+        return array_values((array) $this->regla('cargos', []));
     }
 
     public function dependencia(): BelongsTo

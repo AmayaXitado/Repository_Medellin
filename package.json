@@ -15,6 +15,7 @@
         "vite": "^7.0.7"
     },
     "dependencies": {
-        "notyf": "^3.10.0"
+        "notyf": "^3.10.0",
+        "qrcode-generator": "^1.5.2"
     }
 }

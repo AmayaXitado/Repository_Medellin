@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Route;
 
 /**
  * Enlace compartido (QR) de un componente o de un nodo. No lleva identidad:
@@ -47,10 +48,16 @@ class EnlaceTurno extends Model
         ];
     }
 
-    /** La ruta 'turno.enlace' la define la vía pública (routes/turnos-publico.php). */
+    /**
+     * La ruta 'turno.enlace' la define la vía pública (routes/turnos-publico.php)
+     * en /t/{token}. Mientras no exista se arma esa misma URL a mano: así los
+     * QR que se impriman antes siguen sirviendo cuando la pantalla llegue.
+     */
     public function url(): string
     {
-        return route('turno.enlace', ['token' => $this->token()]);
+        return Route::has('turno.enlace')
+            ? route('turno.enlace', ['token' => $this->token()])
+            : url('t/'.$this->token());
     }
 
     public function haExpirado(): bool

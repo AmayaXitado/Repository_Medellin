@@ -172,6 +172,9 @@ Las ramas siguen siendo `eduDev` y `josedev`, y el destino de los PR es `develop
 - Calle con Nodo 1 a Nodo 6: `CalleSeeder`, que también corre como migración para que
   exista en producción.
 - `Marcacion` lanza `LogicException` si se intenta editar o borrar.
+- `Componente::cargos(): array`: los cargos del componente, que se eligen de una lista.
+  Calle trae Conductor camioneta, Conductor microbús, Operador terapéutico y Monitor de
+  ruta. Administración los edita, uno por línea, en «Componentes y nodos».
 
 **José entrega, y Edwar lo usa en su parte de administración:**
 - `Marcador::marcar(Colaborador $c, array $datos): Marcacion`. Decide entrada o salida.
@@ -181,6 +184,15 @@ Las ramas siguen siendo `eduDev` y `josedev`, y el destino de los PR es `develop
 
 Mientras José no entregue el `Marcador`, Edwar programa contra estas firmas y lo
 reemplaza por un *stub* en sus tests.
+
+**Ya disponible en el modelo para el `Marcador`** (fase 2b de Edwar):
+- `Marcacion::entradasAbiertas()`: scope con la última marca de cada persona cuando es
+  una entrada. Lo usa «En turno ahora». `estadoDe($c)` puede ser
+  `Marcacion::entradasAbiertas()->where('colaborador_id', $c->id)->first()`, y
+  `cerrarAbiertas()` puede partir de ese mismo scope.
+- `Marcacion::minutosDesde()`: los minutos desde que marcó, para «llevas 5 h 20 min».
+- `EnlaceTurno::url()` apunta a `/t/{token}`. Los QR impresos ya llevan esa URL, así que
+  la ruta `turno.enlace` **tiene que** quedar en `/t/{token}`.
 
 ## 6. Orden de trabajo
 
