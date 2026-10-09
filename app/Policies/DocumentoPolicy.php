@@ -15,7 +15,13 @@ class DocumentoPolicy
 
         // Un documento inactivo solo lo ve quien administra: sigue existiendo
         // para auditoría, pero desaparece de la vista de los demás.
-        return $documento->activo || $usuario->puedeAdministrarEn($documento->dependencia_id);
+        if (! $documento->activo && ! $usuario->puedeAdministrarEn($documento->dependencia_id)) {
+            return false;
+        }
+
+        // Y uno dentro de una carpeta retirada, solo quien ve esa carpeta:
+        // si no, su enlace directo seguía abriéndolo.
+        return $documento->carpeta === null || $usuario->can('view', $documento->carpeta);
     }
 
     public function download(User $usuario, Documento $documento): bool
@@ -43,8 +49,12 @@ class DocumentoPolicy
         return $usuario->puedeAdministrarEn($documento->dependencia_id);
     }
 
+    /**
+     * Los archivos reemplazados. Para quien sube, reemplazar es reemplazar;
+     * lo anterior se conserva para auditoría y lo consulta Coordinación.
+     */
     public function verVersiones(User $usuario, Documento $documento): bool
     {
-        return $this->view($usuario, $documento);
+        return $this->view($usuario, $documento) && $usuario->puedeGestionarEn($documento->dependencia_id);
     }
 }

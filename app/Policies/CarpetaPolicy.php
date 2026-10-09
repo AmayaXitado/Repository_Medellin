@@ -13,7 +13,7 @@ class CarpetaPolicy
             return false;
         }
 
-        return $carpeta->activa || $usuario->puedeAdministrarEn($carpeta->dependencia_id);
+        return $usuario->puedeGestionarEn($carpeta->dependencia_id) || ! $carpeta->estaRetirada();
     }
 
     public function update(User $usuario, Carpeta $carpeta): bool
@@ -23,11 +23,20 @@ class CarpetaPolicy
 
     public function inactivar(User $usuario, Carpeta $carpeta): bool
     {
-        return $usuario->puedeAdministrarEn($carpeta->dependencia_id);
+        if ($usuario->puedeGestionarEn($carpeta->dependencia_id)) {
+            return true;
+        }
+
+        // Quien edita puede retirar una carpeta que creó él, mientras no
+        // esconda trabajo de otras personas.
+        return $carpeta->activa
+            && $usuario->puedeEditarEn($carpeta->dependencia_id)
+            && $carpeta->creado_por === $usuario->id
+            && ! $carpeta->tieneContenidoAjenoA($usuario);
     }
 
     public function reactivar(User $usuario, Carpeta $carpeta): bool
     {
-        return $usuario->puedeAdministrarEn($carpeta->dependencia_id);
+        return $usuario->puedeGestionarEn($carpeta->dependencia_id);
     }
 }
