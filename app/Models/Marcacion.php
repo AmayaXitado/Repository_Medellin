@@ -6,6 +6,7 @@ use App\Enums\OrigenMarcacion;
 use App\Enums\TipoMarcacion;
 use App\Models\Scopes\DependenciaScope;
 use Illuminate\Database\Eloquent\Attributes\ScopedBy;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -75,6 +76,26 @@ class Marcacion extends Model
     public function esEntrada(): bool
     {
         return $this->tipo === TipoMarcacion::Entrada;
+    }
+
+    /**
+     * Quién está en turno ahora: la última marca de cada persona, cuando es
+     * una entrada. Una sola consulta para toda la lista, no una por persona.
+     *
+     * «Última» por marcada_at y no por id: una corrección manual se inserta
+     * después pero puede ser de una hora anterior.
+     */
+    public function scopeEntradasAbiertas(Builder $query): Builder
+    {
+        return $query
+            ->where('tipo', TipoMarcacion::Entrada->value)
+            ->whereRaw('marcada_at = (select max(m2.marcada_at) from marcaciones m2 where m2.colaborador_id = marcaciones.colaborador_id)');
+    }
+
+    /** Minutos desde que marcó: para «lleva 5 h 20 min» y para saber si pasó de la duración máxima. */
+    public function minutosDesde(): int
+    {
+        return (int) $this->marcada_at->diffInMinutes(now());
     }
 
     public function dependencia(): BelongsTo

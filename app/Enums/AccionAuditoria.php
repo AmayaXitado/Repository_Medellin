@@ -42,6 +42,8 @@ enum AccionAuditoria: string
     case TurnoCierreAutomatico = 'turno.cierre_automatico';
     case EnlaceTurnoCreado = 'enlace_turno.creado';
     case EnlaceTurnoRevocado = 'enlace_turno.revocado';
+    case ComponenteGuardado = 'componente.guardado';
+    case NodoGuardado = 'nodo.guardado';
 
     public function etiqueta(): string
     {
@@ -82,6 +84,8 @@ enum AccionAuditoria: string
             self::TurnoCierreAutomatico => 'Cerró un turno sin salida',
             self::EnlaceTurnoCreado => 'Creó un enlace de turno',
             self::EnlaceTurnoRevocado => 'Revocó un enlace de turno',
+            self::ComponenteGuardado => 'Creó o cambió un componente',
+            self::NodoGuardado => 'Creó o cambió un nodo',
         };
     }
 }

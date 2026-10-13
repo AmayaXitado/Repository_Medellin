@@ -37,6 +37,19 @@ class AdminBaseTest extends TestCase
             ['Nodo 1', 'Nodo 2', 'Nodo 3', 'Nodo 4', 'Nodo 5', 'Nodo 6'],
             $calle->nodos->pluck('nombre')->all(),
         );
+        $this->assertSame(CalleSeeder::CARGOS, $calle->cargos());
+    }
+
+    public function test_los_cargos_que_ya_cambio_administracion_no_se_pisan(): void
+    {
+        $inclusion = Dependencia::factory()->create(['slug' => 'inclusion-social']);
+        (new CalleSeeder)->run();
+
+        $calle = Componente::withoutGlobalScopes()->where('dependencia_id', $inclusion->id)->sole();
+        $calle->update(['config' => ['cargos' => ['Solo este']]]);
+        (new CalleSeeder)->run();
+
+        $this->assertSame(['Solo este'], $calle->fresh()->cargos());
     }
 
     public function test_sin_la_dependencia_el_seeder_no_hace_nada(): void

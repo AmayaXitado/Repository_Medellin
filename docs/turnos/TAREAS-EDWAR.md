@@ -42,26 +42,26 @@ Un solo PR, pequeño, que se mezcle rápido.
 **Listo cuando:** `php artisan migrate:fresh --seed` funciona, la suite completa pasa y
 José puede crear un `Colaborador` y un `EnlaceTurno` con factories.
 
-## Fase 1b — colaboradores, componentes y nodos
+## Fase 1b — colaboradores, componentes y nodos ✅
 
-- [ ] **Colaboradores** (`admin/turnos/colaboradores`):
+- [x] **Colaboradores** (`admin/turnos/colaboradores`):
   - listado con **búsqueda por cédula** (coincidencia exacta y por prefijo) y por nombre;
   - filtros por componente, nodo, verificado y activo;
   - crear, editar y desactivar (nunca borrar);
   - botón **«Verificar»** para los autorregistrados;
   - ficha del colaborador con sus marcaciones y evidencias recientes.
-- [ ] **Componentes y nodos** (solo Administración): crear, editar, activar y desactivar,
+- [x] **Componentes y nodos** (solo Administración): crear, editar, activar y desactivar,
       con la configuración del JSON en campos de formulario, no como JSON crudo.
-- [ ] `ColaboradorPolicy` y `ComponentePolicy`: Coordinación gestiona colaboradores y
+- [x] `ColaboradorPolicy` y `ComponentePolicy`: Coordinación gestiona colaboradores y
       Administración gestiona componentes.
-- [ ] Menú lateral: sección **«Turnos»**, visible desde Coordinación.
+- [x] Menú lateral: sección **«Turnos»**, visible desde Coordinación.
 
-## Fase 2b — enlaces de turno y «En turno ahora»
+## Fase 2b — enlaces de turno y «En turno ahora» ✅
 
-- [ ] **Enlaces de turno**: crear (componente, y nodo opcional), copiar, mostrar como
+- [x] **Enlaces de turno**: crear (componente, y nodo opcional), copiar, mostrar como
       **QR** (imprimible) y revocar. El QR se genera en el navegador; no hace falta
       ninguna librería PHP.
-- [ ] **En turno ahora**: quién tiene una entrada abierta, en qué nodo y desde qué hora.
+- [x] **En turno ahora**: quién tiene una entrada abierta, en qué nodo y desde qué hora.
       Usa `Marcador::estadoDe()` de José. Mientras no exista, usa un *stub*.
 
 ## Fase 3b — marcaciones, novedades, corrección y reporte
@@ -85,3 +85,13 @@ José puede crear un `Colaborador` y un `EnlaceTurno` con factories.
 - [ ] La corrección manual crea una fila nueva y deja la original intacta.
 - [ ] `Marcacion::update()` lanza una excepción.
 - [ ] El CSV suma bien un turno que pasa de medianoche.
+
+## Pendiente de coordinar con José (ver `PLAN.md` §8)
+
+- [ ] **8.1** Cargo, componente y nodo obligatorios; selects dependientes del componente,
+      sin `<optgroup>`; toast con lo que falte. Aplica también a los filtros y al
+      formulario de enlaces de turno.
+- [ ] **8.2** Versión automática en el menú (deploy cuenta las fusiones desde `v2.0`).
+- [ ] **8.3** Pantalla «Novedades» con aprobar o rechazar y aviso por la campana.
+      Decidir si Edición valida.
+- [ ] **8.4** Avisos de versión automáticos (`CHANGELOG.md`) y módulo «Enviar aviso».

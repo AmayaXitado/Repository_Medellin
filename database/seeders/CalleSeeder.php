@@ -18,6 +18,14 @@ use Illuminate\Database\Seeder;
  */
 class CalleSeeder extends Seeder
 {
+    /** Los cargos de quienes marcan turno en Calle. */
+    public const CARGOS = [
+        'Conductor camioneta',
+        'Conductor microbús',
+        'Operador terapéutico',
+        'Monitor de ruta',
+    ];
+
     public function run(): void
     {
         $inclusion = Dependencia::where('slug', 'inclusion-social')->first();
@@ -30,6 +38,11 @@ class CalleSeeder extends Seeder
             ['dependencia_id' => $inclusion->id, 'slug' => 'calle'],
             ['nombre' => 'Calle'],
         );
+
+        // Solo si aún no tiene: si Administración ya los cambió, se respetan.
+        if ($calle->cargos() === []) {
+            $calle->update(['config' => ['cargos' => self::CARGOS] + ($calle->config ?? [])]);
+        }
 
         foreach (range(1, 6) as $n) {
             Nodo::firstOrCreate(
