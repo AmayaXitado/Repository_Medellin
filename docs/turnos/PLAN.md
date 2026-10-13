@@ -222,3 +222,58 @@ Los pasos **a** y **b** de cada fila van en paralelo.
 6. **¿Una persona puede estar en dos componentes?** Hoy el plan le da uno habitual,
    pero puede marcar en cualquiera que tenga un enlace.
 7. **Formato del reporte que necesitan (el Excel).**
+
+## 8. Cola de trabajo acordada (pendiente de coordinar)
+
+> Anotado el 9 de octubre. Se coordina con José antes de empezar: varios puntos tocan
+> los dos lados (administración y vía pública).
+
+### 8.1 Cargo, componente y nodo obligatorios — Edwar + José
+
+- **Cargo, componente y nodo pasan a ser obligatorios** al registrar a una persona de
+  campo, tanto en la administración como en el autorregistro público.
+- **Lo que falte se avisa con un toast** (`window.mostrarToast`), no solo con el bloque
+  de errores del formulario. Hoy `partials/alertas.blade.php` pinta los errores como
+  bloque; se agrega el toast.
+- **Selects dependientes, sin «Calle» repetido:** primero se elige el componente, y los
+  selects de nodo y de cargo muestran **solo** los de ese componente. Desaparecen los
+  `<optgroup>` con el nombre del componente: ya no hacen falta.
+  - **Administración (Edwar):** `GuardarColaboradorRequest` (`required` en los tres) y
+    `colaboradores/_formulario.blade.php` (selects dependientes, con un JS pequeño que
+    filtra por `data-componente`). Lo mismo en los filtros de «Personas de campo», «En
+    turno ahora» y en el formulario de enlaces de turno.
+  - **Vía pública (José):** el componente ya lo da el enlace, así que no se elige. En
+    `<x-campos.registro-colaborador>` y `<x-campos.selector-nodo>`, nodo y cargo pasan a
+    `required` y muestran solo los del componente del enlace. El cargo pasa de texto
+    libre a select (ver `TAREAS-JOSE.md`).
+- Las personas ya registradas sin cargo o sin nodo no se rompen: el dato se exige al
+  guardar la próxima vez.
+
+### 8.2 Versión automática en el menú — Edwar
+
+- Se muestra bajo «Documenta · Inclusión Social» y sube sola con cada fusión, **sin
+  commits nuevos**: `bin/deploy.sh` cuenta las fusiones desde la etiqueta `v2.0` y
+  guarda el número antes de `config:cache`.
+- Producción (`main`): `v2.N`. Pruebas (`develop`): `v2.(N+1)-beta.K`. Local: `v2.x-dev`.
+- Requiere crear una vez la etiqueta `v2.0` en `main`.
+
+### 8.3 Novedades de turno con validación — Edwar (pantalla) + José (detección)
+
+- Nueva regla del componente: **«Jornada esperada (horas)»**.
+- Al cerrarse un turno, el `Marcador` (José) genera novedades: turno corto, horas extra,
+  sin salida, llegada tarde (cuando exista la programación), sin ubicación y fuera de
+  zona.
+- Cada novedad nace *Pendiente* y se **aprueba o rechaza con un comentario**. Queda
+  quién y cuándo. Las marcaciones no se tocan, porque son inmutables.
+- Se ven en la pantalla **Novedades** (fase 3b) y **avisan por la campana** de
+  notificaciones con un enlace directo.
+- **Decisión abierta:** ¿Edición también valida? Si sí, ve solo «Novedades».
+
+### 8.4 Avisos de actualizaciones a los usuarios — Edwar
+
+- **Automático por versión:** al desplegar, se lee la sección de esa versión en
+  `CHANGELOG.md` y se notifica una vez a todos los usuarios activos.
+- **Módulo «Enviar aviso»** (Administración): mensajes libres (mantenimientos,
+  recordatorios) para todos, una dependencia o ciertos roles, por la misma campana.
+
+**Orden sugerido:** 8.1 → 8.2 → 8.3 (con la fase 3b y el `Marcador`) → 8.4.
