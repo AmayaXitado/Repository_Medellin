@@ -44,6 +44,7 @@ enum AccionAuditoria: string
     case EnlaceTurnoRevocado = 'enlace_turno.revocado';
     case ComponenteGuardado = 'componente.guardado';
     case NodoGuardado = 'nodo.guardado';
+    case NovedadRevisada = 'turno.novedad_revisada';
 
     public function etiqueta(): string
     {
@@ -86,6 +87,7 @@ enum AccionAuditoria: string
             self::EnlaceTurnoRevocado => 'Revocó un enlace de turno',
             self::ComponenteGuardado => 'Creó o cambió un componente',
             self::NodoGuardado => 'Creó o cambió un nodo',
+            self::NovedadRevisada => 'Aprobó o rechazó una novedad de turno',
         };
     }
 }

@@ -45,14 +45,12 @@
 
     <div>
         <label for="nodo" class="block text-xs font-medium text-[var(--muted)]">Nodo</label>
-        <select id="nodo" name="nodo" class="{{ $campo }} mt-1">
+        <select id="nodo" name="nodo" data-depende-de="#componente" class="{{ $campo }} mt-1">
             <option value="">Todos</option>
             @foreach($componentes as $componente)
-                <optgroup label="{{ $componente->nombre }}">
-                    @foreach($componente->nodos as $nodo)
-                        <option value="{{ $nodo->id }}" @selected(request('nodo') == $nodo->id)>{{ $nodo->nombre }}</option>
-                    @endforeach
-                </optgroup>
+                @foreach($componente->nodos as $nodo)
+                    <option value="{{ $nodo->id }}" data-componente="{{ $componente->id }}" @selected(request('nodo') == $nodo->id)>{{ $nodo->nombre }}</option>
+                @endforeach
             @endforeach
         </select>
     </div>

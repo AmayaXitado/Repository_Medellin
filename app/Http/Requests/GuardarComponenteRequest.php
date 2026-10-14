@@ -28,7 +28,13 @@ class GuardarComponenteRequest extends FormRequest
             ],
             'activo' => ['boolean'],
             'tolerancia_min' => ['required', 'integer', 'between:0,240'],
-            'horas_max_turno' => ['required', 'integer', 'between:1,24'],
+            'jornada_horas' => ['required', 'integer', 'between:1,24'],
+            'descanso_min' => ['required', 'integer', 'between:0,240'],
+            'descanso_parcial_min' => ['required', 'integer', 'between:0,240', 'lte:descanso_min'],
+            'sin_descanso_hasta_h' => ['required', 'integer', 'between:0,12'],
+            'descanso_completo_desde_h' => ['required', 'integer', 'between:1,24', 'gte:sin_descanso_hasta_h'],
+            'horas_max_turno' => ['required', 'integer', 'between:1,24', 'gte:jornada_horas'],
+            'turnos_por_dia' => ['required', 'integer', 'between:1,6'],
             'foto_obligatoria' => ['boolean'],
             'ubicacion_obligatoria' => ['boolean'],
             'autoregistro' => ['boolean'],
@@ -75,8 +81,14 @@ class GuardarComponenteRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'tolerancia_min' => 'tolerancia de llegada',
+            'tolerancia_min' => 'tolerancia',
+            'jornada_horas' => 'jornada esperada',
+            'descanso_min' => 'descanso de turno largo',
+            'descanso_parcial_min' => 'descanso de turno medio',
+            'sin_descanso_hasta_h' => 'turno corto (sin descanso) hasta',
+            'descanso_completo_desde_h' => 'turno largo desde',
             'horas_max_turno' => 'duración máxima del turno',
+            'turnos_por_dia' => 'turnos por día',
         ];
     }
 

@@ -31,6 +31,12 @@ class AdminComponentesTest extends TestCase
     {
         return $cambios + [
             'tolerancia_min' => 10,
+            'jornada_horas' => 8,
+            'descanso_min' => 60,
+            'descanso_parcial_min' => 30,
+            'sin_descanso_hasta_h' => 4,
+            'descanso_completo_desde_h' => 6,
+            'turnos_por_dia' => 1,
             'horas_max_turno' => 12,
             'foto_obligatoria' => '1',
             'ubicacion_obligatoria' => '0',
@@ -57,8 +63,8 @@ class AdminComponentesTest extends TestCase
         $this->actingAs($this->admin)
             ->post(route('admin.turnos.componentes.store'), $this->reglas([
                 'nombre' => 'Básica',
-                'cargos' => "Conductor  camioneta
-
+                'cargos' => "Conductor  camioneta
+
 Monitor de ruta
 Monitor de ruta
 ",

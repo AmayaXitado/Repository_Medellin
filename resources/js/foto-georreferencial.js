@@ -156,6 +156,17 @@ export function hayUbicacion() {
     return ultima !== null;
 }
 
+/**
+ * Las coordenadas para guardarlas en columnas (las marcaciones de turno se
+ * filtran por lugar; dibujadas en la foto no se pueden consultar).
+ * null si no hay ubicación.
+ */
+export function datosDeUbicacion() {
+    return ultima
+        ? { lat: ultima.latitude, lng: ultima.longitude, precision: ultima.accuracy, municipio: ciudad }
+        : null;
+}
+
 /** Pide la ubicación y espera la respuesta (o el tope de 20 s del propio navegador). */
 export function pedirUbicacionAhora() {
     prepararUbicacion();

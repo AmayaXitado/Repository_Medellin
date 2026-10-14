@@ -42,6 +42,12 @@ Route::post('enviar/{token}', [EnvioPublicoController::class, 'recibir'])
     ->middleware('throttle:envio-carga')
     ->name('envio.recibir');
 
+// Solo en los enlaces de un componente: ¿la cédula ya está registrada?
+Route::post('enviar/{token}/cedula', [EnvioPublicoController::class, 'cedula'])
+    ->where('token', '[A-Za-z0-9]{48}')
+    ->middleware('throttle:cedula-consulta')
+    ->name('envio.cedula');
+
 /*
 |--------------------------------------------------------------------------
 | Acceso
@@ -155,6 +161,10 @@ Route::middleware(['auth', 'usuario.activo', 'dependencia'])->group(function () 
         Route::patch('enlaces/{enlace}/revocar', [EnlaceCargaController::class, 'revocar'])->name('enlaces.revocar');
         Route::patch('enlaces/{enlace}/fecha-envio', [EnlaceCargaController::class, 'corregirFechaEnvio'])
             ->name('enlaces.fecha-envio');
+
+        // Avisos por la campana (Administración).
+        Route::get('avisos', [\App\Http\Controllers\Admin\AvisoController::class, 'index'])->name('avisos.index');
+        Route::post('avisos', [\App\Http\Controllers\Admin\AvisoController::class, 'store'])->name('avisos.store');
     });
 
     Route::get('auditoria', [AuditoriaController::class, 'index'])->name('auditoria.index');

@@ -96,3 +96,38 @@ Artisan::command(
         return 0;
     },
 )->purpose('Crea un enlace de carga hacia una carpeta y muestra su URL');
+
+/*
+|--------------------------------------------------------------------------
+| Turnos
+|--------------------------------------------------------------------------
+| Cierra las entradas que pasaron de la duración máxima de su componente.
+| Necesita el cron del servidor llamando a `php artisan schedule:run` cada
+| minuto (ver docs/turnos/PLAN.md).
+*/
+
+Artisan::command('turnos:cerrar-abiertas', function (\App\Services\Turnos\Marcador $marcador) {
+    $cerradas = $marcador->cerrarAbiertas();
+    $this->info("Turnos cerrados sin salida: {$cerradas}");
+})->purpose('Cierra las entradas de turno que pasaron de la duración máxima');
+
+\Illuminate\Support\Facades\Schedule::command('turnos:cerrar-abiertas')->hourly()->withoutOverlapping();
+
+/*
+|--------------------------------------------------------------------------
+| Avisos de versión
+|--------------------------------------------------------------------------
+| Lo corre bin/deploy.sh después de cada despliegue. Si CHANGELOG.md tiene
+| la sección de la versión desplegada y aún no se anunció, avisa una vez a
+| todos los usuarios activos por la campana.
+*/
+
+Artisan::command('avisos:version', function (\App\Services\Avisos $avisos) {
+    $version = (string) config('app.version');
+    $changelog = is_file(base_path('CHANGELOG.md')) ? file_get_contents(base_path('CHANGELOG.md')) : '';
+    $aviso = $avisos->anunciarVersion($version, $changelog);
+
+    $this->info($aviso
+        ? "Aviso de {$version} enviado a {$aviso->destinatarios} personas."
+        : "Nada que anunciar para {$version}.");
+})->purpose('Anuncia por la campana los cambios de la versión desplegada');

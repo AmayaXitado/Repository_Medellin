@@ -79,12 +79,19 @@ function iniciar(campo) {
     let consultada = null;
     let turno = 0;
 
+    // Quien use la pieza (el enlace de turno, por ejemplo) se entera de la
+    // respuesta sin tener que volver a preguntar: null es «aún no se sabe».
+    const anunciar = (datos) => {
+        campo.dispatchEvent(new CustomEvent('cedula:consultada', { detail: datos, bubbles: true }));
+    };
+
     const reiniciar = () => {
         consultada = null;
         turno++;
         mostrarSaludo('');
         avisar('');
         abrirRegistro(false);
+        anunciar(null);
     };
 
     const consultar = async () => {
@@ -143,6 +150,7 @@ function iniciar(campo) {
         }
 
         consultada = cedula;
+        anunciar(datos);
 
         if (datos.existe) {
             mostrarSaludo('Hola, ' + datos.saludo);

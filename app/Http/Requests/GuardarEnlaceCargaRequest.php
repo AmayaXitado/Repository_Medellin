@@ -68,6 +68,13 @@ class GuardarEnlaceCargaRequest extends FormRequest
                 },
             ],
 
+            // Opcional: con componente, quien envía se identifica solo con su
+            // cédula (persona de campo). Sin él, declara nombre, correo y entidad.
+            'componente_id' => [
+                'nullable',
+                Rule::exists('componentes', 'id')->where('dependencia_id', $dependenciaId)->where('activo', true),
+            ],
+
             'proposito' => ['nullable', 'string', 'max:255'],
 
             // Hoy vale: prepareForValidation() ya lo llevó al final del día.

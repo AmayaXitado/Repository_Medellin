@@ -39,6 +39,23 @@
             </p>
         </div>
 
+        @if($componentes->isNotEmpty())
+            <div>
+                <label for="componente_id" class="{{ $etiqueta }}">
+                    ¿Es para personas de campo? <span class="font-normal text-[var(--muted)]">(opcional)</span>
+                </label>
+                <select id="componente_id" name="componente_id" class="{{ $campo }}">
+                    <option value="">No: es para alguien de fuera (pide nombre, correo y entidad)</option>
+                    @foreach($componentes as $componente)
+                        <option value="{{ $componente->id }}" @selected(old('componente_id') == $componente->id)>
+                            Sí, de {{ $componente->nombre }} (pide solo la cédula)
+                        </option>
+                    @endforeach
+                </select>
+                <p class="{{ $ayuda }}">Las personas de campo ya registradas no vuelven a llenar sus datos: basta su cédula.</p>
+            </div>
+        @endif
+
         <div>
             <label for="proposito" class="{{ $etiqueta }}">Propósito</label>
             <input id="proposito" name="proposito" type="text" value="{{ old('proposito') }}"

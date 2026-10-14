@@ -52,5 +52,18 @@ class AppServiceProvider extends ServiceProvider
             Limit::perMinute(10)->by('ip:'.$peticion->ip()),
             Limit::perMinute(6)->by('token:'.$peticion->route('token')),
         ]);
+
+        // Preguntar por una cédula en un enlace compartido es lo que se usaría
+        // para recorrer cédulas al azar: tope bajo por IP. Por token es más
+        // alto, porque un QR de turno lo usa todo un equipo a la misma hora.
+        RateLimiter::for('cedula-consulta', fn (Request $peticion) => [
+            Limit::perMinute(20)->by('ip:'.$peticion->ip()),
+            Limit::perMinute(120)->by('token:'.$peticion->route('token')),
+        ]);
+
+        RateLimiter::for('turno-marca', fn (Request $peticion) => [
+            Limit::perMinute(10)->by('ip:'.$peticion->ip()),
+            Limit::perMinute(120)->by('token:'.$peticion->route('token')),
+        ]);
     }
 }

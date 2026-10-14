@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Enums\AccionAuditoria;
 use App\Enums\EstadoEscaneo;
 use App\Enums\EstadoRecepcion;
+use App\Models\Colaborador;
+use App\Models\Componente;
 use App\Models\Documento;
 use App\Models\EnlaceCarga;
 use App\Models\Recepcion;
@@ -13,6 +15,10 @@ use App\Services\AlmacenamientoDocumentos;
 use App\Services\Auditor;
 use App\Services\CalendarioHabil;
 use App\Services\ContextoDependencia;
+use App\Services\Turnos\IdentificadorColaborador;
+use App\Models\User;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -42,6 +48,7 @@ class EnvioPublicoController extends Controller
         protected Auditor $auditor,
         protected ContextoDependencia $contexto,
         protected CalendarioHabil $calendario,
+        protected IdentificadorColaborador $identificador,
     ) {
     }
 
@@ -60,6 +67,8 @@ class EnvioPublicoController extends Controller
             'token' => $token,
             'proposito' => $enlace->proposito,
             'maximoArchivos' => self::MAXIMO_ARCHIVOS,
+            // Con componente, quien envía es una persona de campo: basta su cédula.
+            'componente' => $this->componenteDe($enlace)?->load(['nodos' => fn ($q) => $q->activos()]),
         ]);
     }
 
@@ -88,10 +97,7 @@ class EnvioPublicoController extends Controller
             // La identidad la declara quien sube, no el enlace. Es lo que se
             // guarda como cadena de custodia junto a cada documento, así que
             // se pide entera: sin correo ni entidad no hay a quién volver.
-            'remitente_nombre' => ['required', 'string', 'max:255'],
-            'remitente_email' => ['required', 'email', 'max:255'],
-            'remitente_entidad' => ['required', 'string', 'max:255'],
-            'nodo' => ['required', 'integer', 'between:1,6'],
+            ...$this->reglasDeIdentidad($peticion, $enlace),
 
             'archivo' => ['required', 'array', 'max:'.self::MAXIMO_ARCHIVOS],
             'archivo.*' => [
@@ -132,6 +138,9 @@ class EnvioPublicoController extends Controller
         // vería estos registros en su pantalla de auditoría.
         $this->contexto->establecer($enlace->dependencia);
 
+        $componente = $this->componenteDe($enlace);
+        $colaborador = $componente ? $this->colaboradorQueEnvia($peticion, $enlace) : null;
+
         $archivos = array_values($peticion->file('archivo'));
 
         // El juicio se hace una sola vez y se congela en cada fila. Una vez
@@ -145,8 +154,16 @@ class EnvioPublicoController extends Controller
         $rutasGuardadas = [];
 
         try {
-            $recepciones = DB::transaction(function () use ($peticion, $enlace, $archivos, $datos, $fueraDeHorario, &$rutasGuardadas) {
+            [$recepciones, $remitente] = DB::transaction(function () use ($peticion, $enlace, $archivos, $datos, $fueraDeHorario, $componente, $colaborador, &$rutasGuardadas) {
                 $creadas = [];
+
+                // La primera vez de una persona de campo se registra aquí, en la
+                // misma transacción: si el envío falla, tampoco queda registrada.
+                if ($componente && $colaborador === null) {
+                    $colaborador = $this->identificador->registrar($componente, $peticion->input('cedula'), $datos['colaborador']);
+                }
+
+                $remitente = $this->remitente($datos, $colaborador?->load('nodo'));
 
                 foreach ($archivos as $indice => $archivo) {
                     $nombreOriginal = Str::limit($archivo->getClientOriginalName(), 250, '');
@@ -201,10 +218,11 @@ class EnvioPublicoController extends Controller
 
                         // Lo que declara quien sube. Se guarda aquí y no en el
                         // enlace: el enlace ya no tiene identidad.
-                        'remitente_nombre' => $datos['remitente_nombre'],
-                        'remitente_email' => $datos['remitente_email'],
-                        'remitente_entidad' => $datos['remitente_entidad'],
-                        'nodo' => $datos['nodo'],
+                        'colaborador_id' => $remitente['colaborador_id'],
+                        'remitente_nombre' => $remitente['nombre'],
+                        'remitente_email' => $remitente['email'],
+                        'remitente_entidad' => $remitente['entidad'],
+                        'nodo' => $remitente['nodo'],
                         'tomada_at' => $tomada,
 
                         // El archivo vive bajo documentos/, con su versión.
@@ -234,7 +252,7 @@ class EnvioPublicoController extends Controller
                 // pensando en una entrega, no en un contador de ficheros.
                 $enlace->registrarUso();
 
-                return $creadas;
+                return [$creadas, $remitente];
             });
         } catch (Throwable $e) {
             foreach ($rutasGuardadas as $ruta) {
@@ -247,7 +265,7 @@ class EnvioPublicoController extends Controller
         // Una notificación por envío, no por archivo: nadie quiere tres
         // correos porque alguien mandó tres fotos a la vez.
         if ($enlace->creador) {
-            $enlace->creador->notify(new RecepcionRecibida($enlace, count($recepciones), $datos['remitente_nombre']));
+            $enlace->creador->notify(new RecepcionRecibida($enlace, count($recepciones), $remitente['nombre']));
         }
 
         // Una entrada por documento: la auditoría sigue documentos, no envíos.
@@ -320,6 +338,99 @@ class EnvioPublicoController extends Controller
         }
 
         return response()->view('publico.recibido', ['archivos' => (array) $archivos]);
+    }
+
+    /**
+     * ¿Esta cédula ya está registrada? Lo mismo que en el enlace de turno:
+     * solo si existe y el saludo recortado. Nada más sale de aquí.
+     */
+    public function cedula(Request $peticion, string $token): JsonResponse
+    {
+        $enlace = EnlaceCarga::porToken($token);
+        abort_if($enlace === null || ! $enlace->estaVigente() || $this->componenteDe($enlace) === null, 404);
+
+        $datos = $peticion->validate(['cedula' => ['required', 'string', 'max:20']]);
+        $colaborador = $this->identificador->buscar($enlace->dependencia_id, $datos['cedula']);
+        $existe = $colaborador?->activo ?? false;
+
+        return response()->json(['existe' => $existe, 'saludo' => $existe ? $colaborador->saludo() : '']);
+    }
+
+    /** El componente del enlace, si tiene uno y está activo. */
+    protected function componenteDe(EnlaceCarga $enlace): ?Componente
+    {
+        return $enlace->componente?->activo ? $enlace->componente : null;
+    }
+
+    /**
+     * Con componente: la cédula y, solo si es nueva, sus datos una vez. Sin
+     * él: nombre, correo, entidad y nodo, como siempre.
+     */
+    protected function reglasDeIdentidad(Request $peticion, EnlaceCarga $enlace): array
+    {
+        $componente = $this->componenteDe($enlace);
+
+        if ($componente === null) {
+            return [
+                'remitente_nombre' => ['required', 'string', 'max:255'],
+                'remitente_email' => ['required', 'email', 'max:255'],
+                'remitente_entidad' => ['required', 'string', 'max:255'],
+                'nodo' => ['required', 'integer', 'between:1,6'],
+            ];
+        }
+
+        $peticion->merge(['cedula' => User::normalizarDocumento($peticion->input('cedula'))]);
+        $existe = $this->identificador->buscar($enlace->dependencia_id, (string) $peticion->input('cedula')) !== null;
+
+        return ['cedula' => ['required', 'string', 'min:5', 'max:20', 'regex:/^[0-9A-Z]+$/']]
+            + ($existe ? [] : $this->identificador->reglasDeRegistro($componente));
+    }
+
+    /** La persona de campo que envía, ya registrada; null si es nueva y puede registrarse. */
+    protected function colaboradorQueEnvia(Request $peticion, EnlaceCarga $enlace): ?Colaborador
+    {
+        $colaborador = $this->identificador->buscar($enlace->dependencia_id, (string) $peticion->input('cedula'));
+
+        if ($colaborador && ! $colaborador->activo) {
+            throw ValidationException::withMessages([
+                'cedula' => 'Tu identificación no está habilitada para enviar. Comunícate con Coordinación.',
+            ]);
+        }
+
+        if ($colaborador === null && ! $this->componenteDe($enlace)->regla('autoregistro')) {
+            throw ValidationException::withMessages([
+                'cedula' => 'Tu identificación no está registrada. Pide a Coordinación que te registre.',
+            ]);
+        }
+
+        return $colaborador;
+    }
+
+    /**
+     * Lo que queda como cadena de custodia en la recepción. Con persona de
+     * campo se copia de su ficha, para que todo lo que ya lee remitente_*
+     * (la ficha del documento, la auditoría) siga funcionando igual.
+     */
+    protected function remitente(array $datos, ?Colaborador $colaborador): array
+    {
+        if ($colaborador === null) {
+            return [
+                'colaborador_id' => null,
+                'nombre' => $datos['remitente_nombre'],
+                'email' => $datos['remitente_email'],
+                'entidad' => $datos['remitente_entidad'],
+                'nodo' => $datos['nodo'],
+            ];
+        }
+
+        return [
+            'colaborador_id' => $colaborador->id,
+            'nombre' => $colaborador->nombre,
+            'email' => $colaborador->correo,
+            'entidad' => $colaborador->entidad,
+            // recepciones.nodo sigue siendo el número de siempre (1 a 6).
+            'nodo' => $colaborador->nodo?->orden,
+        ];
     }
 
     /**

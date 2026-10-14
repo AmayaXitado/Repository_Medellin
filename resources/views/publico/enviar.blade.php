@@ -33,6 +33,10 @@
         La identidad la escribe quien envía, no quien generó el enlace. Es lo
         que queda como cadena de custodia junto a cada documento.
     --}}
+    @if($componente)
+        {{-- Persona de campo: la cédula basta; sus datos se llenan una sola vez. --}}
+        <x-campos.cedula :consulta="route('envio.cedula', ['token' => $token])" :componente="$componente" />
+    @else
     <fieldset class="space-y-4">
         <legend class="text-sm font-semibold text-[var(--text)]">Quién envía</legend>
 
@@ -67,6 +71,7 @@
             </select>
         </div>
     </fieldset>
+    @endif
 
     <fieldset>
         <legend class="text-sm font-semibold text-[var(--text)]">Qué envías</legend>
