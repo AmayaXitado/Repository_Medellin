@@ -48,9 +48,11 @@ class AppServiceProvider extends ServiceProvider
         // —una alcaldía entera detrás de un NAT— no debe agotarle el cupo a
         // los demás remitentes, y un token filtrado no debe poder inundar
         // una bandeja desde muchas IP.
+        // Una carga de 300 archivos llega en 6 tandas seguidas (y alguna puede
+        // reintentarse): el tope deja pasar eso y sigue frenando una avalancha.
         RateLimiter::for('envio-carga', fn (Request $peticion) => [
-            Limit::perMinute(10)->by('ip:'.$peticion->ip()),
-            Limit::perMinute(6)->by('token:'.$peticion->route('token')),
+            Limit::perMinute(20)->by('ip:'.$peticion->ip()),
+            Limit::perMinute(20)->by('token:'.$peticion->route('token')),
         ]);
 
         // Preguntar por una cédula en un enlace compartido es lo que se usaría

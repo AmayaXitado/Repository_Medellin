@@ -45,6 +45,9 @@ enum AccionAuditoria: string
     case ComponenteGuardado = 'componente.guardado';
     case NodoGuardado = 'nodo.guardado';
     case NovedadRevisada = 'turno.novedad_revisada';
+    case DocumentoAbierto = 'documento.abierto';
+    case CarpetaCustodia = 'carpeta.custodia';
+    case GrupoCustodiaGuardado = 'grupo_custodia.guardado';
 
     public function etiqueta(): string
     {
@@ -88,6 +91,9 @@ enum AccionAuditoria: string
             self::ComponenteGuardado => 'Creó o cambió un componente',
             self::NodoGuardado => 'Creó o cambió un nodo',
             self::NovedadRevisada => 'Aprobó o rechazó una novedad de turno',
+            self::DocumentoAbierto => 'Abrió un documento custodiado',
+            self::CarpetaCustodia => 'Cambió la custodia de una carpeta',
+            self::GrupoCustodiaGuardado => 'Creó o cambió un grupo de custodia',
         };
     }
 }

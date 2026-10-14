@@ -42,17 +42,18 @@
         @if($componentes->isNotEmpty())
             <div>
                 <label for="componente_id" class="{{ $etiqueta }}">
-                    ¿Es para personas de campo? <span class="font-normal text-[var(--muted)]">(opcional)</span>
+                    Componente <span class="font-normal text-[var(--muted)]">(si es para personas de campo)</span>
                 </label>
                 <select id="componente_id" name="componente_id" class="{{ $campo }}">
-                    <option value="">No: es para alguien de fuera (pide nombre, correo y entidad)</option>
+                    <option value="">Ninguno: es para alguien de fuera</option>
                     @foreach($componentes as $componente)
-                        <option value="{{ $componente->id }}" @selected(old('componente_id') == $componente->id)>
-                            Sí, de {{ $componente->nombre }} (pide solo la cédula)
-                        </option>
+                        <option value="{{ $componente->id }}" @selected(old('componente_id') == $componente->id)>{{ $componente->nombre }}</option>
                     @endforeach
                 </select>
-                <p class="{{ $ayuda }}">Las personas de campo ya registradas no vuelven a llenar sus datos: basta su cédula.</p>
+                <p class="{{ $ayuda }}">
+                    Con un componente, el formulario pide solo la cédula y toma los datos de la persona.
+                    Sin componente, pide nombre, correo y entidad.
+                </p>
             </div>
         @endif
 

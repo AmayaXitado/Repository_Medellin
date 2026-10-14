@@ -28,15 +28,16 @@ permiten al día lo decide la regla «Turnos por día» del componente.
 En los **enlaces de evidencias** de un componente pasa lo mismo: la cédula basta, y
 los datos de quien envía salen de su ficha.
 
-## 2. Para Coordinación y Edición
+## 2. Para los líderes (Edición) y Coordinación
 
+Los editores son los **líderes** de cada componente o nodo: gestionan todo lo de turnos.
 El grupo **Turnos** del menú va en el orden del trabajo:
 
 | Menú | Para qué | Quién |
 |---|---|---|
-| **Componentes y nodos** | Configurar Calle, Básica…: nodos, cargos y reglas | Administración |
-| **Enlaces de turno** | Crear el enlace de un componente o de un nodo, copiar el link, imprimir el QR, revocarlo | Coordinación |
-| **Personas de campo** | Buscar por cédula (con o sin puntos) o nombre; registrar, editar, verificar, desactivar. En la ficha: sus marcaciones, sus evidencias y **agregar una marca que faltó** | Coordinación |
+| **Componentes y nodos** | Configurar Calle, Básica…: nodos, cargos y reglas | Coordinación |
+| **Enlaces de turno** | Crear el enlace de un componente o de un nodo, copiar el link, imprimir el QR, revocarlo | Desde Edición |
+| **Personas de campo** | Buscar por cédula (con o sin puntos) o nombre; registrar, editar, verificar, desactivar. En la ficha: sus marcaciones, sus evidencias y **agregar una marca que faltó** | Desde Edición |
 | **En turno ahora** | Quién marcó entrada y no salida, dónde y desde cuándo. En rojo si pasó del máximo | Desde Edición |
 | **Novedades** | Turno corto, horas extra, sin salida, sin ubicación, fuera de zona. **Aprobar, rechazar** (pide comentario) **o corregir la hora**. Llegan por la campana | Desde Edición |
 | **Marcaciones y reporte** | Todas las marcas, con foto y mapa, filtros y **Corregir hora**. **Descargar reporte (Excel)** | Desde Edición |
@@ -89,12 +90,12 @@ trabajo, 10 min de más (menos de 15): sale 0,00 extra. Un turno de 8 h en el si
 el descanso, son 7 h de trabajo: **turno corto**. Lo que se paga lo decide la nómina con
 esas columnas.
 
-## 3. Para Administración
+## 3. Para Coordinación y Administración
 
 | Menú | Para qué |
 |---|---|
-| **Componentes y nodos** | Crear Básica, Estabilización… con sus nodos, sus cargos y sus reglas. Sin tocar código |
-| **Enviar aviso** | Mensajes por la campana a la dependencia, o solo a ciertos roles |
+| **Componentes y nodos** | Crear Básica, Estabilización… con sus nodos, sus cargos y sus reglas. Sin tocar código (Coordinación) |
+| **Enviar aviso** | Mensajes por la campana a la dependencia, o solo a ciertos roles (Administración) |
 
 Las reglas de cada componente:
 

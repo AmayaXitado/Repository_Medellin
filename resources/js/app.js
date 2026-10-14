@@ -6,6 +6,8 @@ import './qr';
 import './turno';
 import './selects-dependientes';
 import './menu-grupos';
+import './carga-tandas';
+import './lote-explorador';
 import './sonidos';
 import './notificaciones';
 import './toasts';

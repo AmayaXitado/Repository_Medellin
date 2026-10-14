@@ -29,9 +29,10 @@ class DocumentoPolicy
         return $this->view($usuario, $documento);
     }
 
+    /** Editar (y copiar, mover, subir versión) exige primero poder verlo: un documento custodiado por otros no se toca. */
     public function update(User $usuario, Documento $documento): bool
     {
-        return $documento->activo && $usuario->puedeEditarEn($documento->dependencia_id);
+        return $documento->activo && $usuario->puedeEditarEn($documento->dependencia_id) && $this->view($usuario, $documento);
     }
 
     public function subirVersion(User $usuario, Documento $documento): bool

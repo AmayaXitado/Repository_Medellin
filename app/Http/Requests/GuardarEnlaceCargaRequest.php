@@ -54,6 +54,7 @@ class GuardarEnlaceCargaRequest extends FormRequest
             'carpeta_id' => [
                 'required',
                 Rule::exists('carpetas', 'id')->where('dependencia_id', $dependenciaId),
+                new \App\Rules\CarpetaAccesible,
                 function (string $atributo, mixed $valor, Closure $falla) use ($puedeCualquierCarpeta, $usuario) {
                     if ($puedeCualquierCarpeta || $valor === null) {
                         return;

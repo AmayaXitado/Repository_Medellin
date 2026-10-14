@@ -170,13 +170,18 @@ Monitor de ruta
         $this->assertSame(1, $ajeno->nodos()->count());
     }
 
-    public function test_coordinacion_no_entra_a_componentes(): void
+    public function test_coordinacion_crea_componentes_y_edicion_no(): void
     {
         $coordinador = $this->usuarioCon(RolDependencia::Coordinacion, $this->dependencia);
-
-        $this->actingAs($coordinador)->get(route('admin.turnos.componentes.index'))->assertForbidden();
+        $this->actingAs($coordinador)->get(route('admin.turnos.componentes.index'))->assertOk();
         $this->actingAs($coordinador)
-            ->post(route('admin.turnos.componentes.store'), $this->reglas(['nombre' => 'Nuevo']))
+            ->post(route('admin.turnos.componentes.store'), $this->reglas(['nombre' => 'Básica']))
+            ->assertSessionHasNoErrors();
+
+        $editor = $this->usuarioCon(RolDependencia::Edicion, $this->dependencia);
+        $this->actingAs($editor)->get(route('admin.turnos.componentes.index'))->assertForbidden();
+        $this->actingAs($editor)
+            ->post(route('admin.turnos.componentes.store'), $this->reglas(['nombre' => 'Otro']))
             ->assertForbidden();
     }
 }

@@ -8,8 +8,7 @@ use App\Services\ContextoDependencia;
 
 /**
  * Revisar los turnos —quién está en turno, las marcaciones, las novedades—
- * y corregir una hora mal marcada: desde Edición. Registrar personas, crear
- * enlaces y agregar marcas que faltaron sigue siendo de Coordinación.
+ * y corregir una hora mal marcada: desde Edición, como todo lo de turnos.
  */
 class MarcacionPolicy
 {

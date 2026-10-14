@@ -45,6 +45,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Cargas grandes, por tandas
+    |--------------------------------------------------------------------------
+    | Se pueden elegir hasta 'maximo_total' archivos de una vez; el navegador
+    | los manda en tandas de 'por_tanda' (o menos, si una tanda pasaría de
+    | 'mb_por_tanda'). El servidor sigue recibiendo como mucho 'por_tanda' por
+    | petición: sus límites no cambian. 'mb_por_tanda' tiene que quedar por
+    | debajo de post_max_size en php.ini.
+    */
+    'carga' => [
+        'maximo_total' => (int) env('REPOSITORIO_CARGA_MAXIMO_TOTAL', 300),
+        'por_tanda' => 50,
+        'mb_por_tanda' => (int) env('REPOSITORIO_CARGA_MB_POR_TANDA', 150),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Resolución de las fotografías
     |--------------------------------------------------------------------------
     | El peso no basta como tope: una foto de 48 MP cabe en 25 MB y aun así se

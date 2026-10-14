@@ -14,6 +14,7 @@ use App\Notifications\RecepcionRecibida;
 use App\Services\AlmacenamientoDocumentos;
 use App\Services\Auditor;
 use App\Services\CalendarioHabil;
+use App\Services\CargaPorTandas;
 use App\Services\ContextoDependencia;
 use App\Services\Turnos\IdentificadorColaborador;
 use App\Models\User;
@@ -66,17 +67,26 @@ class EnvioPublicoController extends Controller
         return response()->view('publico.enviar', [
             'token' => $token,
             'proposito' => $enlace->proposito,
-            'maximoArchivos' => self::MAXIMO_ARCHIVOS,
+            // Lo que se puede elegir de una vez; el navegador lo manda en
+            // tandas de MAXIMO_ARCHIVOS (carga-tandas.js).
+            'maximoArchivos' => config('repositorio.carga.maximo_total'),
             // Con componente, quien envía es una persona de campo: basta su cédula.
             'componente' => $this->componenteDe($enlace)?->load(['nodos' => fn ($q) => $q->activos()]),
         ]);
     }
 
-    public function recibir(Request $peticion, string $token): Response|RedirectResponse
+    public function recibir(Request $peticion, string $token): Response|RedirectResponse|JsonResponse
     {
         $enlace = EnlaceCarga::porToken($token);
 
-        if ($enlace === null || ! $enlace->estaVigente()) {
+        // Una carga grande llega en tandas (carga-tandas.js) y cuenta como un
+        // solo envío: si la primera tanda gastó el último uso, las siguientes
+        // de esa misma carga entran igual (mientras el enlace siga activo y
+        // sin vencer).
+        $tanda = $enlace ? CargaPorTandas::desde($peticion, 'enlace:'.$enlace->id) : null;
+        $continuaUnaCarga = $tanda?->yaEmpezo() && $enlace->activo && ! $enlace->haExpirado();
+
+        if ($enlace === null || (! $enlace->estaVigente() && ! $continuaUnaCarga)) {
             return $this->enlaceNoDisponible($token, $enlace);
         }
 
@@ -122,6 +132,8 @@ class EnvioPublicoController extends Controller
             'tomadas.*' => ['nullable', 'date'],
 
             'mensaje' => ['nullable', 'string', 'max:1000'],
+
+            ...CargaPorTandas::reglas(),
         ], [
             'remitente_nombre.required' => 'Escribe tu nombre para que sepan de quién viene.',
             'remitente_email.required' => 'Escribe tu correo, por si necesitan responderte.',
@@ -152,9 +164,10 @@ class EnvioPublicoController extends Controller
         // Si la transacción se cae después de escribir algún archivo, las
         // filas se deshacen solas pero los archivos no: hay que borrarlos.
         $rutasGuardadas = [];
+        $hashes = [];
 
         try {
-            [$recepciones, $remitente] = DB::transaction(function () use ($peticion, $enlace, $archivos, $datos, $fueraDeHorario, $componente, $colaborador, &$rutasGuardadas) {
+            [$recepciones, $remitente] = DB::transaction(function () use ($peticion, $enlace, $archivos, $datos, $fueraDeHorario, $componente, $colaborador, $tanda, &$rutasGuardadas, &$hashes) {
                 $creadas = [];
 
                 // La primera vez de una persona de campo se registra aquí, en la
@@ -166,6 +179,14 @@ class EnvioPublicoController extends Controller
                 $remitente = $this->remitente($datos, $colaborador?->load('nodo'));
 
                 foreach ($archivos as $indice => $archivo) {
+                    // Reintentar una tanda que sí había llegado no la duplica.
+                    $hash = hash_file('sha256', $archivo->getRealPath());
+
+                    if ($tanda && ($tanda->yaRecibido($hash) || in_array($hash, $hashes, true))) {
+                        continue;
+                    }
+
+                    $hashes[] = $hash;
                     $nombreOriginal = Str::limit($archivo->getClientOriginalName(), 250, '');
 
                     // El reloj de quien envía puede estar en cualquier huso o
@@ -249,8 +270,12 @@ class EnvioPublicoController extends Controller
                 }
 
                 // Un uso por envío, no por archivo: quien puso «1 uso» está
-                // pensando en una entrega, no en un contador de ficheros.
-                $enlace->registrarUso();
+                // pensando en una entrega, no en un contador de ficheros. Una
+                // carga por tandas es un solo envío: el uso se cuenta en la
+                // primera tanda que entra.
+                if (! $tanda?->yaEmpezo()) {
+                    $enlace->registrarUso();
+                }
 
                 return [$creadas, $remitente];
             });
@@ -262,10 +287,20 @@ class EnvioPublicoController extends Controller
             throw $e;
         }
 
-        // Una notificación por envío, no por archivo: nadie quiere tres
-        // correos porque alguien mandó tres fotos a la vez.
-        if ($enlace->creador) {
-            $enlace->creador->notify(new RecepcionRecibida($enlace, count($recepciones), $remitente['nombre']));
+        $nombres = collect($recepciones)->pluck('nombre_original')->all();
+
+        if ($tanda) {
+            $tanda->marcarEmpezada();
+            $tanda->anotar($hashes, $nombres);
+            // La confirmación y el aviso, con todo lo de la carga, no solo
+            // con lo de la última tanda.
+            $nombres = $tanda->nombres();
+        }
+
+        // Una notificación por envío, no por archivo ni por tanda: nadie
+        // quiere seis avisos porque alguien mandó 300 fotos.
+        if ($enlace->creador && (! $tanda || $tanda->esUltima())) {
+            $enlace->creador->notify(new RecepcionRecibida($enlace, count($nombres), $remitente['nombre']));
         }
 
         // Una entrada por documento: la auditoría sigue documentos, no envíos.
@@ -278,9 +313,19 @@ class EnvioPublicoController extends Controller
             );
         }
 
+        if ($tanda) {
+            if (! $tanda->esUltima()) {
+                return response()->json(['recibidos' => count($recepciones)]);
+            }
+
+            $peticion->session()->flash('envio.confirmado', $nombres);
+
+            return response()->json(['recibidos' => count($recepciones), 'redirect' => route('envio.confirmacion')]);
+        }
+
         return redirect()
             ->route('envio.confirmacion')
-            ->with('envio.confirmado', collect($recepciones)->pluck('nombre_original')->all());
+            ->with('envio.confirmado', $nombres);
     }
 
     /**

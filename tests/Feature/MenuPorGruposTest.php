@@ -38,9 +38,8 @@ class MenuPorGruposTest extends TestCase
         $coordinador = $this->usuarioCon(RolDependencia::Coordinacion, $this->dependencia);
 
         $this->actingAs($coordinador)->get(route('documentos.index'))
-            ->assertSeeInOrder(['Turnos', 'Enlaces de turno', 'Personas de campo', 'En turno ahora', 'Novedades', 'Marcaciones y reporte'])
+            ->assertSeeInOrder(['Turnos', 'Componentes y nodos', 'Enlaces de turno', 'Personas de campo', 'En turno ahora', 'Novedades', 'Marcaciones y reporte'])
             ->assertSeeInOrder(['Administración', 'Usuarios', 'Tipos de documento', 'Auditoría'])
-            ->assertDontSee('Componentes y nodos')
             ->assertDontSee('Enviar aviso');
     }
 
@@ -53,14 +52,13 @@ class MenuPorGruposTest extends TestCase
             ->assertSeeInOrder(['Administración', 'Usuarios', 'Tipos de documento', 'Enviar aviso', 'Auditoría']);
     }
 
-    public function test_edicion_ve_solo_lo_de_revisar_turnos(): void
+    public function test_edicion_gestiona_todo_turnos_menos_los_componentes(): void
     {
         $editor = $this->usuarioCon(RolDependencia::Edicion, $this->dependencia);
 
         $this->actingAs($editor)->get(route('documentos.index'))
-            ->assertSeeInOrder(['Turnos', 'En turno ahora', 'Novedades', 'Marcaciones y reporte'])
-            ->assertDontSee('Personas de campo')
-            ->assertDontSee('Enlaces de turno')
+            ->assertSeeInOrder(['Turnos', 'Enlaces de turno', 'Personas de campo', 'En turno ahora', 'Novedades', 'Marcaciones y reporte'])
+            ->assertDontSee('Componentes y nodos')
             ->assertDontSee('data-grupo-menu="administracion"', false);
     }
 

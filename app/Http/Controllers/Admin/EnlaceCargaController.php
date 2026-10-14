@@ -59,7 +59,7 @@ class EnlaceCargaController extends Controller
         $esAdministrador = $usuario->puedeEditarEn($dependencia->id);
 
         $carpetas = $esAdministrador
-            ? Carpeta::activas()->orderBy('nombre')->get()
+            ? Carpeta::visiblesPara(auth()->user())->activas()->orderBy('nombre')->get()
             : $usuario->carpetasLideradas()->where('dependencia_id', $dependencia->id)->activas()->orderBy('nombre')->get();
 
         $sugerida = $peticion->filled('carpeta')

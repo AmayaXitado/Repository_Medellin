@@ -148,11 +148,12 @@ class AdminEnlacesYEnTurnoTest extends TestCase
 
     public function test_edicion_no_entra_y_otra_dependencia_no_se_ve(): void
     {
-        // Edición revisa quién está en turno, pero los enlaces son de Coordinación.
+        // Edición (los líderes) maneja los enlaces y ve quién está en turno; Lectura nada.
         $editor = $this->usuarioCon(RolDependencia::Edicion, $this->dependencia);
-        $this->actingAs($editor)->get(route('admin.turnos.enlaces.index'))->assertForbidden();
+        $this->actingAs($editor)->get(route('admin.turnos.enlaces.index'))->assertOk();
         $this->actingAs($editor)->get(route('admin.turnos.en-turno'))->assertOk();
         $lector = $this->usuarioCon(RolDependencia::Lectura, $this->dependencia);
+        $this->actingAs($lector)->get(route('admin.turnos.enlaces.index'))->assertForbidden();
         $this->actingAs($lector)->get(route('admin.turnos.en-turno'))->assertForbidden();
 
         $ajeno = EnlaceTurno::factory()->create(['nombre' => 'Enlace de Beta']);

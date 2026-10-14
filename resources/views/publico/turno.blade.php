@@ -17,7 +17,9 @@
 
 @if($marcado)
     {{-- Lo primero que se ve al volver: qué quedó registrado y a qué hora. --}}
-    <div class="mt-6 rounded-lg bg-success-soft p-4 text-center" role="status">
+    {{-- Suena igual que toda confirmación (sonidos.js), salvo un doble toque, que no registró nada. --}}
+    <div class="mt-6 rounded-lg bg-success-soft p-4 text-center" role="status"
+         @unless($marcado['repetida']) data-sonido-al-cargar="envio" @endunless>
         <p class="text-lg font-semibold text-[var(--success)]">
             {{ $marcado['repetida'] ? 'Ya estaba registrada tu' : $marcado['tipo'].' registrada' }}
             {{ $marcado['repetida'] ? mb_strtolower($marcado['tipo']) : '' }}
@@ -56,7 +58,7 @@
             Foto {!! $fotoObligatoria ? '*' : '<span class="font-normal text-[var(--muted)]">(opcional)</span>' !!}
         </p>
         <p class="mt-1 text-xs text-[var(--muted)]">Se le estampa la hora y el lugar. Tómala en el sitio.</p>
-        <x-campo-archivo nombre="foto" :requerido="$fotoObligatoria" camara formatos="publico" />
+        <x-campo-archivo nombre="foto" :requerido="$fotoObligatoria" camara formatos="publico" sello="Turno" />
     </div>
 
     {{-- Las llena turno.js justo antes de enviar. --}}

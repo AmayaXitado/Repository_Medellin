@@ -196,19 +196,24 @@ class AdminColaboradoresTest extends TestCase
             ->assertSee('Todavía no ha marcado turno.');
     }
 
-    public function test_edicion_y_lectura_no_entran(): void
+    public function test_edicion_gestiona_a_las_personas_y_lectura_no_entra(): void
     {
         $persona = $this->persona();
 
-        foreach ([RolDependencia::Edicion, RolDependencia::Lectura] as $rol) {
-            $usuario = $this->usuarioCon($rol, $this->dependencia);
+        // Los editores son los líderes de cada componente o nodo.
+        $editor = $this->usuarioCon(RolDependencia::Edicion, $this->dependencia);
+        $this->actingAs($editor)->get(route('admin.turnos.colaboradores.index'))->assertOk();
+        $this->actingAs($editor)->get(route('admin.turnos.colaboradores.show', $persona))->assertOk();
+        $this->actingAs($editor)
+            ->post(route('admin.turnos.colaboradores.store'), $this->ficha(['documento' => '12345678', 'nombre' => 'De un editor']))
+            ->assertSessionHasNoErrors();
 
-            $this->actingAs($usuario)->get(route('admin.turnos.colaboradores.index'))->assertForbidden();
-            $this->actingAs($usuario)->get(route('admin.turnos.colaboradores.show', $persona))->assertForbidden();
-            $this->actingAs($usuario)
-                ->post(route('admin.turnos.colaboradores.store'), $this->ficha(['documento' => '12345678', 'nombre' => 'X']))
-                ->assertForbidden();
-        }
+        $lector = $this->usuarioCon(RolDependencia::Lectura, $this->dependencia);
+        $this->actingAs($lector)->get(route('admin.turnos.colaboradores.index'))->assertForbidden();
+        $this->actingAs($lector)->get(route('admin.turnos.colaboradores.show', $persona))->assertForbidden();
+        $this->actingAs($lector)
+            ->post(route('admin.turnos.colaboradores.store'), $this->ficha(['documento' => '87654321', 'nombre' => 'X']))
+            ->assertForbidden();
     }
 
     public function test_no_se_alcanza_una_persona_de_otra_dependencia(): void
