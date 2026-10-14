@@ -31,14 +31,12 @@
 
         <div>
             <label for="nodo_id" class="{{ $etiqueta }}">Nodo {!! $opcional !!}</label>
-            <select id="nodo_id" name="nodo_id" class="{{ $campo }}">
+            <select id="nodo_id" name="nodo_id" data-depende-de="#componente_id" class="{{ $campo }}">
                 <option value="">Todo el componente</option>
                 @foreach($componentes as $componente)
-                    <optgroup label="{{ $componente->nombre }}">
-                        @foreach($componente->nodos as $nodo)
-                            <option value="{{ $nodo->id }}" @selected(old('nodo_id') == $nodo->id)>{{ $nodo->nombre }}</option>
-                        @endforeach
-                    </optgroup>
+                    @foreach($componente->nodos as $nodo)
+                        <option value="{{ $nodo->id }}" data-componente="{{ $componente->id }}" @selected(old('nodo_id') == $nodo->id)>{{ $nodo->nombre }}</option>
+                    @endforeach
                 @endforeach
             </select>
             <p class="{{ $ayuda }}">

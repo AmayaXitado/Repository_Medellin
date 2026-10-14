@@ -34,6 +34,33 @@
             </select>
         </div>
 
+        {{--
+            Custodia: solo Coordinación en adelante la asigna. Quien no puede,
+            solo ve si la carpeta está custodiada (y por quién).
+        --}}
+        @if($grupos->isNotEmpty())
+            <div>
+                <label for="grupo_custodia_id" class="{{ $etiqueta }}">Custodia</label>
+                <select id="grupo_custodia_id" name="grupo_custodia_id" class="{{ $campo }}">
+                    <option value="">Sin custodia: la ve toda la dependencia</option>
+                    @foreach($grupos as $grupo)
+                        <option value="{{ $grupo->id }}" @selected(old('grupo_custodia_id', $carpeta->grupo_custodia_id) == $grupo->id)>{{ $grupo->nombre }}</option>
+                    @endforeach
+                </select>
+                <p class="mt-1 text-xs text-[var(--muted)]">
+                    Bajo custodia, solo los miembros del grupo (y Coordinación y Administración) ven y trabajan esta carpeta
+                    y todo lo que tiene dentro.
+                    @if($custodia && ! $carpeta->grupo_custodia_id)
+                        Ahora la custodia «{{ $custodia->nombre }}» desde una carpeta superior.
+                    @endif
+                </p>
+            </div>
+        @elseif($custodia)
+            <p class="rounded-md bg-[var(--card-soft)] px-3 py-2 text-sm text-[var(--text)]">
+                Bajo custodia de <strong>{{ $custodia->nombre }}</strong>.
+            </p>
+        @endif
+
         <div>
             <label for="descripcion" class="{{ $etiqueta }}">Descripción</label>
             <textarea id="descripcion" name="descripcion" rows="2" maxlength="500"

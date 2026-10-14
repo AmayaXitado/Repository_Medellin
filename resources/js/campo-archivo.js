@@ -247,9 +247,19 @@ function iniciar(campo) {
 
         seleccion = seleccion.concat(sinRepetir.slice(0, hueco));
 
-        avisar(descartados > 0
-            ? 'Solo se pueden enviar ' + maximo + ' archivos. ' + (descartados === 1 ? 'Se dejó 1 fuera.' : 'Se dejaron ' + descartados + ' fuera.')
-            : '');
+        const excedido = descartados > 0
+            ? 'Has excedido la capacidad de carga: máximo ' + maximo + ' archivos por vez. '
+                + (descartados === 1 ? 'Se dejó 1 fuera;' : 'Se dejaron ' + descartados + ' fuera;')
+                + ' cárgalos en otro envío.'
+            : '';
+
+        avisar(excedido);
+
+        // Además del aviso junto al campo, un toast: con cientos de tarjetas
+        // en pantalla, el aviso puede quedar lejos de donde se está mirando.
+        if (excedido) {
+            window.mostrarToast?.('error', excedido);
+        }
 
         sincronizarEntrada();
         pintar();
@@ -347,7 +357,7 @@ function iniciar(campo) {
                     return archivo;
                 }
 
-                return deCamara ? estamparFoto(archivo, ladoMaximo) : reducirImagen(archivo, ladoMaximo);
+                return deCamara ? estamparFoto(archivo, ladoMaximo, campo.dataset.sello || 'Evidencia') : reducirImagen(archivo, ladoMaximo);
             }),
         );
 

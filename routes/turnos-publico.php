@@ -2,12 +2,28 @@
 
 /*
 |--------------------------------------------------------------------------
-| Turnos — vía pública (dueño: José)
+| Turnos — vía pública
 |--------------------------------------------------------------------------
 | Se carga desde bootstrap/app.php con el middleware 'web' y nada más: sin
 | sesión de usuario ni dependencia en contexto. La dependencia la da el
 | enlace (EnlaceTurno::porToken).
 |
 | Contrato con administración: la pantalla del enlace se llama 'turno.enlace'
-| y recibe {token}. EnlaceTurno::url() depende de ese nombre.
+| y vive en /t/{token}. EnlaceTurno::url() y los QR ya impresos dependen de
+| ese nombre y de esa ruta: no se cambian.
 */
+
+use App\Http\Controllers\Publico\TurnoController;
+use Illuminate\Support\Facades\Route;
+
+Route::get('t/{token}', [TurnoController::class, 'mostrar'])
+    ->middleware('throttle:envio-formulario')
+    ->name('turno.enlace');
+
+Route::post('t/{token}/cedula', [TurnoController::class, 'cedula'])
+    ->middleware('throttle:cedula-consulta')
+    ->name('turno.cedula');
+
+Route::post('t/{token}/marcar', [TurnoController::class, 'marcar'])
+    ->middleware('throttle:turno-marca')
+    ->name('turno.marcar');

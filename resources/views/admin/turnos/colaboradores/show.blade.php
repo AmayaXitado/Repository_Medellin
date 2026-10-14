@@ -82,11 +82,11 @@
             @else
                 <ul class="divide-y divide-[var(--border)] text-sm">
                     @foreach($marcaciones as $marcacion)
-                        <li class="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5">
+                        <li class="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5 {{ $marcacion->estaAnulada() ? 'opacity-50' : '' }}">
                             <span class="w-16 font-medium {{ $marcacion->esEntrada() ? 'text-[var(--success)]' : 'text-[var(--text)]' }}">
                                 {{ $marcacion->tipo->etiqueta() }}
                             </span>
-                            <span class="text-[var(--text)]">{{ $marcacion->marcada_at->format('d/m/Y H:i') }}</span>
+                            <span class="text-[var(--text)] {{ $marcacion->estaAnulada() ? 'line-through' : '' }}">{{ $marcacion->marcada_at->format('d/m/Y H:i') }}</span>
                             <span class="text-[var(--muted)]">{{ $marcacion->nodo?->nombre }}</span>
                             @if($marcacion->origen !== \App\Enums\OrigenMarcacion::Enlace)
                                 <span class="rounded bg-[var(--card-soft)] px-1.5 py-0.5 text-xs text-[var(--muted)]">{{ $marcacion->origen->etiqueta() }}</span>
@@ -97,11 +97,41 @@
                             @if($marcacion->fuera_de_zona)
                                 <span class="rounded bg-warning-soft px-1.5 py-0.5 text-xs text-[var(--warning)]">Fuera de zona</span>
                             @endif
+                            <span class="ml-auto">
+                                @if($marcacion->estaAnulada())
+                                    <span class="text-xs text-[var(--muted)]" title="{{ $marcacion->motivo_anulacion }}">Corregida</span>
+                                @else
+                                    @include('admin.turnos._corregir', ['marcacion' => $marcacion])
+                                @endif
+                            </span>
                         </li>
                     @endforeach
                 </ul>
             @endif
         </div>
+
+        @can('update', $colaborador)
+            {{-- Corrección: una marca que faltó. Fila nueva con motivo y autor; nada se edita. --}}
+            <form method="POST" action="{{ route('admin.turnos.marcaciones.store', $colaborador) }}"
+                  class="rounded-lg bg-[var(--card)] p-4 ring-1 ring-[var(--border)]">
+                @csrf
+                <h2 class="text-sm font-medium text-[var(--text)]">Agregar una marca que faltó</h2>
+                <p class="mb-3 text-xs text-[var(--muted)]">Queda como corrección, con tu nombre y el motivo. Las marcas existentes no se tocan.</p>
+                <div class="grid gap-2 sm:grid-cols-4">
+                    <select name="tipo" required class="liquid-input text-sm" aria-label="Tipo">
+                        <option value="entrada" @selected(old('tipo') === 'entrada')>Entrada</option>
+                        <option value="salida" @selected(old('tipo', 'salida') === 'salida')>Salida</option>
+                    </select>
+                    <input name="marcada_at" type="datetime-local" required max="{{ now()->format('Y-m-d\TH:i') }}"
+                           value="{{ old('marcada_at') }}" class="liquid-input text-sm" aria-label="Fecha y hora">
+                    <input name="motivo" required minlength="5" maxlength="500" value="{{ old('motivo') }}"
+                           placeholder="Motivo: ej. olvidó marcar la salida" class="liquid-input text-sm sm:col-span-2">
+                </div>
+                <div class="mt-2 flex justify-end">
+                    <button class="liquid-button-primary rounded-md px-4 py-2 text-sm font-medium">Agregar marca</button>
+                </div>
+            </form>
+        @endcan
 
         <div class="overflow-hidden rounded-lg bg-[var(--card)] ring-1 ring-[var(--border)]">
             <h2 class="border-b border-[var(--border)] px-4 py-3 text-sm font-medium text-[var(--text)]">Últimas evidencias enviadas</h2>

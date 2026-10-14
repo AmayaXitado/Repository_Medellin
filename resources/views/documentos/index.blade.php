@@ -87,12 +87,26 @@
     <div class="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         @foreach($carpetas as $carpeta)
             <div class="main-card group relative p-4 ring-1 ring-[var(--border)] hover:ring-[var(--primary)] {{ $carpeta->activa ? '' : 'opacity-60' }}">
-                <a href="{{ route('documentos.index', ['carpeta' => $carpeta->uuid]) }}" class="flex items-start gap-3">
+                {{-- Fuera del enlace: marcar no abre la carpeta. --}}
+                @if($destinos && $carpeta->activa)
+                    <input type="checkbox" name="carpetas[]" value="{{ $carpeta->uuid }}" form="form-lote" data-lote-item
+                           aria-label="Marcar la carpeta {{ $carpeta->nombre }}"
+                           class="size-4 cursor-pointer accent-[var(--primary)]" style="position:absolute;left:.6rem;top:.6rem">
+                @endif
+                <a href="{{ route('documentos.index', ['carpeta' => $carpeta->uuid]) }}" class="flex items-start gap-3 {{ $destinos ? 'pl-5' : '' }}">
                     <svg class="size-8 shrink-0 text-amber-500" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M2 6a2 2 0 0 1 2-2h5.17a2 2 0 0 1 1.41.59L12 6h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6Z"/>
                     </svg>
                     <div class="min-w-0">
-                        <p class="truncate font-medium text-[var(--text)]">{{ $carpeta->nombre }}</p>
+                        <p class="flex items-center gap-1 truncate font-medium text-[var(--text)]">
+                            @if(isset($custodiadas[$carpeta->id]))
+                                <svg class="size-3.5 shrink-0 text-[var(--primary)]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <title>Bajo custodia</title>
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"/>
+                                </svg>
+                            @endif
+                            <span class="truncate">{{ $carpeta->nombre }}</span>
+                        </p>
                         <p class="text-xs text-[var(--muted)]">
                             {{ $carpeta->documentos_count }} {{ Str::plural('documento', $carpeta->documentos_count) }}
                             @unless($carpeta->activa) · inactiva @endunless
@@ -123,6 +137,11 @@
     <table class="min-w-full divide-y divide-[var(--border)] text-sm">
         <thead class="bg-[var(--card-soft)] text-left text-xs uppercase tracking-wide text-[var(--muted)]">
             <tr>
+                @if($destinos)
+                    <th class="w-10 py-3 pl-4">
+                        <input type="checkbox" data-lote-todos aria-label="Marcar todos los documentos" class="size-4 cursor-pointer accent-[var(--primary)]">
+                    </th>
+                @endif
                 <th class="px-4 py-3 font-medium">Documento</th>
                 <th class="px-4 py-3 font-medium">Tipo</th>
                 <th class="px-4 py-3 font-medium">Fecha</th>
@@ -134,6 +153,14 @@
         <tbody class="divide-y divide-[var(--border)]">
             @forelse($documentos as $documento)
                 <tr class="{{ $documento->activo ? '' : 'bg-danger-soft' }}">
+                    @if($destinos)
+                        <td class="py-3 pl-4">
+                            @if($documento->activo)
+                                <input type="checkbox" name="documentos[]" value="{{ $documento->uuid }}" form="form-lote" data-lote-item data-lote-documento
+                                       aria-label="Marcar {{ $documento->nombre }}" class="size-4 cursor-pointer accent-[var(--primary)]">
+                            @endif
+                        </td>
+                    @endif
                     <td class="px-4 py-3">
                         <a href="{{ route('documentos.show', $documento) }}"
                            class="break-words font-medium text-[var(--text)] hover:text-[var(--primary)]">
@@ -208,7 +235,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="6" class="px-4 py-10 text-center text-[var(--muted)]">
+                    <td colspan="{{ $destinos ? 7 : 6 }}" class="px-4 py-10 text-center text-[var(--muted)]">
                         @if($busqueda)
                             No hay documentos que coincidan con la búsqueda.
                         @else
@@ -226,5 +253,30 @@
 </div>
 
 <div class="mt-4">{{ $documentos->links() }}</div>
+
+{{--
+    Copiar o mover lo marcado (LoteController). Los checks están repartidos por
+    la página y apuntan aquí con form="form-lote". La barra aparece al marcar
+    algo (lote-explorador.js) y queda fija abajo mientras se recorre la lista.
+--}}
+@if($destinos)
+    <form id="form-lote" method="POST" action="{{ route('documentos.lote') }}" data-lote-barra hidden
+          class="fixed inset-x-4 bottom-4 z-40 mx-auto flex max-w-3xl flex-wrap items-center gap-2 rounded-lg bg-[var(--card)] p-3 shadow-lg ring-1 ring-[var(--border)] md:left-72">
+        @csrf
+        <p class="text-sm font-medium text-[var(--text)]"><span data-lote-cuenta>0</span> marcados</p>
+        <select name="destino" class="liquid-input min-w-0 flex-1 text-sm" aria-label="Carpeta de destino">
+            <option value="">Raíz de la dependencia</option>
+            @foreach($destinos as $id => $ruta)
+                <option value="{{ $id }}" @selected($id === $carpetaActual?->id)>{{ $ruta }}</option>
+            @endforeach
+        </select>
+        <button name="accion" value="copiar" class="liquid-button-primary rounded-md px-3 py-2 text-sm font-medium">Copiar aquí</button>
+        <button name="accion" value="mover" data-lote-mover
+                class="rounded-md bg-[var(--card-soft)] px-3 py-2 text-sm font-medium text-[var(--text)] ring-1 ring-[var(--border)] hover:brightness-95">
+            Mover aquí
+        </button>
+        <button type="button" data-lote-limpiar class="px-2 py-2 text-sm text-[var(--muted)] hover:text-[var(--text)]">Quitar marcas</button>
+    </form>
+@endif
 
 @endsection

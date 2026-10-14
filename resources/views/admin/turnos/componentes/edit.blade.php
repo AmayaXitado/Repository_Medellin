@@ -27,48 +27,56 @@
             <div class="border-b border-[var(--border)] px-4 py-3">
                 <h2 class="text-sm font-medium text-[var(--text)]">Nodos ({{ $nodos->count() }})</h2>
                 <p class="text-xs text-[var(--muted)]">
-                    La ubicación es opcional. Con latitud, longitud y radio, una marca lejos del nodo sale como «fuera de zona»;
-                    nunca se bloquea.
+                    <strong>Orden</strong>: en qué lugar sale el nodo en las listas (1 primero) y el número del nodo en las
+                    evidencias. La ubicación es opcional: con latitud, longitud y radio, una marca lejos del nodo sale como
+                    «fuera de zona»; nunca se bloquea.
                 </p>
             </div>
 
-            {{-- Un formulario por nodo: se edita en su sitio, sin otra pantalla. --}}
-            <div class="divide-y divide-[var(--border)]">
+            {{--
+                Un formulario por nodo: se edita en su sitio, sin otra pantalla.
+                Con scroll (sin barra, como el menú): a lo ancho los campos no
+                se aplastan en pantallas angostas, y a lo alto la lista no
+                empuja el formulario de agregar fuera de la vista.
+            --}}
+            <div class="sin-barra max-h-[28rem] overflow-auto">
+            <div class="min-w-[44rem] divide-y divide-[var(--border)]">
                 @forelse($nodos as $nodo)
                     <form method="POST" action="{{ route('admin.turnos.nodos.update', [$componente, $nodo]) }}"
-                          class="grid grid-cols-2 items-end gap-2 px-4 py-3 sm:grid-cols-12 {{ $nodo->activo ? '' : 'opacity-60' }}">
+                          class="grid grid-cols-12 items-end gap-2 px-4 py-3 {{ $nodo->activo ? '' : 'opacity-60' }}">
                         @csrf @method('PUT')
-                        <label class="col-span-2 sm:col-span-3">
+                        <label class="col-span-3">
                             <span class="text-xs text-[var(--muted)]">Nombre</span>
                             <input name="nombre" required maxlength="100" value="{{ $nodo->nombre }}" class="{{ $campo }}">
                         </label>
-                        <label class="sm:col-span-1">
-                            <span class="text-xs text-[var(--muted)]">Orden</span>
+                        <label class="col-span-1">
+                            <span class="text-xs text-[var(--muted)]" title="Lugar en las listas y número del nodo en las evidencias">Orden</span>
                             <input name="orden" type="number" min="0" max="999" value="{{ $nodo->orden }}" class="{{ $campo }}">
                         </label>
-                        <label class="sm:col-span-2">
+                        <label class="col-span-2">
                             <span class="text-xs text-[var(--muted)]">Latitud</span>
                             <input name="lat" inputmode="decimal" value="{{ $nodo->lat }}" placeholder="6.2476" class="{{ $campo }}">
                         </label>
-                        <label class="sm:col-span-2">
+                        <label class="col-span-2">
                             <span class="text-xs text-[var(--muted)]">Longitud</span>
                             <input name="lng" inputmode="decimal" value="{{ $nodo->lng }}" placeholder="-75.5658" class="{{ $campo }}">
                         </label>
-                        <label class="sm:col-span-2">
+                        <label class="col-span-2">
                             <span class="text-xs text-[var(--muted)]">Radio (m)</span>
                             <input name="radio_m" type="number" min="10" value="{{ $nodo->radio_m }}" placeholder="300" class="{{ $campo }}">
                         </label>
-                        <label class="flex items-center gap-1.5 pb-2 text-xs text-[var(--muted)] sm:col-span-1">
+                        <label class="flex items-center gap-1.5 pb-2 text-xs text-[var(--muted)] col-span-1">
                             <input type="checkbox" name="activo" value="1" class="accent-[var(--primary)]" @checked($nodo->activo)>
                             Activo
                         </label>
-                        <button class="rounded-md bg-[var(--card-soft)] px-3 py-2 text-sm font-medium text-[var(--text)] ring-1 ring-[var(--border)] hover:brightness-95 sm:col-span-1">
+                        <button class="rounded-md bg-[var(--card-soft)] px-3 py-2 text-sm font-medium text-[var(--text)] ring-1 ring-[var(--border)] hover:brightness-95 col-span-1">
                             Guardar
                         </button>
                     </form>
                 @empty
                     <p class="px-4 py-6 text-center text-sm text-[var(--muted)]">Aún no tiene nodos.</p>
                 @endforelse
+            </div>
             </div>
 
             <form method="POST" action="{{ route('admin.turnos.nodos.store', $componente) }}"

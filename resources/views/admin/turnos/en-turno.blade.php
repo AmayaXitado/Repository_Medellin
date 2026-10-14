@@ -17,20 +17,18 @@
     </div>
 
     <form method="GET" class="ml-auto flex flex-wrap items-end gap-2">
-        <select name="componente" class="{{ $campo }}" onchange="this.form.submit()" aria-label="Componente">
+        <select id="filtro-componente" name="componente" class="{{ $campo }}" onchange="this.form.submit()" aria-label="Componente">
             <option value="">Todos los componentes</option>
             @foreach($componentes as $componente)
                 <option value="{{ $componente->id }}" @selected(request('componente') == $componente->id)>{{ $componente->nombre }}</option>
             @endforeach
         </select>
-        <select name="nodo" class="{{ $campo }}" onchange="this.form.submit()" aria-label="Nodo">
+        <select name="nodo" data-depende-de="#filtro-componente" class="{{ $campo }}" onchange="this.form.submit()" aria-label="Nodo">
             <option value="">Todos los nodos</option>
             @foreach($componentes as $componente)
-                <optgroup label="{{ $componente->nombre }}">
-                    @foreach($componente->nodos as $nodo)
-                        <option value="{{ $nodo->id }}" @selected(request('nodo') == $nodo->id)>{{ $nodo->nombre }}</option>
-                    @endforeach
-                </optgroup>
+                @foreach($componente->nodos as $nodo)
+                    <option value="{{ $nodo->id }}" data-componente="{{ $componente->id }}" @selected(request('nodo') == $nodo->id)>{{ $nodo->nombre }}</option>
+                @endforeach
             @endforeach
         </select>
     </form>
@@ -55,8 +53,7 @@
                 @endphp
                 <tr>
                     <td class="px-4 py-3">
-                        <a href="{{ route('admin.turnos.colaboradores.show', $marcacion->colaborador) }}"
-                           class="font-medium text-[var(--text)] hover:text-[var(--primary)]">{{ $marcacion->colaborador->nombre }}</a>
+                        @can('view', $marcacion->colaborador)<a href="{{ route('admin.turnos.colaboradores.show', $marcacion->colaborador) }}" class="font-medium text-[var(--text)] hover:text-[var(--primary)]">{{ $marcacion->colaborador->nombre }}</a>@else<span class="font-medium text-[var(--text)]">{{ $marcacion->colaborador->nombre }}</span>@endcan
                         <p class="text-xs text-[var(--muted)]">
                             CC {{ $marcacion->colaborador->documento }}{{ $marcacion->colaborador->cargo ? ' · '.$marcacion->colaborador->cargo : '' }}
                         </p>

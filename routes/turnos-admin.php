@@ -15,7 +15,9 @@ use App\Http\Controllers\Admin\Turnos\ColaboradorController;
 use App\Http\Controllers\Admin\Turnos\ComponenteController;
 use App\Http\Controllers\Admin\Turnos\EnlaceTurnoController;
 use App\Http\Controllers\Admin\Turnos\EnTurnoController;
+use App\Http\Controllers\Admin\Turnos\MarcacionController;
 use App\Http\Controllers\Admin\Turnos\NodoController;
+use App\Http\Controllers\Admin\Turnos\NovedadController;
 use Illuminate\Support\Facades\Route;
 
 // Personas de campo (Coordinación).
@@ -49,3 +51,11 @@ Route::get('enlaces/{enlace}', [EnlaceTurnoController::class, 'show'])->name('en
 Route::get('enlaces/{enlace}/imprimir', [EnlaceTurnoController::class, 'imprimir'])->name('enlaces.imprimir');
 Route::patch('enlaces/{enlace}/revocar', [EnlaceTurnoController::class, 'revocar'])->name('enlaces.revocar');
 Route::get('en-turno', [EnTurnoController::class, 'index'])->name('en-turno');
+
+// Marcaciones (consulta, reporte y corrección) y novedades (Coordinación).
+Route::get('marcaciones', [MarcacionController::class, 'index'])->name('marcaciones.index');
+Route::get('marcaciones/exportar', [MarcacionController::class, 'exportar'])->name('marcaciones.exportar');
+Route::post('colaboradores/{colaborador}/marcaciones', [MarcacionController::class, 'store'])->name('marcaciones.store');
+Route::patch('marcaciones/{marcacion}/corregir', [MarcacionController::class, 'corregir'])->name('marcaciones.corregir');
+Route::get('novedades', [NovedadController::class, 'index'])->name('novedades.index');
+Route::patch('novedades/{novedad}', [NovedadController::class, 'revisar'])->name('novedades.revisar');
