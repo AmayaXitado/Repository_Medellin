@@ -22,6 +22,7 @@ Cada viñeta, corta y para quien no programa.
 - En el explorador se marcan varios documentos y carpetas con un check y se copian o mueven a otra carpeta de una vez, sin descargar ni volver a subir.
 - Carpetas bajo custodia: Coordinación asigna una carpeta a un grupo (por ejemplo, los líderes de un nodo) y solo ese grupo la ve y la trabaja; abrir sus documentos queda registrado.
 - Las fotos tomadas con la cámara llevan un sello visible: hora grande, fecha, dirección (calle, barrio, municipio), y coordenadas.
+- La auditoría muestra por dónde entró cada archivo (aplicación o enlace de carga) y a qué carpeta fue; se busca por nombre de archivo. Los registros anteriores se completan solos.
 - Una hora mal marcada se corrige; la original queda en el historial.
 - Con el turno del día cerrado, el enlace ya no deja volver a marcar.
 - El menú se organiza por grupos que se pliegan, en el orden del trabajo.

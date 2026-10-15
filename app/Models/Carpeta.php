@@ -286,6 +286,12 @@ class Carpeta extends Model
         return $ruta;
     }
 
+    /** La ruta como se lee: «Calle / Nodo 2 / Octubre». */
+    public function rutaTexto(): string
+    {
+        return $this->ruta()->pluck('nombre')->join(' / ');
+    }
+
     /** Evita mover una carpeta dentro de sí misma o de una descendiente. */
     public function esAncestroDe(self $posibleDescendiente): bool
     {

@@ -156,11 +156,16 @@ class DocumentoController extends Controller
         });
 
         // Una entrada por documento: la auditoría sigue documentos, no cargas.
+        // Con el origen y la carpeta, para cuando alguien dice que no subió
+        // algo, o que lo subió en otro lado.
+        $carpeta = $documentos ? ($documentos[0]->carpeta?->rutaTexto() ?? 'Raíz') : null;
+
         foreach ($documentos as $documento) {
             $this->auditor->registrar(
                 AccionAuditoria::DocumentoCreado,
                 $documento,
                 "Cargó «{$documento->nombre}»",
+                ['origen' => 'Aplicación', 'carpeta' => $carpeta],
             );
         }
 
