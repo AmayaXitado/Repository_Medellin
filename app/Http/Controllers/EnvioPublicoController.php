@@ -304,12 +304,20 @@ class EnvioPublicoController extends Controller
         }
 
         // Una entrada por documento: la auditoría sigue documentos, no envíos.
+        $carpeta = $enlace->carpeta?->rutaTexto() ?? 'Raíz';
+
         foreach ($recepciones as $recepcion) {
             $this->auditor->registrar(
                 AccionAuditoria::RecepcionRecibida,
                 $recepcion->documento,
                 "{$recepcion->remitente_nombre} envió «{$recepcion->nombre_original}» por un enlace de carga",
-                ['enlace' => $enlace->id, 'recepcion' => $recepcion->id, 'tamano' => $recepcion->tamano],
+                [
+                    'origen' => 'Enlace de carga',
+                    'carpeta' => $carpeta,
+                    'enlace' => $enlace->id,
+                    'recepcion' => $recepcion->id,
+                    'tamano' => $recepcion->tamano,
+                ],
             );
         }
 

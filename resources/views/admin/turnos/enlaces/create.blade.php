@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('titulo', 'Nuevo enlace de turno')
+@section('titulo', 'Nuevo enlace')
 
 @section('contenido')
 
@@ -11,14 +11,33 @@
 @endphp
 
 <div class="mx-auto max-w-xl">
-    <h1 class="mb-1 text-lg font-semibold text-[var(--text)]">Nuevo enlace de turno</h1>
+    <h1 class="mb-1 text-lg font-semibold text-[var(--text)]">Nuevo enlace</h1>
     <p class="mb-6 text-sm text-[var(--muted)]">
-        Quien lo abra se identifica con su cédula y marca entrada o salida. El enlace no lleva el nombre de nadie.
+        Quien lo abra se identifica con su cédula. El enlace no lleva el nombre de nadie.
     </p>
 
     <form method="POST" action="{{ route('admin.turnos.enlaces.store') }}"
           class="space-y-4 rounded-lg bg-[var(--card)] p-6 ring-1 ring-[var(--border)]">
         @csrf
+
+        <fieldset>
+            <legend class="{{ $etiqueta }}">Para qué es *</legend>
+            <div class="mt-2 space-y-2">
+                @foreach(\App\Models\EnlaceTurno::TIPOS as $valor => $texto)
+                    <label class="flex items-center gap-2 text-sm text-[var(--text)]">
+                        <input type="radio" name="tipo" value="{{ $valor }}" required
+                               @checked(old('tipo', request('tipo', 'turno')) === $valor)>
+                        {{ $texto }}
+                    </label>
+                @endforeach
+            </div>
+            @can('create', \App\Models\EnlaceCarga::class)
+                <p class="{{ $ayuda }}">
+                    ¿Para que alguien suba documentos a una carpeta?
+                    <a href="{{ route('admin.enlaces.create') }}" class="text-[var(--primary)] underline">Crea un enlace de carga</a>.
+                </p>
+            @endcan
+        </fieldset>
 
         <div>
             <label for="componente_id" class="{{ $etiqueta }}">Componente *</label>

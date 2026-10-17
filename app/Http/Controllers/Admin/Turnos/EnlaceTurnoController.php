@@ -36,7 +36,7 @@ class EnlaceTurnoController extends Controller
 
         return view('admin.turnos.enlaces.index', [
             'enlaces' => EnlaceTurno::with(['componente', 'nodo', 'creador'])
-                ->withCount('marcaciones')
+                ->withCount(['marcaciones', 'derivaciones'])
                 ->latest()
                 ->paginate(config('repositorio.por_pagina')),
         ]);
@@ -61,6 +61,7 @@ class EnlaceTurnoController extends Controller
             'token_hash' => EnlaceTurno::hashDe($token),
             'token_cifrado' => $token,
             'dependencia_id' => $this->contexto->requerida()->id,
+            'tipo' => $request->input('tipo') ?: 'turno',
             'componente_id' => $request->integer('componente_id'),
             'nodo_id' => $request->input('nodo_id'),
             'nombre' => $request->input('nombre'),
@@ -71,7 +72,7 @@ class EnlaceTurnoController extends Controller
         $this->auditor->registrar(
             AccionAuditoria::EnlaceTurnoCreado,
             $enlace,
-            "Creó un enlace de turno para {$this->dondeDe($enlace)}",
+            "Creó un enlace ({$enlace->etiquetaTipo()}) para {$this->dondeDe($enlace)}",
         );
 
         return redirect()
