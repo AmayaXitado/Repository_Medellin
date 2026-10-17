@@ -159,6 +159,11 @@ function iniciar(campo) {
         } else {
             mostrarSaludo('');
             abrirRegistro(true);
+
+            // Un formulario sin registro (derivaciones) no deja entrar a quien no está.
+            if (registro.children.length === 0) {
+                avisar('Esta identificación no está registrada. Pide a Coordinación que te registre.');
+            }
         }
     };
 

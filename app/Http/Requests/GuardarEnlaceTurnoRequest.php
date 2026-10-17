@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\EnlaceTurno;
 use App\Services\ContextoDependencia;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -11,6 +12,8 @@ class GuardarEnlaceTurnoRequest extends FormRequest
     public function rules(): array
     {
         return [
+            // Sin tipo es de turno, como todos los que había antes.
+            'tipo' => ['nullable', Rule::in(array_keys(EnlaceTurno::TIPOS))],
             'componente_id' => [
                 'required',
                 Rule::exists('componentes', 'id')

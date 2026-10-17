@@ -177,7 +177,7 @@ class TurnoController extends Controller
     {
         $enlace = EnlaceTurno::porToken($token);
 
-        return $enlace?->estaVigente() && $enlace->componente?->activo ? $enlace : null;
+        return $enlace?->estaVigente() && ! $enlace->esDerivacion() && $enlace->componente?->activo ? $enlace : null;
     }
 
     protected function noDisponible(): Response

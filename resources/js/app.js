@@ -4,6 +4,7 @@ import './cedula';
 import './copiar';
 import './qr';
 import './turno';
+import './pasos';
 import './selects-dependientes';
 import './menu-grupos';
 import './carga-tandas';

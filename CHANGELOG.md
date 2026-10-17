@@ -23,6 +23,8 @@ Cada viñeta, corta y para quien no programa.
 - Carpetas bajo custodia: Coordinación asigna una carpeta a un grupo (por ejemplo, los líderes de un nodo) y solo ese grupo la ve y la trabaja; abrir sus documentos queda registrado.
 - Las fotos tomadas con la cámara llevan un sello visible: hora grande, fecha, dirección (calle, barrio, municipio), y coordenadas.
 - La auditoría muestra por dónde entró cada archivo (aplicación o enlace de carga) y a qué carpeta fue; se busca por nombre de archivo. Los registros anteriores se completan solos.
+- Derivaciones y respuesta territorial: formulario por enlace o QR solo para cédulas registradas, con soporte y hasta 3 evidencias con sello; tiempo de respuesta calculado (más de 1 h exige justificación); consulta, corrección y eliminación; reporte en Excel con encabezado negro y ZIP con las fotos.
+- Los enlaces por cédula se crean en un solo lugar eligiendo para qué son: turnos o derivaciones.
 - Una hora mal marcada se corrige; la original queda en el historial.
 - Con el turno del día cerrado, el enlace ya no deja volver a marcar.
 - El menú se organiza por grupos que se pliegan, en el orden del trabajo.

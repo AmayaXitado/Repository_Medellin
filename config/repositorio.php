@@ -105,6 +105,12 @@ return [
 
         'publico' => $formatosPublicos,
 
+        // Evidencias fotográficas: lo mismo de la puerta pública, sin el PDF.
+        'imagenes' => [
+            'extensiones' => array_values(array_diff($formatosPublicos['extensiones'], ['pdf'])),
+            'mimetypes' => array_values(array_diff($formatosPublicos['mimetypes'], ['application/pdf'])),
+        ],
+
         'aplicacion' => [
             'extensiones' => [
                 ...$formatosPublicos['extensiones'],
