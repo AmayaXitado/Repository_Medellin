@@ -86,17 +86,46 @@
 @if($carpetas->isNotEmpty())
     <div class="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         @foreach($carpetas as $carpeta)
-            <div class="main-card group relative p-4 ring-1 ring-[var(--border)] hover:ring-[var(--primary)] {{ $carpeta->activa ? '' : 'opacity-60' }}">
-                {{-- Fuera del enlace: marcar no abre la carpeta. --}}
-                @if($destinos && $carpeta->activa)
+            @php
+                $seleccionable = $destinos && $carpeta->activa;
+                $editable = (bool) $rolActual?->puedeEditar();
+                $lote = "lote-carpeta-{$carpeta->uuid}";
+            @endphp
+            {{--
+                Marcada para copiar o mover, la tarjeta lo dice sola: anillo,
+                tinte y la marca sobre el icono, todo con has-[:checked] sobre
+                el check escondido. Con su menú abierto sube por encima de las
+                vecinas, que si no lo taparían.
+            --}}
+            <div class="main-card group/carpeta relative p-4 ring-1 ring-[var(--border)] hover:ring-[var(--primary)]
+                        has-[:checked]:border-[var(--primary)] has-[:checked]:ring-2 has-[:checked]:ring-[var(--primary)]
+                        has-[:checked]:[background-color:color-mix(in_srgb,var(--primary)_8%,var(--card))]
+                        has-[details[open]]:z-20">
+                {{--
+                    El check del lote sigue aquí, pero sin verse: lo marca
+                    «Seleccionar» en el menú ⋮ y lo envía #form-lote como
+                    siempre (lote-explorador.js).
+                --}}
+                @if($seleccionable)
                     <input type="checkbox" name="carpetas[]" value="{{ $carpeta->uuid }}" form="form-lote" data-lote-item
-                           aria-label="Marcar la carpeta {{ $carpeta->nombre }}"
-                           class="size-4 cursor-pointer accent-[var(--primary)]" style="position:absolute;left:.6rem;top:.6rem">
+                           id="{{ $lote }}" hidden>
                 @endif
-                <a href="{{ route('documentos.index', ['carpeta' => $carpeta->uuid]) }}" class="flex items-start gap-3 {{ $destinos ? 'pl-5' : '' }}">
-                    <svg class="size-8 shrink-0 text-amber-500" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M2 6a2 2 0 0 1 2-2h5.17a2 2 0 0 1 1.41.59L12 6h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6Z"/>
-                    </svg>
+                <a href="{{ route('documentos.index', ['carpeta' => $carpeta->uuid]) }}"
+                   class="flex items-start gap-3 {{ $carpeta->activa ? '' : 'opacity-60' }} {{ $seleccionable || $editable ? 'pr-8' : '' }}">
+                    <span class="relative shrink-0">
+                        <svg class="size-8 text-amber-500" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M2 6a2 2 0 0 1 2-2h5.17a2 2 0 0 1 1.41.59L12 6h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6Z"/>
+                        </svg>
+                        @if($seleccionable)
+                            <span aria-hidden="true"
+                                  class="absolute -bottom-1 -right-1.5 hidden size-5 items-center justify-center rounded-full bg-[var(--primary)] text-[var(--card)] ring-2 ring-[var(--card)] group-has-[:checked]/carpeta:flex">
+                                <svg class="size-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" clip-rule="evenodd"
+                                          d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z"/>
+                                </svg>
+                            </span>
+                        @endif
+                    </span>
                     <div class="min-w-0">
                         <p class="flex items-center gap-1 truncate font-medium text-[var(--text)]">
                             @if(isset($custodiadas[$carpeta->id]))
@@ -111,16 +140,67 @@
                             {{ $carpeta->documentos_count }} {{ Str::plural('documento', $carpeta->documentos_count) }}
                             @unless($carpeta->activa) · inactiva @endunless
                         </p>
+                        {{-- Lo llena lote-explorador.js; describe también al botón ⋮. --}}
+                        @if($seleccionable)
+                            <span id="estado-{{ $lote }}" data-lote-estado="{{ $lote }}" class="sr-only"></span>
+                        @endif
                     </div>
                 </a>
-                @if($rolActual?->puedeEditar())
-                    <a href="{{ route('carpetas.edit', $carpeta) }}"
-                       class="absolute right-2 top-2 hidden text-xs text-[var(--muted)] hover:text-[var(--text)] group-hover:block">Editar</a>
+
+                {{--
+                    Un <details>, como el menú de la cuenta: se abre aunque el
+                    JavaScript falle. menu-opciones.js le pone lo de un menú
+                    (flechas, Escape, uno abierto a la vez). Va al lado del
+                    enlace y no dentro, así que pulsarlo no abre la carpeta.
+                --}}
+                @if($seleccionable || $editable)
+                    <details data-menu-opciones class="absolute right-1 top-1">
+                        <summary aria-haspopup="menu" aria-expanded="false" aria-label="Opciones de la carpeta {{ $carpeta->nombre }}"
+                                 @if($seleccionable) aria-describedby="estado-{{ $lote }}" @endif
+                                 class="foco flex size-11 cursor-pointer list-none items-center justify-center rounded-full text-[var(--muted)]
+                                        hover:bg-[var(--card-soft)] hover:text-[var(--text)] [&::-webkit-details-marker]:hidden">
+                            <svg class="size-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <circle cx="12" cy="5" r="1.75"/>
+                                <circle cx="12" cy="12" r="1.75"/>
+                                <circle cx="12" cy="19" r="1.75"/>
+                            </svg>
+                        </summary>
+
+                        <div role="menu" aria-label="Opciones de la carpeta {{ $carpeta->nombre }}"
+                             class="absolute right-0 top-full z-30 mt-1 w-48 max-w-[calc(100vw-2rem)] overflow-hidden rounded-md bg-[var(--card)] py-1 shadow-lg ring-1 ring-[var(--border)]">
+                            @if($editable)
+                                <a href="{{ route('carpetas.edit', $carpeta) }}" role="menuitem" tabindex="-1"
+                                   class="flex min-h-11 items-center gap-2.5 px-4 text-sm text-[var(--text)] hover:bg-[var(--card-soft)]
+                                          focus-visible:bg-[var(--card-soft)] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--primary)]">
+                                    <svg class="size-4 shrink-0 text-[var(--muted)]" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                              d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"/>
+                                    </svg>
+                                    Editar
+                                </a>
+                            @endif
+                            {{-- El texto cambia con el check (has-[:checked]): no hay que tenerlo al día a mano. --}}
+                            @if($seleccionable)
+                                <button type="button" role="menuitem" tabindex="-1" data-lote-alternar="{{ $lote }}"
+                                        class="flex min-h-11 w-full items-center gap-2.5 px-4 text-left text-sm text-[var(--text)] hover:bg-[var(--card-soft)]
+                                               focus-visible:bg-[var(--card-soft)] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--primary)]">
+                                    <svg class="size-4 shrink-0 text-[var(--muted)] group-has-[:checked]/carpeta:hidden" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+                                    </svg>
+                                    <svg class="hidden size-4 shrink-0 text-[var(--muted)] group-has-[:checked]/carpeta:block" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+                                    </svg>
+                                    <span class="group-has-[:checked]/carpeta:hidden">Seleccionar</span>
+                                    <span class="hidden group-has-[:checked]/carpeta:inline">Quitar selección</span>
+                                </button>
+                            @endif
+                        </div>
+                    </details>
                 @endif
 
                 @unless($carpeta->activa)
                     @can('reactivar', $carpeta)
-                        <form method="POST" action="{{ route('carpetas.reactivar', $carpeta) }}" class="mt-3">
+                        <form method="POST" action="{{ route('carpetas.reactivar', $carpeta) }}" class="mt-3 opacity-60">
                             @csrf @method('PATCH')
                             <button class="w-full rounded-md bg-[var(--success)] px-3 py-1.5 text-xs font-medium text-white hover:brightness-90">
                                 Reactivar carpeta

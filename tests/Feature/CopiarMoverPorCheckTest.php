@@ -110,6 +110,48 @@ class CopiarMoverPorCheckTest extends TestCase
         $this->lote('copiar')->assertSessionHasErrors('documentos');
     }
 
+    /**
+     * Las carpetas ya no tienen check a la vista: se marcan con «Seleccionar»
+     * en su menú ⋮. Se sigue el marcado tal cual: la opción apunta a un check
+     * escondido, y ese check (con el de un documento) es lo que envía el lote.
+     */
+    public function test_lo_que_marca_el_menu_de_la_tarjeta_es_lo_que_envia_el_lote(): void
+    {
+        $a = $this->subir('Acta A', $this->origen);
+        $sub = $this->carpeta('Octubre', $this->origen);
+        $this->subir('Foto', $sub);
+
+        $html = $this->actingAs($this->editor)
+            ->get(route('documentos.index', ['carpeta' => $this->origen->uuid]))
+            ->assertOk()
+            ->getContent();
+
+        $dom = new \DOMDocument;
+        libxml_use_internal_errors(true);
+        $dom->loadHTML('<?xml encoding="UTF-8">'.$html);
+        libxml_clear_errors();
+        $xpath = new \DOMXPath($dom);
+
+        $opcion = $xpath->query('//details[@data-menu-opciones]//button[@data-lote-alternar]')->item(0);
+        $checkCarpeta = $dom->getElementById($opcion->getAttribute('data-lote-alternar'));
+        $checkDocumento = $xpath->query('//input[@data-lote-documento]')->item(0);
+        $formulario = $dom->getElementById('form-lote');
+
+        $this->assertSame('form-lote', $checkCarpeta->getAttribute('form'));
+        $this->assertSame('form-lote', $checkDocumento->getAttribute('form'));
+
+        $this->actingAs($this->editor)->post($formulario->getAttribute('action'), [
+            'accion' => 'copiar',
+            str_replace('[]', '', $checkCarpeta->getAttribute('name')) => [$checkCarpeta->getAttribute('value')],
+            str_replace('[]', '', $checkDocumento->getAttribute('name')) => [$checkDocumento->getAttribute('value')],
+            'destino' => $this->destino->id,
+        ])->assertSessionHas('exito', 'Se copiaron 1 documento y 1 carpeta a «Carpeta 2».');
+
+        $this->assertSame(['Acta A'], Documento::where('carpeta_id', $this->destino->id)->pluck('nombre')->all());
+        $this->assertSame(1, Carpeta::where('carpeta_id', $this->destino->id)->where('nombre', 'Octubre')->sole()->documentos()->count());
+        $this->assertSame($this->origen->id, $a->fresh()->carpeta_id, 'Copiar no mueve el original.');
+    }
+
     public function test_lectura_no_copia_ni_mueve_y_no_ve_los_checks(): void
     {
         $a = $this->subir('Acta A', $this->origen);
