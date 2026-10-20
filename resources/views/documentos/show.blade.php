@@ -114,18 +114,9 @@
                 @if(str_starts_with($documento->versionActual->mime, 'image/'))
                     {{-- Fondo neutro detrás de la imagen: sin él, un PNG con transparencia
                          se mezcla con la tarjeta y no se distingue dónde acaba la foto. --}}
-                    <div class="relative bg-[var(--card-soft)]">
+                    <div class="bg-[var(--card-soft)]">
                         <img src="{{ route('documentos.previsualizar', $documento) }}" alt="{{ $documento->nombre }}"
                              class="mx-auto max-h-[70vh]">
-                        @foreach(['anterior' => ['left-3', 'M15.75 19.5 8.25 12l7.5-7.5'], 'siguiente' => ['right-3', 'm8.25 4.5 7.5 7.5-7.5 7.5']] as $lado => [$posicion, $trazo])
-                            @if($vecinos[$lado])
-                                <a href="{{ route('documentos.show', $vecinos[$lado]) }}" tabindex="-1"
-                                   class="absolute top-1/2 {{ $posicion }} flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-white backdrop-blur hover:bg-black/65">
-                                    <svg class="size-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $trazo }}"/></svg>
-                                    <span class="sr-only">Archivo {{ $lado }}</span>
-                                </a>
-                            @endif
-                        @endforeach
                     </div>
                 @else
                     <iframe src="{{ route('documentos.previsualizar', $documento) }}"
