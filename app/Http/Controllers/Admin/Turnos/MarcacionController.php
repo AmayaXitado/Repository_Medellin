@@ -14,13 +14,14 @@ use App\Models\User;
 use App\Services\Turnos\Jornadas;
 use App\Services\Turnos\Marcador;
 use App\Services\Turnos\TurnoCerrado;
+use App\Support\Xlsx;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
-use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 /**
  * Las marcaciones tal como quedaron: se consultan, se exportan y, si falta
@@ -50,18 +51,21 @@ class MarcacionController extends Controller
         ]);
     }
 
+    /** Tope legal de la semana (Ley 2101 de 2021): pasarlo se señala, no se bloquea. */
+    public const HORAS_SEMANA = 42;
+
     /**
-     * El reporte: un turno por fila (entrada, salida, horas), para abrir en
-     * Excel. Punto y coma y coma decimal: es lo que espera un Excel en
-     * español de Colombia. Con BOM, para que las tildes salgan bien.
+     * El reporte en Excel, con dos pestañas:
+     *  - «Turnos»: un turno por fila (entrada, salida, horas), como siempre.
+     *  - «Resumen mensual»: una fila por persona con días, horas, extras,
+     *    novedades y las horas de cada semana contra las 42 h.
      */
-    public function exportar(Request $request, Jornadas $jornadas): StreamedResponse
+    public function exportar(Request $request, Jornadas $jornadas): BinaryFileResponse
     {
         $this->authorize('viewAny', Marcacion::class);
 
         [$desde, $hasta] = $this->rango($request);
         $turnos = $jornadas->entre($desde, $hasta, fn (Builder $q) => $this->filtrar($q, $request));
-        $nombre = 'turnos_'.$desde->format('Y-m-d').'_'.$hasta->format('Y-m-d').'.csv';
 
         // Las novedades de duración de cada turno (las de su salida), sin las
         // ya corregidas: esas quedaron reemplazadas por la nueva evaluación.
@@ -72,60 +76,161 @@ class MarcacionController extends Controller
             ->get()
             ->keyBy('marcacion_id');
 
-        $horas = fn (?int $minutos) => $minutos !== null ? number_format($minutos / 60, 2, ',', '') : '';
+        $filas = $turnos->map(fn (array $turno) => $this->calcular($turno, $novedades));
 
-        return response()->streamDownload(function () use ($turnos, $novedades, $horas) {
-            $salida = fopen('php://output', 'w');
-            fwrite($salida, "\xEF\xBB\xBF");
-            fputcsv($salida, [
-                'Cédula', 'Nombre', 'Cargo', 'Componente', 'Nodo', 'Entrada', 'Salida',
-                'Permanencia', 'Descanso', 'Horas trabajadas', 'Jornada', 'Horas ordinarias', 'Horas extra', 'Extras aprobadas',
-                'Novedad', 'Cómo cerró',
-            ], ';');
+        $ruta = Xlsx::libro(tempnam(sys_get_temp_dir(), 'turnos'), [
+            'Turnos' => [self::ENCABEZADOS_TURNOS, $filas->map(fn (array $f) => $this->filaTurno($f))],
+            'Resumen mensual' => $this->resumen($request, $filas, $desde, $hasta),
+        ]);
 
-            foreach ($turnos as $turno) {
-                $entrada = $turno['entrada'];
-                $c = $entrada->colaborador;
-                $novedad = $turno['salida'] ? $novedades->get($turno['salida']->id) : null;
-                $jornada = (int) round((float) $entrada->componente->regla('jornada_horas') * 60);
+        return response()
+            ->download($ruta, 'turnos_'.$desde->format('Y-m-d').'_'.$hasta->format('Y-m-d').'.xlsx')
+            ->deleteFileAfterSend();
+    }
 
-                // Lo que cuenta es el trabajo real: la permanencia menos el
-                // descanso (Componente::minutosTrabajados, el mismo cálculo de
-                // las novedades).
-                $permanencia = $turno['minutos'];
-                $trabajado = $permanencia !== null ? $entrada->componente->minutosTrabajados($permanencia) : null;
+    protected const ENCABEZADOS_TURNOS = [
+        'Cédula', 'Nombre', 'Cargo', 'Componente', 'Nodo', 'Entrada', 'Salida',
+        'Permanencia (h)', 'Descanso (h)', 'Horas trabajadas', 'Jornada (h)', 'Horas ordinarias', 'Horas extra', 'Extras aprobadas',
+        'Novedad', 'Cómo cerró',
+    ];
 
-                // Horas extra solo cuando hay novedad de horas extra (pasó de la
-                // tolerancia); lo de dentro de la tolerancia cuenta como jornada.
-                $extra = $novedad?->tipo === TipoNovedad::HorasExtra ? max(0, $trabajado - $jornada) : 0;
+    /** Las cuentas de un turno, en minutos. Lo usan las dos pestañas. */
+    protected function calcular(array $turno, $novedades): array
+    {
+        $entrada = $turno['entrada'];
+        $novedad = $turno['salida'] ? $novedades->get($turno['salida']->id) : null;
+        $jornada = (int) round((float) $entrada->componente->regla('jornada_horas') * 60);
 
-                fputcsv($salida, [
-                    $c->documento,
-                    $c->nombre,
-                    $c->cargo,
-                    $entrada->componente->nombre,
-                    $entrada->nodo?->nombre,
-                    $entrada->marcada_at->format('d/m/Y H:i'),
-                    $turno['salida']?->marcada_at->format('d/m/Y H:i') ?? 'Sin salida',
-                    $horas($permanencia),
-                    $permanencia !== null ? $horas($permanencia - $trabajado) : '',
-                    $horas($trabajado),
-                    $horas($jornada),
-                    $trabajado !== null ? $horas($trabajado - $extra) : '',
-                    $horas($extra),
-                    match (true) {
-                        $extra === 0 => '',
-                        $novedad->estado === EstadoNovedad::Aprobada => 'SI',
-                        $novedad->estado === EstadoNovedad::Rechazada => 'NO',
-                        default => 'PENDIENTE',
-                    },
-                    $novedad ? "{$novedad->tipo->etiqueta()} ({$novedad->estado->etiqueta()})" : '',
-                    $turno['salida']?->origen->etiqueta() ?? 'Sigue abierto',
-                ], ';');
+        // Lo que cuenta es el trabajo real: la permanencia menos el descanso
+        // (Componente::minutosTrabajados, el mismo cálculo de las novedades).
+        $permanencia = $turno['minutos'];
+        $trabajado = $permanencia !== null ? $entrada->componente->minutosTrabajados($permanencia) : null;
+
+        // Horas extra solo cuando hay novedad de horas extra (pasó de la
+        // tolerancia); lo de dentro de la tolerancia cuenta como jornada.
+        $extra = $novedad?->tipo === TipoNovedad::HorasExtra ? max(0, $trabajado - $jornada) : 0;
+
+        return compact('turno', 'entrada', 'novedad', 'jornada', 'permanencia', 'trabajado', 'extra');
+    }
+
+    protected function filaTurno(array $f): array
+    {
+        $c = $f['entrada']->colaborador;
+        $salida = $f['turno']['salida'];
+
+        return [
+            $c->documento,
+            $c->nombre,
+            $c->cargo,
+            $f['entrada']->componente->nombre,
+            $f['entrada']->nodo?->nombre,
+            $f['entrada']->marcada_at->format('d/m/Y H:i'),
+            $salida?->marcada_at->format('d/m/Y H:i') ?? 'Sin salida',
+            self::horas($f['permanencia']),
+            $f['permanencia'] !== null ? self::horas($f['permanencia'] - $f['trabajado']) : null,
+            self::horas($f['trabajado']),
+            self::horas($f['jornada']),
+            $f['trabajado'] !== null ? self::horas($f['trabajado'] - $f['extra']) : null,
+            self::horas($f['extra']),
+            match (true) {
+                $f['extra'] === 0 => '',
+                $f['novedad']->estado === EstadoNovedad::Aprobada => 'SI',
+                $f['novedad']->estado === EstadoNovedad::Rechazada => 'NO',
+                default => 'PENDIENTE',
+            },
+            $f['novedad'] ? "{$f['novedad']->tipo->etiqueta()} ({$f['novedad']->estado->etiqueta()})" : '',
+            $salida?->origen->etiqueta() ?? 'Sigue abierto',
+        ];
+    }
+
+    /**
+     * Una fila por persona. Entran también las personas activas del filtro
+     * que no marcaron nada en el período (0 días, en rojo): es lo primero
+     * que hay que mirar. Las faltas contra un turno programado llegan cuando
+     * cada componente tenga sus turnos preestablecidos.
+     *
+     * @return array{0: array, 1: array}
+     */
+    protected function resumen(Request $request, $filas, Carbon $desde, Carbon $hasta): array
+    {
+        // Semanas de lunes a domingo que tocan el período.
+        $semanas = [];
+        for ($inicio = $desde->copy()->startOfWeek(Carbon::MONDAY); $inicio->lte($hasta); $inicio->addWeek()) {
+            $semanas[$inicio->format('o-W')] = 'Sem. '.$inicio->translatedFormat('j M').'–'.$inicio->copy()->endOfWeek(Carbon::SUNDAY)->translatedFormat('j M');
+        }
+
+        $dias = (int) $desde->copy()->startOfDay()->diffInDays($hasta->copy()->startOfDay()) + 1;
+        $esperadas = self::HORAS_SEMANA * $dias / 7;
+
+        $porPersona = $filas->groupBy(fn (array $f) => $f['entrada']->colaborador_id);
+
+        $personas = Colaborador::activos()
+            ->when($request->filled('componente'), fn ($q) => $q->where('componente_id', $request->integer('componente')))
+            ->when($request->filled('nodo'), fn ($q) => $q->where('nodo_id', $request->integer('nodo')))
+            ->when($request->filled('cedula'), fn ($q) => $q->where('documento', 'like', User::normalizarDocumento($request->input('cedula')).'%'))
+            ->with(['componente', 'nodo'])
+            ->get()
+            ->keyBy('id');
+
+        // Quien marcó pero ya no está activo también sale: marcó en el período.
+        $porPersona->each(function ($turnos, $id) use ($personas) {
+            $personas->put($id, $turnos->first()['entrada']->colaborador);
+        });
+
+        $resumen = $personas->sortBy('nombre', SORT_NATURAL | SORT_FLAG_CASE)->map(function (Colaborador $c) use ($porPersona, $semanas, $esperadas, $dias) {
+            $turnos = $porPersona->get($c->id, collect());
+            $trabajado = $turnos->sum('trabajado');
+            $extra = $turnos->sum('extra');
+            $extraDe = fn (EstadoNovedad $estado) => $turnos->filter(fn ($f) => $f['extra'] > 0 && $f['novedad']->estado === $estado)->sum('extra');
+            $deTipo = fn (TipoNovedad $tipo) => $turnos->filter(fn ($f) => $f['novedad']?->tipo === $tipo)->count();
+            $diasTrabajados = $turnos->map(fn ($f) => $f['entrada']->marcada_at->toDateString())->unique()->count();
+
+            $porSemana = array_fill_keys(array_keys($semanas), 0);
+            foreach ($turnos as $f) {
+                $porSemana[$f['entrada']->marcada_at->format('o-W')] += (int) $f['trabajado'];
             }
 
-            fclose($salida);
-        }, $nombre, ['Content-Type' => 'text/csv; charset=UTF-8']);
+            $semanasSobre = collect($porSemana)->filter(fn ($m) => $m > self::HORAS_SEMANA * 60)->count();
+            $cumplimiento = $esperadas > 0 ? round($trabajado / 60 / $esperadas * 100) : null;
+            $primero = $turnos->first()['entrada'] ?? null;
+
+            return [
+                $c->documento,
+                $c->nombre,
+                $c->cargo,
+                $primero?->componente->nombre ?? $c->componente?->nombre,
+                $c->nodo?->nombre ?? $primero?->nodo?->nombre,
+                $diasTrabajados === 0 ? ['alerta' => 0] : $diasTrabajados,
+                $turnos->count(),
+                self::horas($trabajado),
+                self::horas($trabajado - $extra),
+                self::horas($extra),
+                self::horas($extraDe(EstadoNovedad::Aprobada)),
+                self::horas($extraDe(EstadoNovedad::Pendiente)),
+                round($trabajado / 60 / ($dias / 7), 2),
+                $semanasSobre ? ['alerta' => $semanasSobre] : 0,
+                ...array_map(fn ($m) => $m > self::HORAS_SEMANA * 60 ? ['alerta' => self::horas($m)] : self::horas($m), array_values($porSemana)),
+                $deTipo(TipoNovedad::TurnoCorto),
+                $deTipo(TipoNovedad::SinSalida),
+                $turnos->filter(fn ($f) => $f['turno']['salida'] === null)->count(),
+                $cumplimiento === null ? null : $cumplimiento.' %',
+            ];
+        })->values()->all();
+
+        return [[
+            'Cédula', 'Nombre', 'Cargo', 'Componente', 'Nodo',
+            'Días trabajados', 'Turnos', 'Horas trabajadas', 'Horas ordinarias', 'Horas extra',
+            'Extras aprobadas (h)', 'Extras pendientes (h)', 'Promedio semanal (h)', 'Semanas sobre '.self::HORAS_SEMANA.' h',
+            ...array_values($semanas),
+            'Turnos cortos', 'Sin salida (novedad)', 'Turnos abiertos',
+            'Cumplimiento vs '.self::HORAS_SEMANA.' h/sem',
+        ], $resumen];
+    }
+
+    /** Minutos a horas con dos decimales, como número: Excel las suma. */
+    protected static function horas(?int $minutos): ?float
+    {
+        return $minutos !== null ? round($minutos / 60, 2) : null;
     }
 
     /** Agregar la marca que faltó. Una fila nueva con motivo y autor: la original no se toca. */

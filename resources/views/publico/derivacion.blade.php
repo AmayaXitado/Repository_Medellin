@@ -118,7 +118,7 @@
             <p class="{{ $ayuda }}">Se les estampa la hora y el lugar. Tómalas en el sitio.</p>
         </div>
 
-    @foreach([1 => true, 2 => false, 3 => false] as $n => $obligatoria)
+    @foreach([1 => true, 2 => true, 3 => true] as $n => $obligatoria)
         <div>
             <p class="{{ $etiqueta }}">Evidencia #{{ $n }} {!! $obligatoria ? '*' : $opcional !!}</p>
             <x-campo-archivo nombre="evidencia{{ $n }}" :requerido="$obligatoria" camara formatos="imagenes" sello="Derivación" />
@@ -143,7 +143,7 @@
         <label for="justificacion" class="{{ $etiqueta }}">Justificación en caso de no cumplir</label>
         <textarea id="justificacion" name="justificacion" rows="3" maxlength="5000"
                   class="{{ $campo }}">{{ old('justificacion') }}</textarea>
-        <p class="{{ $ayuda }}">Obligatoria si la respuesta tardó más de {{ \App\Models\Derivacion::META_MINUTOS }} minutos.</p>
+        <p class="{{ $ayuda }}">Obligatoria si la respuesta tardó más de {{ intdiv(\App\Models\Derivacion::META_MINUTOS, 60) }} horas.</p>
     </div>
 
     </section>

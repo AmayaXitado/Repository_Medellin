@@ -90,6 +90,21 @@ trabajo, 10 min de más (menos de 15): sale 0,00 extra. Un turno de 8 h en el si
 el descanso, son 7 h de trabajo: **turno corto**. Lo que se paga lo decide la nómina con
 esas columnas.
 
+El Excel trae dos pestañas:
+
+- **Turnos**: un turno por fila, con las columnas de arriba.
+- **Resumen mensual**: una fila por persona del filtro, también las que no marcaron (0 días,
+  en rojo). Días trabajados, turnos, horas trabajadas/ordinarias/extra (aprobadas y
+  pendientes), promedio semanal, **las horas de cada semana (lunes a domingo) en rojo si
+  pasan de 42**, cuántas semanas pasaron de 42, turnos cortos, sin salida, turnos abiertos y
+  el cumplimiento contra 42 h por semana (referencia). Las **faltas** contra un turno
+  programado se suman cuando cada componente tenga sus turnos preestablecidos.
+
+Para verlo con datos inventados (solo en desarrollo):
+`php artisan db:seed --class=DemoTurnosSeeder` llena septiembre de 2026 en el componente
+«DEMO · Calle» con 7 personas ficticias (normal, horas extra, noche, turnos cortos, faltas,
+turno largo y una que no marcó). Se puede volver a correr; borra solo lo de ese componente.
+
 ## 3. Para Coordinación y Administración
 
 | Menú | Para qué |
@@ -181,4 +196,4 @@ viene (el número es el de la beta en pruebas, sin `-beta`).
 
 `tests/Feature/Turnos/*` y `tests/Feature/AvisosTest.php`: marcar de punta a punta,
 turno nocturno, doble toque, privacidad de la cédula, novedades, cierre automático,
-reporte CSV, permisos por rol y aislamiento entre dependencias.
+reporte en Excel (turnos y resumen mensual), permisos por rol y aislamiento entre dependencias.

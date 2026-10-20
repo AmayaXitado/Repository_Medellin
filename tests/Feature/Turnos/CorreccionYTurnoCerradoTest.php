@@ -202,18 +202,18 @@ class CorreccionYTurnoCerradoTest extends TestCase
         $extra = NovedadTurno::withoutGlobalScopes()->sole();
         $this->actingAs($this->editor)->patch(route('admin.turnos.novedades.revisar', $extra), ['estado' => 'aprobada']);
 
-        $csv = $this->actingAs($this->editor)->get(route('admin.turnos.marcaciones.exportar'))->streamedContent();
+        $turnos = $this->hojaXlsx($this->actingAs($this->editor)->get(route('admin.turnos.marcaciones.exportar')), 'Turnos');
 
-        $this->assertStringContainsString('Permanencia;Descanso;"Horas trabajadas";Jornada;"Horas ordinarias";"Horas extra";"Extras aprobadas"', $csv);
-        $this->assertStringContainsString(';10,00;0,00;10,00;8,00;8,00;2,00;SI;', $csv);
+        $this->assertSame(['Permanencia (h)', 'Descanso (h)', 'Horas trabajadas', 'Jornada (h)', 'Horas ordinarias', 'Horas extra', 'Extras aprobadas'], array_slice($turnos[0], 7, 7));
+        $this->assertEquals([10, 0, 10, 8, 8, 2, 'SI'], array_slice($turnos[1], 7, 7));
     }
 
     public function test_un_turno_dentro_de_la_tolerancia_no_da_horas_extra(): void
     {
         $this->turno('15:10');
 
-        $csv = $this->actingAs($this->editor)->get(route('admin.turnos.marcaciones.exportar'))->streamedContent();
+        $turnos = $this->hojaXlsx($this->actingAs($this->editor)->get(route('admin.turnos.marcaciones.exportar')), 'Turnos');
 
-        $this->assertStringContainsString(';8,17;0,00;8,17;8,00;8,17;0,00;;', $csv);
+        $this->assertEquals([8.17, 0, 8.17, 8, 8.17, 0, null], array_slice($turnos[1], 7, 7));
     }
 }

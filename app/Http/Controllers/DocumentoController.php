@@ -67,6 +67,7 @@ class DocumentoController extends Controller
             ->when($request->filled('hasta'), fn ($q) => $q->whereDate('fecha_documento', '<=', $request->date('hasta')))
             ->with(['versionActual', 'tipoDocumento', 'etiquetas', 'creador', 'recepcion'])
             ->orderByDesc('created_at')
+            ->orderByDesc('id')
             ->paginate(config('repositorio.por_pagina'))
             ->withQueryString();
 
@@ -250,14 +251,45 @@ class DocumentoController extends Controller
 
         $documento->load([
             'versiones.autor', 'etiquetas', 'tipoDocumento', 'carpeta', 'creador', 'inactivador',
-            'recepcion.enlace',
+            'recepcion.enlace', 'comentarios.autor',
         ]);
 
         return view('documentos.show', [
             'documento' => $documento,
+            'vecinos' => $this->vecinos($documento),
             'migas' => $documento->carpeta?->ruta() ?? collect(),
             'carpetas' => Carpeta::visiblesPara(auth()->user())->activas()->orderBy('nombre')->get(),
         ]);
+    }
+
+    /**
+     * El anterior y el siguiente de la misma carpeta, en el orden del
+     * explorador (lo más nuevo primero), para pasar de un archivo a otro con
+     * las flechas sin volver a la lista.
+     *
+     * ponytail: trae los uuid de toda la carpeta; con carpetas de decenas de
+     * miles de archivos, buscar solo el vecino de cada lado con dos consultas.
+     *
+     * @return array{anterior: ?string, siguiente: ?string, posicion: int, total: int}
+     */
+    protected function vecinos(Documento $documento): array
+    {
+        $orden = Documento::query()
+            ->visiblesPara(auth()->user())
+            ->where('carpeta_id', $documento->carpeta_id)
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->pluck('uuid')
+            ->values();
+
+        $i = $orden->search($documento->uuid);
+
+        return [
+            'anterior' => $i === false ? null : $orden->get($i - 1),
+            'siguiente' => $i === false ? null : $orden->get($i + 1),
+            'posicion' => $i === false ? 0 : $i + 1,
+            'total' => $orden->count(),
+        ];
     }
 
     /**

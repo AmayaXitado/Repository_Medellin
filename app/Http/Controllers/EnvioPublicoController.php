@@ -109,7 +109,7 @@ class EnvioPublicoController extends Controller
             // se pide entera: sin correo ni entidad no hay a quién volver.
             ...$this->reglasDeIdentidad($peticion, $enlace),
 
-            'archivo' => ['required', 'array', 'max:'.self::MAXIMO_ARCHIVOS],
+            'archivo' => ['required', 'array', 'max:'.self::MAXIMO_ARCHIVOS, \App\Services\CargaPorTandas::reglaCompleta()],
             'archivo.*' => [
                 'bail',
                 'file',

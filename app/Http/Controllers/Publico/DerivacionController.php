@@ -100,11 +100,13 @@ class DerivacionController extends Controller
         $datos = $peticion->validate(Derivacion::reglas($enlace->componente_id) + [
             'soporte' => ['nullable', 'file', $formatos, $maximo],
             'evidencia1' => ['required', 'image', $maximo],
-            'evidencia2' => ['nullable', 'image', $maximo],
-            'evidencia3' => ['nullable', 'image', $maximo],
+            'evidencia2' => ['required', 'image', $maximo],
+            'evidencia3' => ['required', 'image', $maximo],
         ], [
-            'evidencia1.required' => 'Toma al menos la evidencia #1.',
-        ], Derivacion::ATRIBUTOS + ['soporte' => 'soporte', 'evidencia1' => 'evidencia #1']);
+            'evidencia1.required' => 'Falta la evidencia #1.',
+            'evidencia2.required' => 'Falta la evidencia #2.',
+            'evidencia3.required' => 'Falta la evidencia #3.',
+        ], Derivacion::ATRIBUTOS + ['soporte' => 'soporte', 'evidencia1' => 'evidencia #1', 'evidencia2' => 'evidencia #2', 'evidencia3' => 'evidencia #3']);
 
         $minutos = Derivacion::tiempoValidado($datos);
 

@@ -24,13 +24,9 @@
 
         <div>
             <label for="carpeta_id" class="{{ $etiqueta }}">Dentro de</label>
-            <select id="carpeta_id" name="carpeta_id" class="{{ $campo }}">
+            <select id="carpeta_id" name="carpeta_id" data-buscable class="{{ $campo }}">
                 <option value="">Raíz de la dependencia</option>
-                @foreach($carpetas as $opcion)
-                    <option value="{{ $opcion->id }}" @selected(old('carpeta_id', $carpeta->carpeta_id) == $opcion->id)>
-                        {{ $opcion->nombre }}
-                    </option>
-                @endforeach
+                <x-opciones-carpeta :carpetas="$carpetas" :seleccionada="old('carpeta_id', $carpeta->carpeta_id)" />
             </select>
         </div>
 
@@ -84,11 +80,9 @@
                 Para moverla, usa «Dentro de» arriba.
             </p>
             <div class="flex gap-2">
-                <select id="copiar_carpeta" name="carpeta_id" class="liquid-input min-w-0 flex-1 text-sm">
+                <select id="copiar_carpeta" name="carpeta_id" data-buscable class="liquid-input min-w-0 flex-1 text-sm">
                     <option value="">Raíz de la dependencia</option>
-                    @foreach($carpetas as $opcion)
-                        <option value="{{ $opcion->id }}">{{ $opcion->nombre }}</option>
-                    @endforeach
+                    <x-opciones-carpeta :carpetas="$carpetas" />
                 </select>
                 <button class="rounded-md bg-[var(--card)] px-4 py-2 text-sm font-medium text-[var(--text)] ring-1 ring-[var(--border)] hover:bg-[var(--card-soft)]">
                     Copiar

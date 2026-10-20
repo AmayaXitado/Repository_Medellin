@@ -31,7 +31,11 @@ otra carpeta, sin descargar y volver a subir.
 
 ## 2. Edición inactiva documentos y carpetas · jornada semanal de 42 horas
 
-### 2a. Inactivar desde Edición
+### 2a. Inactivar desde Edición ✅ hecho (19 de octubre)
+
+Edición inactiva documentos (con motivo) y carpetas que puede ver; la custodia aparta lo de
+otros nodos. Reactivar: documentos, Administración (la única que ve lo inactivo); carpetas,
+Coordinación.
 
 Hoy Edición solo inactiva las carpetas que creó (y sin contenido ajeno), y los documentos
 solo los inactiva Administración.
@@ -159,6 +163,23 @@ nodo)? ¿Lectura puede ver lo custodiado, o tampoco?
 > misma restricción, pero con un responsable y con Coordinación al mando.
 
 ## 5. Recargos: nocturno, dominical y festivo · semana de 42 horas
+
+**Respuesta de Talento Humano y Nómina (octubre de 2026):**
+
+- Descanso semanal: rota según el turno (no siempre domingo).
+- Más de 42 h: no se liquida, se revisa. En el componente no se generan horas extra.
+- Nocturno 7 p. m. a 6 a. m., 35 %. Dominical/festivo diurno (6 a. m. a 7 p. m.) 90 %;
+  nocturno 125 % (hasta medianoche, o hasta las 6 a. m. si el día siguiente es festivo).
+- Valor hora en nómina = salario ÷ 210. **Salarios y valores los calcula Nómina**, no Documenta:
+  el reporte entrega horas por tipo (RN, RFN, RFD) y el porcentaje que aplica.
+- Descanso: se aceptan los tramos, pero un turno que empieza entre las 8 y las 11 a. m.
+  debe descontar 1 h de almuerzo aunque dure hasta 6 h.
+- **Pendiente (reunión del jueves):** turnos preestablecidos por componente. Calle: 7 h de
+  labor + 30 min a 1 h de alimentación (8 h en el sitio); domingos 8 h. Con los turnos
+  cargados en cada componente bajan las novedades falsas.
+- Formatos de referencia: planilla mensual por persona y día con códigos (N, C, I, F…) y
+  liquidación de recargos RN / RFN / RFD por persona (archivos de Nómina, no se versionan:
+  traen datos personales).
 
 **Qué se pide:** que el reporte (y el módulo) distinga lo que la ley paga distinto: horas
 nocturnas, domingos y festivos, horas extra, y sus combinaciones; y que la semana

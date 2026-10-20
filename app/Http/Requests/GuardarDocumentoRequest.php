@@ -54,6 +54,7 @@ class GuardarDocumentoRequest extends FormRequest
                 $this->routeIs('documentos.store') ? 'required' : 'nullable',
                 'array',
                 'max:'.self::MAXIMO_ARCHIVOS,
+                \App\Services\CargaPorTandas::reglaCompleta(),
             ],
             'archivo.*' => [
                 'bail',

@@ -40,11 +40,18 @@ class DocumentoPolicy
         return $this->update($usuario, $documento);
     }
 
+    /**
+     * Edición inactiva lo que puede ver (la custodia ya aparta lo de otros
+     * nodos), siempre con motivo. Nada se borra: queda para auditoría.
+     */
     public function inactivar(User $usuario, Documento $documento): bool
     {
-        return $usuario->puedeAdministrarEn($documento->dependencia_id);
+        return $documento->activo
+            && $usuario->puedeEditarEn($documento->dependencia_id)
+            && $this->view($usuario, $documento);
     }
 
+    /** Deshacer es de Administración: es la única que ve lo inactivo. */
     public function reactivar(User $usuario, Documento $documento): bool
     {
         return $usuario->puedeAdministrarEn($documento->dependencia_id);

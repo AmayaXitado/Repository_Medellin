@@ -23,7 +23,7 @@ class Derivacion extends Model
     protected $table = 'derivaciones';
 
     /** Pasado este tiempo de respuesta hay que justificar. */
-    public const META_MINUTOS = 60;
+    public const META_MINUTOS = 180;
 
     protected $fillable = [
         'dependencia_id', 'componente_id', 'enlace_turno_id', 'colaborador_id',

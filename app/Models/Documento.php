@@ -77,6 +77,11 @@ class Documento extends Model
         return $this->belongsToMany(Etiqueta::class, 'documento_etiqueta');
     }
 
+    public function comentarios(): HasMany
+    {
+        return $this->hasMany(ComentarioDocumento::class)->orderBy('created_at');
+    }
+
     public function versiones(): HasMany
     {
         return $this->hasMany(DocumentoVersion::class)->orderByDesc('numero');
