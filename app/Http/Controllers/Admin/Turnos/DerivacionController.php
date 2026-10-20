@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin\Turnos;
 use App\Enums\AccionAuditoria;
 use App\Http\Controllers\Controller;
 use App\Models\Derivacion;
+use App\Models\Documento;
 use App\Models\Nodo;
 use App\Services\AlmacenamientoDocumentos;
 use App\Services\Auditor;
@@ -12,6 +13,7 @@ use App\Support\Xlsx;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -33,6 +35,9 @@ class DerivacionController extends Controller
         'DESCRIPCION DEL CASO', 'UBICACION DEL REQUERIMIENTO', 'EVIDENCIAS # 1', 'EVIDENCIAS # 2',
         'EVIDENCIAS # 3', 'HORA DE RESPUESTA', 'TIEMPO DE RESPUESTA', 'JUSTIFICACION EN CASO DE NO CUMPLIR',
     ];
+
+    /** Cuánto dura el enlace a un PDF de soporte dentro del Excel. */
+    public const DIAS_ENLACE = 30;
 
     public function __construct(
         protected Auditor $auditor,
@@ -146,10 +151,8 @@ class DerivacionController extends Controller
 
     protected function excel(Request $request, string $ruta): string
     {
-        $enlace = fn ($documento) => $documento ? ['url' => route('documentos.show', $documento), 'texto' => 'Ver'] : null;
-
         $filas = $this->consulta($request)
-            ->with(['nodo', 'soporte', 'evidencia1', 'evidencia2', 'evidencia3'])
+            ->with(['nodo', 'soporte.versionActual', 'evidencia1.versionActual', 'evidencia2.versionActual', 'evidencia3.versionActual'])
             ->lazy()
             ->map(fn (Derivacion $d) => [
                 $d->created_at->format('d/m/Y H:i:s'),
@@ -160,18 +163,60 @@ class DerivacionController extends Controller
                 $d->fecha_requerimiento->format('d/m/Y'),
                 substr($d->hora_requerimiento, 0, 5),
                 $d->entidad,
-                $enlace($d->soporte),
+                $this->archivoEnCelda($d->soporte),
                 $d->descripcion,
                 $d->ubicacion,
-                $enlace($d->evidencia1),
-                $enlace($d->evidencia2),
-                $enlace($d->evidencia3),
+                $this->archivoEnCelda($d->evidencia1),
+                $this->archivoEnCelda($d->evidencia2),
+                $this->archivoEnCelda($d->evidencia3),
                 substr($d->hora_respuesta, 0, 5),
                 sprintf('%d:%02d', intdiv($d->tiempo_respuesta_min, 60), $d->tiempo_respuesta_min % 60),
                 $d->justificacion,
             ]);
 
         return Xlsx::guardar($ruta, 'Derivaciones', self::ENCABEZADOS, $filas);
+    }
+
+    /**
+     * Una foto va dentro de la celda: se ve sin entrar a Documenta. Lo que no
+     * es foto (un PDF de soporte) va como enlace firmado que abre sin cuenta
+     * y vence a los DIAS_ENLACE días.
+     */
+    protected function archivoEnCelda(?Documento $documento): ?array
+    {
+        $version = $documento?->versionActual;
+
+        if ($version === null || ! $this->almacenamiento->existe($version)) {
+            return null;
+        }
+
+        if (str_starts_with((string) $version->mime, 'image/')
+            && ($miniatura = Xlsx::miniatura($this->almacenamiento->contenido($version)))) {
+            return $miniatura;
+        }
+
+        return [
+            'url' => URL::temporarySignedRoute('derivaciones.archivo', now()->addDays(self::DIAS_ENLACE), ['documento' => $documento->uuid]),
+            'texto' => 'Abrir '.strtoupper((string) $version->extension),
+        ];
+    }
+
+    /** Sirve un archivo de una derivación a quien tenga el enlace firmado del reporte. */
+    public function archivo(string $documento)
+    {
+        $documento = Documento::withoutGlobalScopes()->where('uuid', $documento)->with('versionActual')->firstOrFail();
+
+        $deUnaDerivacion = Derivacion::withoutGlobalScopes()->withTrashed()
+            ->where(function ($q) use ($documento) {
+                foreach (['soporte', 'evidencia1', 'evidencia2', 'evidencia3'] as $campo) {
+                    $q->orWhere("{$campo}_documento_id", $documento->id);
+                }
+            })
+            ->exists();
+
+        abort_unless($deUnaDerivacion && $documento->versionActual, 404);
+
+        return $this->almacenamiento->descargar($documento->versionActual);
     }
 
     /** Filtros: fechas del requerimiento, nodo, cumplimiento y texto libre. */

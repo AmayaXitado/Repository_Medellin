@@ -38,13 +38,11 @@ class CarpetaPolicy
             return true;
         }
 
-        // Quien edita puede retirar una carpeta que creó él, mientras no
-        // esconda trabajo de otras personas (ni esté custodiada por otros).
+        // Edición retira cualquier carpeta que pueda ver: la custodia ya
+        // aparta las de otros nodos. Reactivarla es de Coordinación.
         return $this->view($usuario, $carpeta)
             && $carpeta->activa
-            && $usuario->puedeEditarEn($carpeta->dependencia_id)
-            && $carpeta->creado_por === $usuario->id
-            && ! $carpeta->tieneContenidoAjenoA($usuario);
+            && $usuario->puedeEditarEn($carpeta->dependencia_id);
     }
 
     public function reactivar(User $usuario, Carpeta $carpeta): bool

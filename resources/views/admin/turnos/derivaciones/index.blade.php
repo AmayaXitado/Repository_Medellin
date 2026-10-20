@@ -9,7 +9,7 @@
     <div>
         <h1 class="text-lg font-semibold text-[var(--text)]">Derivaciones y respuesta territorial</h1>
         <p class="text-sm text-[var(--muted)]">
-            Llegan por el enlace por cédula de tipo derivación. Meta de respuesta: {{ \App\Models\Derivacion::META_MINUTOS }} minutos.
+            Llegan por el enlace por cédula de tipo derivación. Meta de respuesta: {{ intdiv(\App\Models\Derivacion::META_MINUTOS, 60) }} horas.
         </p>
     </div>
     <div class="ml-auto flex flex-wrap gap-2">

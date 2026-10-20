@@ -59,6 +59,28 @@ class CargaPorTandasTest extends TestCase
         ];
     }
 
+    /**
+     * PHP tira sin avisar lo que pasa de max_file_uploads. Como el formulario
+     * manda un nombre por archivo, menos archivos que nombres delata la pérdida:
+     * no se guarda nada y se dice por qué, en vez de guardar la mitad.
+     */
+    public function test_si_llegan_menos_archivos_que_nombres_no_se_guarda_nada(): void
+    {
+        $this->actingAs($this->editor)->post(route('documentos.store'), [
+            'carpeta_id' => $this->carpeta->id,
+            'archivo' => $this->archivos(1, 2),
+            'nombres' => ['Uno', 'Dos', 'Tres', 'Cuatro'],
+        ])->assertSessionHasErrors(['archivo' => 'El servidor recibió 2 de 4 archivos y no se guardó nada. Vuelve a intentarlo con menos archivos por vez, o avisa a soporte (límite de PHP: max_file_uploads).']);
+
+        $this->assertSame(0, Documento::count());
+    }
+
+    public function test_la_tanda_nunca_pasa_del_limite_de_php(): void
+    {
+        $this->assertLessThanOrEqual((int) ini_get('max_file_uploads'), \App\Services\CargaPorTandas::porTanda());
+        $this->assertLessThanOrEqual(config('repositorio.carga.por_tanda'), \App\Services\CargaPorTandas::porTanda());
+    }
+
     public function test_tres_tandas_cargan_todo_y_la_ultima_dice_a_donde_volver(): void
     {
         $lote = (string) Str::uuid();

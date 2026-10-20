@@ -71,15 +71,47 @@ class AdminMarcacionesYNovedadesTest extends TestCase
         Marcacion::factory()->de($this->persona)->create(['marcada_at' => $noche]);
         Marcacion::factory()->de($this->persona)->salida()->create(['marcada_at' => $noche->copy()->addHours(8)->addMinutes(30)]);
 
-        $csv = $this->actingAs($this->coordinador)
-            ->get(route('admin.turnos.marcaciones.exportar'))
-            ->assertOk()
-            ->streamedContent();
+        $turnos = $this->hojaXlsx(
+            $this->actingAs($this->coordinador)->get(route('admin.turnos.marcaciones.exportar'))->assertOk(),
+            'Turnos',
+        );
 
-        $this->assertStringStartsWith("\xEF\xBB\xBF", $csv, 'Lleva BOM para que Excel lea las tildes.');
-        $this->assertStringContainsString('Cédula;Nombre;Cargo', $csv);
-        $this->assertStringContainsString('43555666;"Laura Gómez";"Monitor de ruta";Calle', $csv);
-        $this->assertStringContainsString(';8,50;', $csv, '8 h 30 min con coma decimal.');
+        $this->assertSame(['Cédula', 'Nombre', 'Cargo'], array_slice($turnos[0], 0, 3));
+        $this->assertSame(['43555666', 'Laura Gómez', 'Monitor de ruta', 'Calle'], array_slice($turnos[1], 0, 4));
+        $this->assertSame(8.5, $turnos[1][7], '8 h 30 min en el sitio, como número.');
+    }
+
+    /** La segunda pestaña: una fila por persona, la semana sobre 42 h en rojo, y quien no marcó con 0 días. */
+    public function test_el_resumen_mensual_compara_cada_semana_con_las_42_horas(): void
+    {
+        // Seis turnos de 7 h 30 en la semana del 7 de septiembre: 45 h.
+        foreach (range(0, 5) as $d) {
+            $entrada = \Illuminate\Support\Carbon::parse('2026-09-07 07:00')->addDays($d);
+            Marcacion::factory()->de($this->persona)->create(['marcada_at' => $entrada]);
+            Marcacion::factory()->de($this->persona)->salida()->create(['marcada_at' => $entrada->copy()->addMinutes(450)]);
+        }
+        Colaborador::factory()->en($this->calle)->create(['nombre' => 'Sin Marcas', 'documento' => '71999000']);
+
+        $respuesta = $this->actingAs($this->coordinador)
+            ->get(route('admin.turnos.marcaciones.exportar', ['desde' => '2026-09-01', 'hasta' => '2026-09-30']))
+            ->assertOk();
+        $resumen = collect($this->hojaXlsx($respuesta, 'Resumen mensual'));
+        $columnas = array_flip($resumen->first());
+
+        $laura = $resumen->first(fn ($f) => ($f[1] ?? null) === 'Laura Gómez');
+        $this->assertEquals(6, $laura[$columnas['Días trabajados']]);
+        $this->assertEquals(45, $laura[$columnas['Horas trabajadas']]);
+        $this->assertEquals(1, $laura[$columnas['Semanas sobre 42 h']]);
+        $this->assertEquals(45, $laura[$columnas['Sem. 7 sep.–13 sep.']]);
+
+        $sinMarcas = $resumen->first(fn ($f) => ($f[1] ?? null) === 'Sin Marcas');
+        $this->assertEquals(0, $sinMarcas[$columnas['Días trabajados']]);
+
+        // Lo que pasa de 42 va resaltado (estilo de alerta).
+        $zip = new \ZipArchive();
+        $zip->open($respuesta->baseResponse->getFile()->getPathname());
+        $this->assertGreaterThanOrEqual(2, substr_count($zip->getFromName('xl/worksheets/sheet2.xml'), 's="3"'));
+        $zip->close();
     }
 
     public function test_la_correccion_manual_agrega_una_fila_y_evalua_el_turno(): void

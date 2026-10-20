@@ -11,7 +11,7 @@
 
     {{-- Más de 50 archivos se envían por tandas (carga-tandas.js). --}}
     <form method="POST" action="{{ route('documentos.store') }}" enctype="multipart/form-data"
-          data-tandas data-por-tanda="{{ config('repositorio.carga.por_tanda') }}" data-mb-por-tanda="{{ config('repositorio.carga.mb_por_tanda') }}"
+          data-tandas data-por-tanda="{{ \App\Services\CargaPorTandas::porTanda() }}" data-mb-por-tanda="{{ config('repositorio.carga.mb_por_tanda') }}"
           class="space-y-6 rounded-lg bg-[var(--card)] p-6 ring-1 ring-[var(--border)]">
         @csrf
 
@@ -21,7 +21,7 @@
                 Cada archivo se guarda como un documento aparte, con el nombre que le
                 pongas en su tarjeta. Todos comparten la carpeta, el tipo, la fecha y
                 las etiquetas de abajo. Hasta {{ config('repositorio.carga.maximo_total') }} de una vez:
-                si son muchos, se envían por pasos de {{ config('repositorio.carga.por_tanda') }}.
+                si son muchos, se envían por pasos de {{ \App\Services\CargaPorTandas::porTanda() }}.
             </p>
 
             <x-campo-archivo requerido varios con-nombres :maximo="config('repositorio.carga.maximo_total')" />

@@ -22,13 +22,9 @@
 
         <div>
             <label for="carpeta_id" class="{{ $etiqueta }}">Carpeta de destino *</label>
-            <select id="carpeta_id" name="carpeta_id" required class="{{ $campo }}">
+            <select id="carpeta_id" name="carpeta_id" required data-buscable class="{{ $campo }}">
                 <option value="">Selecciona…</option>
-                @foreach($carpetas as $carpeta)
-                    <option value="{{ $carpeta->id }}" @selected(old('carpeta_id', $carpetaPorDefecto) == $carpeta->id)>
-                        {{ $carpeta->nombre }}
-                    </option>
-                @endforeach
+                <x-opciones-carpeta :carpetas="$carpetas" :seleccionada="old('carpeta_id', $carpetaPorDefecto)" />
             </select>
             <p class="{{ $ayuda }}">
                 @if($esAdministrador)

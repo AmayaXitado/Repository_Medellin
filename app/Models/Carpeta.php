@@ -82,25 +82,6 @@ class Carpeta extends Model
         return $this->lideres()->whereKey($usuario->id)->exists();
     }
 
-    /** ¿Hay, en ella o en sus subcarpetas, algo que no creó este usuario? */
-    public function tieneContenidoAjenoA(User $usuario): bool
-    {
-        $pendientes = [$this->id];
-
-        while ($pendientes) {
-            $ajeno = fn ($q) => $q->where(fn ($q) => $q->whereNull('creado_por')->orWhere('creado_por', '!=', $usuario->id));
-
-            if (Documento::whereIn('carpeta_id', $pendientes)->where($ajeno)->exists()
-                || self::whereIn('carpeta_id', $pendientes)->where($ajeno)->exists()) {
-                return true;
-            }
-
-            $pendientes = self::whereIn('carpeta_id', $pendientes)->pluck('id')->all();
-        }
-
-        return false;
-    }
-
     /**
      * Ids de las carpetas retiradas de la vista: las inactivas y todo lo que
      * cuelga de ellas. Sin heredar, una subcarpeta activa dentro de una

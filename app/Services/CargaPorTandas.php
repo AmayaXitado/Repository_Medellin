@@ -101,6 +101,35 @@ class CargaPorTandas
     }
 
     /** Las reglas de los campos de la tanda, para sumar a la validación. */
+    /**
+     * Cuántos archivos por petición. Nunca más de lo que deja PHP
+     * (max_file_uploads, 20 de fábrica): lo que pasa de ahí PHP lo tira sin
+     * avisar, y la carga parecería haber «borrado» archivos.
+     */
+    public static function porTanda(): int
+    {
+        $php = (int) ini_get('max_file_uploads') ?: 20;
+
+        return max(1, min((int) config('repositorio.carga.por_tanda'), $php));
+    }
+
+    /**
+     * Para 'archivo': el formulario manda un nombre por tarjeta, así que si
+     * llegan menos archivos que nombres, PHP se quedó con parte de la carga.
+     * Mejor un error claro que guardar la mitad en silencio.
+     */
+    public static function reglaCompleta(): \Closure
+    {
+        return function (string $atributo, $archivos, \Closure $fallar) {
+            $esperados = count((array) request()->input('nombres', []));
+            $recibidos = count((array) $archivos);
+
+            if ($esperados > $recibidos) {
+                $fallar("El servidor recibió {$recibidos} de {$esperados} archivos y no se guardó nada. Vuelve a intentarlo con menos archivos por vez, o avisa a soporte (límite de PHP: max_file_uploads).");
+            }
+        };
+    }
+
     public static function reglas(): array
     {
         return [

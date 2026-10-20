@@ -97,12 +97,12 @@ class DescansoTest extends TestCase
         $novedad->update(['estado' => 'aprobada']);
         $coordinador = $this->usuarioCon(RolDependencia::Coordinacion, $this->calle->dependencia);
 
-        $csv = $this->actingAs($coordinador)->get(route('admin.turnos.marcaciones.exportar', [
+        $turnos = $this->hojaXlsx($this->actingAs($coordinador)->get(route('admin.turnos.marcaciones.exportar', [
             'desde' => now()->subDays(2)->toDateString(),
-        ]))->streamedContent();
+        ])), 'Turnos');
 
         // Permanencia 9,77 · descanso 1,00 · trabajadas 8,77 · jornada 8,00 · ordinarias 8,00 · extra 0,77 · aprobadas SI
-        $this->assertStringContainsString(';9,77;1,00;8,77;8,00;8,00;0,77;SI;', $csv);
+        $this->assertEquals([9.77, 1, 8.77, 8, 8, 0.77, 'SI'], array_slice($turnos[1], 7, 7));
     }
 
     public function test_el_descuento_va_por_tramos_de_permanencia(): void

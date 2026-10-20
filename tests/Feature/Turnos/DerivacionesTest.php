@@ -62,6 +62,7 @@ class DerivacionesTest extends TestCase
             'soporte' => $this->archivoPdf('oficio.pdf'),
             'evidencia1' => $this->archivoJpg('uno.jpg'),
             'evidencia2' => $this->archivoJpg('dos.jpg'),
+            'evidencia3' => $this->archivoJpg('tres.jpg'),
         ]);
     }
 
@@ -75,7 +76,9 @@ class DerivacionesTest extends TestCase
         $this->assertSame(['1017000111', 'José Amaya Pérez', 'Monitor de ruta', 40], [$d->cedula, $d->nombre, $d->cargo, $d->tiempo_respuesta_min]);
         $this->assertNotNull($d->soporte_documento_id);
         $this->assertNotNull($d->evidencia2_documento_id);
-        $this->assertNull($d->evidencia3_documento_id);
+        $this->assertNotNull($d->evidencia3_documento_id);
+
+        $this->registrar(['evidencia3' => null])->assertSessionHasErrors('evidencia3');
         $this->assertSame('Derivaciones · Calle', $d->evidencia1->carpeta->nombre);
         $this->assertDatabaseHas('auditorias', ['accion' => 'derivacion.registrada', 'auditable_id' => $d->id]);
     }
@@ -88,7 +91,10 @@ class DerivacionesTest extends TestCase
 
     public function test_pasada_la_hora_exige_justificacion_y_cruza_la_medianoche(): void
     {
-        $this->registrar(['hora_respuesta' => '11:30'])->assertSessionHasErrors('justificacion');
+        // La meta son 3 horas: 2 h 59 pasa, 3 h 30 no sin justificación.
+        $this->registrar(['hora_respuesta' => '12:59'])->assertSessionHasNoErrors();
+        $this->registrar(['hora_respuesta' => '13:30'])->assertSessionHasErrors('justificacion');
+        \App\Models\Derivacion::query()->forceDelete();
 
         $this->registrar(['hora_requerimiento' => '23:30', 'hora_respuesta' => '00:15'])->assertSessionHasNoErrors();
         $this->assertSame(45, Derivacion::sole()->tiempo_respuesta_min);
@@ -143,9 +149,20 @@ class DerivacionesTest extends TestCase
         $this->assertStringContainsString('CC DE QUIEN ESCALA LA NOVEDAD', $hoja);
         $this->assertStringContainsString('JUSTIFICACION EN CASO DE NO CUMPLIR', $hoja);
         $this->assertStringContainsString('José Amaya Pérez', $hoja);
-        $this->assertStringContainsString('HYPERLINK', $hoja);
         $this->assertStringContainsString('FF000000', $zip->getFromName('xl/styles.xml'));
+
+        // Las tres evidencias van dentro del Excel; el soporte (PDF) como enlace firmado.
+        $this->assertStringContainsString('<drawing r:id="rId1"/>', $hoja);
+        $this->assertNotFalse($zip->getFromName('xl/media/hoja1-image3.jpeg'));
+        $this->assertFalse($zip->getFromName('xl/media/hoja1-image4.jpeg'));
+        preg_match('/HYPERLINK\(&quot;([^&]+(?:&amp;[^&]+)*)&quot;/', $hoja, $enlace);
         $zip->close();
+
+        // El enlace abre sin sesión; alterado, no.
+        $url = html_entity_decode($enlace[1]);
+        auth()->logout();
+        $this->get($url)->assertOk();
+        $this->get($url.'x')->assertForbidden();
 
         $fotos = $this->actingAs($this->lider)->get(route('admin.turnos.derivaciones.fotos'))->assertOk();
         $zip->open($fotos->getFile()->getPathname());

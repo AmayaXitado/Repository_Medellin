@@ -264,7 +264,7 @@
           class="fixed inset-x-4 bottom-4 z-40 mx-auto flex max-w-3xl flex-wrap items-center gap-2 rounded-lg bg-[var(--card)] p-3 shadow-lg ring-1 ring-[var(--border)] md:left-72">
         @csrf
         <p class="text-sm font-medium text-[var(--text)]"><span data-lote-cuenta>0</span> marcados</p>
-        <select name="destino" class="liquid-input min-w-0 flex-1 text-sm" aria-label="Carpeta de destino">
+        <select name="destino" data-buscable class="liquid-input min-w-0 flex-1 text-sm" aria-label="Carpeta de destino">
             <option value="">Raíz de la dependencia</option>
             @foreach($destinos as $id => $ruta)
                 <option value="{{ $id }}" @selected($id === $carpetaActual?->id)>{{ $ruta }}</option>

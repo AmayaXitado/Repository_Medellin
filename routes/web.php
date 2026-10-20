@@ -99,6 +99,12 @@ Route::middleware(['auth', 'usuario.activo', 'dependencia'])->group(function () 
     Route::post('documentos/lote', [\App\Http\Controllers\LoteController::class, 'aplicar'])
         ->name('documentos.lote');
 
+    Route::post('documentos/{documento}/comentarios', [\App\Http\Controllers\ComentarioDocumentoController::class, 'store'])
+        ->middleware('throttle:30,1')
+        ->name('documentos.comentarios.store');
+    Route::delete('documentos/{documento}/comentarios/{comentario}', [\App\Http\Controllers\ComentarioDocumentoController::class, 'destroy'])
+        ->name('documentos.comentarios.destroy');
+
     Route::patch('documentos/{documento}/inactivar', [DocumentoEstadoController::class, 'inactivar'])
         ->name('documentos.inactivar');
     Route::patch('documentos/{documento}/reactivar', [DocumentoEstadoController::class, 'reactivar'])

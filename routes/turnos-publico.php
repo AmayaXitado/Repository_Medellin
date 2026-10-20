@@ -13,6 +13,7 @@
 | ese nombre y de esa ruta: no se cambian.
 */
 
+use App\Http\Controllers\Admin\Turnos\DerivacionController as AdminDerivacionController;
 use App\Http\Controllers\Publico\DerivacionController;
 use App\Http\Controllers\Publico\TurnoController;
 use Illuminate\Support\Facades\Route;
@@ -41,3 +42,8 @@ Route::post('d/{token}/cedula', [DerivacionController::class, 'cedula'])
 Route::post('d/{token}', [DerivacionController::class, 'registrar'])
     ->middleware('throttle:turno-marca')
     ->name('derivacion.registrar');
+
+// Un archivo de una derivación desde el Excel del reporte: enlace firmado y con vencimiento.
+Route::get('derivaciones/archivo/{documento}', [AdminDerivacionController::class, 'archivo'])
+    ->middleware(['signed', 'throttle:envio-formulario'])
+    ->name('derivaciones.archivo');

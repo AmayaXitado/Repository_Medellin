@@ -184,7 +184,7 @@ function iniciarTiempo(form) {
 
         salida.textContent = cumple
             ? `Tiempo de respuesta: ${legible} ✓ dentro de la meta`
-            : `Tiempo de respuesta: ${legible} · pasó la meta de ${meta} min: justifica abajo`;
+            : `Tiempo de respuesta: ${legible} · pasó la meta de ${meta / 60} h: justifica abajo`;
         salida.className = 'rounded-lg px-3 py-2 text-sm font-medium '
             + (cumple ? 'bg-success-soft text-[var(--success)]' : 'bg-[var(--card-soft)] text-[var(--danger)] ring-1 ring-[var(--border)]');
         justificacion.required = !cumple;

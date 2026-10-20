@@ -27,7 +27,7 @@
 
 {{-- Más de 50 archivos se envían por tandas (carga-tandas.js). --}}
 <form method="POST" action="{{ route('envio.recibir', ['token' => $token]) }}"
-          data-tandas data-por-tanda="{{ config('repositorio.carga.por_tanda') }}" data-mb-por-tanda="{{ config('repositorio.carga.mb_por_tanda') }}"
+          data-tandas data-por-tanda="{{ \App\Services\CargaPorTandas::porTanda() }}" data-mb-por-tanda="{{ config('repositorio.carga.mb_por_tanda') }}"
       enctype="multipart/form-data" class="mt-6 space-y-6">
     @csrf
 
