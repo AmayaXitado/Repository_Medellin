@@ -19,7 +19,7 @@ Cada viñeta, corta y para quien no programa.
 - Las horas extra se calculan sobre el trabajo real, descontando el descanso: nada en turnos de hasta 4 h, 30 min hasta 6 h y 1 h en turnos más largos.
 - Reporte de turnos en Excel con dos pestañas: el detalle de cada turno (tiempo en el sitio, descanso, horas trabajadas, ordinarias, extra y si se aprobaron) y un resumen mensual por persona con días trabajados, horas de cada semana contra las 42 h (en rojo si pasan), extras aprobadas y pendientes, turnos cortos y cumplimiento.
 - Se pueden cargar hasta 300 archivos de una vez: se envían solos por pasos de 50, con barra de progreso, y si se corta la conexión se retoma sin duplicar.
-- En el explorador se marcan varios documentos y carpetas con un check y se copian o mueven a otra carpeta de una vez, sin descargar ni volver a subir.
+- En el explorador se marcan varios documentos (con su check) y carpetas (con «Seleccionar» en el menú ⋮ de cada una) y se copian o mueven a otra carpeta de una vez, sin descargar ni volver a subir.
 - Carpetas bajo custodia: Coordinación asigna una carpeta a un grupo (por ejemplo, los líderes de un nodo) y solo ese grupo la ve y la trabaja; abrir sus documentos queda registrado.
 - Las fotos tomadas con la cámara llevan un sello visible: hora grande, fecha, dirección (calle, barrio, municipio), y coordenadas.
 - La auditoría muestra por dónde entró cada archivo (aplicación o enlace de carga) y a qué carpeta fue; se busca por nombre de archivo. Los registros anteriores se completan solos.
