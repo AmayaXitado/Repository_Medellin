@@ -7,7 +7,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>QR de turno · {{ $donde }}</title>
+    <title>QR · {{ $donde }}</title>
     @vite(['resources/js/app.js'])
     <style>
         body { margin: 0; font-family: system-ui, sans-serif; color: #111; background: #fff; }
@@ -23,15 +23,20 @@
 </head>
 <body>
     <div class="hoja">
-        <h1>Marca tu turno aquí</h1>
+        <h1>{{ $enlace->esDerivacion() ? 'Reporta aquí la derivación' : 'Marca tu turno aquí' }}</h1>
         <p class="sub">{{ $donde }}{{ $enlace->nombre ? ' · '.$enlace->nombre : '' }}</p>
 
         <div class="qr" data-qr="{{ $enlace->url() }}"></div>
 
         <ol>
             <li>Escanea el código con la cámara de tu celular.</li>
-            <li>Escribe tu cédula. La primera vez te pide tus datos; después, solo la cédula.</li>
-            <li>Toca <strong>Registrar entrada</strong> al llegar y <strong>Registrar salida</strong> al irte.</li>
+            @if($enlace->esDerivacion())
+                <li>Escribe tu cédula: tiene que estar registrada.</li>
+                <li>Llena el caso, adjunta el soporte y toma las evidencias.</li>
+            @else
+                <li>Escribe tu cédula. La primera vez te pide tus datos; después, solo la cédula.</li>
+                <li>Toca <strong>Registrar entrada</strong> al llegar y <strong>Registrar salida</strong> al irte.</li>
+            @endif
         </ol>
 
         <p class="pie">{{ $enlace->url() }}</p>

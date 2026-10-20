@@ -19,7 +19,9 @@
         <div class="flex items-start gap-3 rounded-lg bg-[var(--card)] p-4 ring-1 ring-[var(--border)] {{ $n->read_at ? 'opacity-60' : '' }}">
             <div class="min-w-0 flex-1">
                 <p class="text-sm text-[var(--text)]">
-                    @if($n->data['carpeta_uuid'] ?? null)
+                    @if($n->data['url'] ?? null)
+                        <a href="{{ url($n->data['url']) }}" class="hover:underline">{{ $n->data['mensaje'] }}</a>
+                    @elseif($n->data['carpeta_uuid'] ?? null)
                         <a href="{{ route('documentos.index', ['carpeta' => $n->data['carpeta_uuid']]) }}" class="hover:underline">
                             {{ $n->data['mensaje'] }}
                         </a>

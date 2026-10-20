@@ -8,6 +8,9 @@
     'camara' => false,
     'maximo' => null,
 
+    // Lo que dice el sello de la foto debajo de la hora: «Evidencia», «Turno».
+    'sello' => 'Evidencia',
+
     // De qué conjunto de config/repositorio.php salen los formatos: el de
     // dentro ('aplicacion', que incluye hojas de cálculo) o el de la puerta
     // pública ('publico', solo PDF y fotos). El mismo campo sirve a los dos
@@ -31,7 +34,7 @@
 <div data-campo-archivo
      @if($autocompletar) data-autocompletar="{{ $autocompletar }}" @endif
      @if($maximo) data-maximo="{{ $maximo }}" @endif
-     @if($camara) data-lado-maximo="{{ config('repositorio.imagen.lado_maximo') }}" @endif>
+     @if($camara) data-lado-maximo="{{ config('repositorio.imagen.lado_maximo') }}" data-sello="{{ $sello }}" @endif>
 
     {{--
         El campo nativo. Nunca se quita del HTML: si el script no corre, esto

@@ -59,7 +59,7 @@ class EnlaceCargaController extends Controller
         $esAdministrador = $usuario->puedeEditarEn($dependencia->id);
 
         $carpetas = $esAdministrador
-            ? Carpeta::activas()->orderBy('nombre')->get()
+            ? Carpeta::visiblesPara(auth()->user())->activas()->orderBy('nombre')->get()
             : $usuario->carpetasLideradas()->where('dependencia_id', $dependencia->id)->activas()->orderBy('nombre')->get();
 
         $sugerida = $peticion->filled('carpeta')
@@ -69,6 +69,7 @@ class EnlaceCargaController extends Controller
         return view('admin.enlaces.create', [
             'carpetas' => $carpetas,
             'esAdministrador' => $esAdministrador,
+            'componentes' => \App\Models\Componente::activos()->orderBy('nombre')->get(),
             // Solo si de verdad puede usarla: el uuid viene de la URL.
             'carpetaPorDefecto' => $carpetas->firstWhere('id', $sugerida?->id)?->id,
         ]);
@@ -86,6 +87,7 @@ class EnlaceCargaController extends Controller
             'token_cifrado' => $token,
             'dependencia_id' => $dependencia->id,
             'carpeta_id' => $request->input('carpeta_id'),
+            'componente_id' => $request->input('componente_id'),
             'proposito' => $request->input('proposito'),
             'expira_at' => $request->input('expira_at'),
             'max_usos' => $request->input('max_usos'),

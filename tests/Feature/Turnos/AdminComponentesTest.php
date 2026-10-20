@@ -31,6 +31,12 @@ class AdminComponentesTest extends TestCase
     {
         return $cambios + [
             'tolerancia_min' => 10,
+            'jornada_horas' => 8,
+            'descanso_min' => 60,
+            'descanso_parcial_min' => 30,
+            'sin_descanso_hasta_h' => 4,
+            'descanso_completo_desde_h' => 6,
+            'turnos_por_dia' => 1,
             'horas_max_turno' => 12,
             'foto_obligatoria' => '1',
             'ubicacion_obligatoria' => '0',
@@ -57,8 +63,8 @@ class AdminComponentesTest extends TestCase
         $this->actingAs($this->admin)
             ->post(route('admin.turnos.componentes.store'), $this->reglas([
                 'nombre' => 'Básica',
-                'cargos' => "Conductor  camioneta
-
+                'cargos' => "Conductor  camioneta
+
 Monitor de ruta
 Monitor de ruta
 ",
@@ -164,13 +170,18 @@ Monitor de ruta
         $this->assertSame(1, $ajeno->nodos()->count());
     }
 
-    public function test_coordinacion_no_entra_a_componentes(): void
+    public function test_coordinacion_crea_componentes_y_edicion_no(): void
     {
         $coordinador = $this->usuarioCon(RolDependencia::Coordinacion, $this->dependencia);
-
-        $this->actingAs($coordinador)->get(route('admin.turnos.componentes.index'))->assertForbidden();
+        $this->actingAs($coordinador)->get(route('admin.turnos.componentes.index'))->assertOk();
         $this->actingAs($coordinador)
-            ->post(route('admin.turnos.componentes.store'), $this->reglas(['nombre' => 'Nuevo']))
+            ->post(route('admin.turnos.componentes.store'), $this->reglas(['nombre' => 'Básica']))
+            ->assertSessionHasNoErrors();
+
+        $editor = $this->usuarioCon(RolDependencia::Edicion, $this->dependencia);
+        $this->actingAs($editor)->get(route('admin.turnos.componentes.index'))->assertForbidden();
+        $this->actingAs($editor)
+            ->post(route('admin.turnos.componentes.store'), $this->reglas(['nombre' => 'Otro']))
             ->assertForbidden();
     }
 }

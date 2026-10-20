@@ -42,8 +42,16 @@ enum AccionAuditoria: string
     case TurnoCierreAutomatico = 'turno.cierre_automatico';
     case EnlaceTurnoCreado = 'enlace_turno.creado';
     case EnlaceTurnoRevocado = 'enlace_turno.revocado';
+    case DerivacionRegistrada = 'derivacion.registrada';
+    case DerivacionActualizada = 'derivacion.actualizada';
+    case DerivacionEliminada = 'derivacion.eliminada';
     case ComponenteGuardado = 'componente.guardado';
     case NodoGuardado = 'nodo.guardado';
+    case NovedadRevisada = 'turno.novedad_revisada';
+    case DocumentoAbierto = 'documento.abierto';
+    case DocumentoComentado = 'documento.comentado';
+    case CarpetaCustodia = 'carpeta.custodia';
+    case GrupoCustodiaGuardado = 'grupo_custodia.guardado';
 
     public function etiqueta(): string
     {
@@ -84,8 +92,16 @@ enum AccionAuditoria: string
             self::TurnoCierreAutomatico => 'Cerró un turno sin salida',
             self::EnlaceTurnoCreado => 'Creó un enlace de turno',
             self::EnlaceTurnoRevocado => 'Revocó un enlace de turno',
+            self::DerivacionRegistrada => 'Registró una derivación',
+            self::DerivacionActualizada => 'Corrigió una derivación',
+            self::DerivacionEliminada => 'Eliminó una derivación',
             self::ComponenteGuardado => 'Creó o cambió un componente',
             self::NodoGuardado => 'Creó o cambió un nodo',
+            self::NovedadRevisada => 'Aprobó o rechazó una novedad de turno',
+            self::DocumentoAbierto => 'Abrió un documento custodiado',
+            self::DocumentoComentado => 'Comentó un documento',
+            self::CarpetaCustodia => 'Cambió la custodia de una carpeta',
+            self::GrupoCustodiaGuardado => 'Creó o cambió un grupo de custodia',
         };
     }
 }
