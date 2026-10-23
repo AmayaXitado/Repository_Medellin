@@ -48,6 +48,12 @@ class Componente extends Model
         // Cuántos turnos puede abrir una persona en un mismo día. Cumplidos,
         // el enlace ya no la deja marcar: lo que falte lo corrige Coordinación.
         'turnos_por_dia' => 1,
+        // Turno automático: una entrada se reconoce como el turno cuyo inicio
+        // está más cerca, si cae entre tantos minutos antes y tantos después.
+        'reconocer_antes_min' => 90,
+        'reconocer_despues_min' => 180,
+        // Cuánto después del inicio esperado, sin entrada, sale «no registró entrada».
+        'aviso_sin_entrada_min' => 30,
         'autoregistro' => true,
         // Los cargos que se pueden elegir para sus personas de campo.
         'cargos' => [],
@@ -103,6 +109,16 @@ class Componente extends Model
     public function nodos(): HasMany
     {
         return $this->hasMany(Nodo::class)->orderBy('orden');
+    }
+
+    public function tiposTurno(): HasMany
+    {
+        return $this->hasMany(TipoTurno::class)->orderBy('orden');
+    }
+
+    public function puntosCriticos(): HasMany
+    {
+        return $this->hasMany(PuntoCritico::class)->orderBy('nombre');
     }
 
     public function colaboradores(): HasMany

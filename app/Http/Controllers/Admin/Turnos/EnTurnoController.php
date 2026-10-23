@@ -17,7 +17,7 @@ class EnTurnoController extends Controller
         $this->authorize('viewAny', Marcacion::class);
 
         $abiertas = Marcacion::entradasAbiertas()
-            ->with(['colaborador', 'nodo', 'componente'])
+            ->with(['colaborador', 'nodo', 'componente', 'tipoTurno', 'puntoCritico'])
             ->when($request->filled('componente'), fn ($q) => $q->where('componente_id', $request->integer('componente')))
             ->when($request->filled('nodo'), fn ($q) => $q->where('nodo_id', $request->integer('nodo')))
             ->orderBy('marcada_at')

@@ -70,6 +70,9 @@
     </script>
 
     @vite(['resources/css/app.css', 'resources/css/loader.css', 'resources/js/app.js'])
+
+    {{-- Lo que una página necesita solo para ella (p. ej. los estilos de Filament). --}}
+    @stack('estilos')
 </head>
 <body class="h-full antialiased">
 
@@ -275,6 +278,8 @@
     });
 })();
 </script>
+
+@stack('scripts')
 
 </body>
 </html>

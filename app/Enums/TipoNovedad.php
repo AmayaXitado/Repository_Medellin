@@ -9,6 +9,8 @@ enum TipoNovedad: string
     case SinSalida = 'sin_salida';
     case SinUbicacion = 'sin_ubicacion';
     case FueraDeZona = 'fuera_de_zona';
+    case Tardanza = 'tardanza';
+    case SinEntrada = 'sin_entrada';
 
     public function etiqueta(): string
     {
@@ -18,6 +20,8 @@ enum TipoNovedad: string
             self::SinSalida => 'Sin salida',
             self::SinUbicacion => 'Sin ubicación',
             self::FueraDeZona => 'Fuera de zona',
+            self::Tardanza => 'Tardanza',
+            self::SinEntrada => 'No registró entrada',
         };
     }
 }

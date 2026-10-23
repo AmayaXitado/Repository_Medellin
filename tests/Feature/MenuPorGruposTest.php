@@ -38,18 +38,18 @@ class MenuPorGruposTest extends TestCase
         $coordinador = $this->usuarioCon(RolDependencia::Coordinacion, $this->dependencia);
 
         $this->actingAs($coordinador)->get(route('documentos.index'))
-            ->assertSeeInOrder(['Turnos', 'Componentes y nodos', 'Enlaces por cédula', 'Personas de campo', 'En turno ahora', 'Novedades', 'Derivaciones', 'Marcaciones y reporte'])
-            ->assertSeeInOrder(['Administración', 'Usuarios', 'Tipos de documento', 'Auditoría'])
+            ->assertSeeInOrder(['Turnos', 'Enlaces por cédula', 'Personas de campo', 'En turno ahora', 'Novedades', 'Marcaciones y reporte'])
+            ->assertSeeInOrder(['Atención territorial', 'Derivaciones'])
+            ->assertSeeInOrder(['Administración', 'Componentes y nodos', 'Usuarios', 'Tipos de documento', 'Auditoría'])
             ->assertDontSee('Enviar aviso');
     }
 
-    public function test_administracion_configura_primero_los_componentes(): void
+    public function test_administracion_ve_los_componentes_en_administracion(): void
     {
         $admin = $this->usuarioCon(RolDependencia::Administracion, $this->dependencia);
 
         $this->actingAs($admin)->get(route('documentos.index'))
-            ->assertSeeInOrder(['Turnos', 'Componentes y nodos', 'Enlaces por cédula'])
-            ->assertSeeInOrder(['Administración', 'Usuarios', 'Tipos de documento', 'Enviar aviso', 'Auditoría']);
+            ->assertSeeInOrder(['Administración', 'Componentes y nodos', 'Usuarios', 'Tipos de documento', 'Enviar aviso', 'Auditoría']);
     }
 
     public function test_edicion_gestiona_todo_turnos_menos_los_componentes(): void
@@ -57,7 +57,8 @@ class MenuPorGruposTest extends TestCase
         $editor = $this->usuarioCon(RolDependencia::Edicion, $this->dependencia);
 
         $this->actingAs($editor)->get(route('documentos.index'))
-            ->assertSeeInOrder(['Turnos', 'Enlaces por cédula', 'Personas de campo', 'En turno ahora', 'Novedades', 'Derivaciones', 'Marcaciones y reporte'])
+            ->assertSeeInOrder(['Turnos', 'Enlaces por cédula', 'Personas de campo', 'En turno ahora', 'Novedades', 'Marcaciones y reporte'])
+            ->assertSeeInOrder(['Atención territorial', 'Derivaciones'])
             ->assertDontSee('Componentes y nodos')
             ->assertDontSee('data-grupo-menu="administracion"', false);
     }
