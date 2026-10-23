@@ -38,6 +38,7 @@ class EnlaceTurno extends Model
         'tipo',
         'componente_id',
         'nodo_id',
+        'punto_critico_id',
         'nombre',
         'activo',
         'expira_at',
@@ -115,6 +116,12 @@ class EnlaceTurno extends Model
     public function nodo(): BelongsTo
     {
         return $this->belongsTo(Nodo::class);
+    }
+
+    /** El QR pegado en un punto crítico: quien marca con él, queda en ese punto ese día. */
+    public function puntoCritico(): BelongsTo
+    {
+        return $this->belongsTo(PuntoCritico::class);
     }
 
     public function creador(): BelongsTo

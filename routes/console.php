@@ -113,6 +113,13 @@ Artisan::command('turnos:cerrar-abiertas', function (\App\Services\Turnos\Marcad
 
 \Illuminate\Support\Facades\Schedule::command('turnos:cerrar-abiertas')->hourly()->withoutOverlapping();
 
+// Quien tenía turno (su turno habitual) y no marcó entrada: novedad y aviso.
+Artisan::command('turnos:revisar-entradas', function (\App\Services\Turnos\RevisorEntradas $revisor) {
+    $this->info('Novedades «no registró entrada»: '.$revisor->revisar());
+})->purpose('Anota a quien se esperaba en turno y no marcó entrada');
+
+\Illuminate\Support\Facades\Schedule::command('turnos:revisar-entradas')->everyFifteenMinutes()->withoutOverlapping();
+
 /*
 |--------------------------------------------------------------------------
 | Avisos de versión

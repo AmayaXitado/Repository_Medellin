@@ -2,13 +2,18 @@
 
 namespace App\Providers;
 
+use App\Http\Middleware\EstablecerDependencia;
+use App\Http\Middleware\VerificarUsuarioActivo;
 use App\Services\ContextoDependencia;
+use Filament\Support\Colors\Color;
+use Filament\Support\Facades\FilamentColor;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
+use Livewire\Livewire;
 use SocialiteProviders\Authentik\Provider as AuthentikProvider;
 use SocialiteProviders\Manager\SocialiteWasCalled;
 
@@ -24,6 +29,24 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Vite::prefetch(concurrency: 3);
+
+        // Cada clic de Livewire (filtrar, paginar, guardar en una tabla de
+        // Filament) vuelve a pasar por estos: sin el de dependencia,
+        // DependenciaScope no filtraría y se verían datos de todas.
+        Livewire::addPersistentMiddleware([
+            VerificarUsuarioActivo::class,
+            EstablecerDependencia::class,
+        ]);
+
+        // Las piezas de Filament (tablas, ventanas) con el azul de Documenta.
+        FilamentColor::register([
+            'primary' => Color::hex('#1f4e79'),
+            'danger' => Color::Red,
+            'gray' => Color::Slate,
+            'info' => Color::Sky,
+            'success' => Color::Green,
+            'warning' => Color::Amber,
+        ]);
 
         $this->limitarRecepcionExterna();
 

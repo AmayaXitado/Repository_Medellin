@@ -64,6 +64,21 @@
         </div>
 
         <div>
+            <label for="punto_critico_id" class="{{ $etiqueta }}">Punto crítico {!! $opcional !!}</label>
+            <select id="punto_critico_id" name="punto_critico_id" data-depende-de="#componente_id" class="{{ $campo }}">
+                <option value="">El habitual de cada persona</option>
+                @foreach($componentes as $componente)
+                    @foreach($componente->puntosCriticos as $punto)
+                        <option value="{{ $punto->id }}" data-componente="{{ $componente->id }}" @selected(old('punto_critico_id') == $punto->id)>{{ $punto->nombre }}</option>
+                    @endforeach
+                @endforeach
+            </select>
+            <p class="{{ $ayuda }}">
+                Para pegar el QR en un punto: quien marque con él queda en ese punto ese día, aunque su habitual sea otro.
+            </p>
+        </div>
+
+        <div>
             <label for="nombre" class="{{ $etiqueta }}">Nombre {!! $opcional !!}</label>
             <input id="nombre" name="nombre" type="text" maxlength="255" value="{{ old('nombre') }}"
                    placeholder="Ej: Microbús placa ABC123" class="{{ $campo }}">

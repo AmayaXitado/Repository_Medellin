@@ -30,6 +30,12 @@ Cada viñeta, corta y para quien no programa.
 - Si el servidor recibe menos archivos de los enviados (límite de PHP), la carga se detiene con un aviso claro en vez de guardar solo una parte; las tandas nunca pasan de ese límite.
 - Dentro de una carpeta se pasa de un archivo a otro con las flechas (botones o teclas ← →), sin volver a la lista; se ve «3 de 25».
 - Comentarios en cada archivo («la foto está mal tomada»): a quien lo subió, y a quienes ya comentaron, les llega por la campana con un enlace directo al comentario.
+- Catálogo de la malla dentro de Documenta: tipos de turno (N1, T3, N7, C13, D, I… con horario y horas de nómina) y puntos críticos con «Ver en el mapa». Los manejan los líderes; se abren desde Personas de campo y En turno ahora. Tablas con búsqueda, filtros y columnas configurables.
+- Componentes y nodos en una sola pantalla: tabla con búsqueda y filtros, y un panel lateral para crear o editar el componente con sus reglas por secciones, los cargos como etiquetas y los nodos (con su zona) que se agregan, ordenan arrastrando y desactivan ahí mismo. Editar un componente ya no apaga las reglas del turno automático.
+- Menú: «Componentes y nodos» pasa a Administración y «Derivaciones» a su propio grupo, Atención territorial.
+- Turnos automáticos: cada persona tiene su turno, punto crítico y días de descanso habituales; al marcar, el turno se reconoce solo por la hora y queda la tardanza. Si alguien con turno no marca entrada a los 30 minutos, llega el aviso «No registró entrada» a líderes y Coordinación (y se cierra solo si después marca). Descansos, vacaciones, incapacidades y permisos se registran por fechas desde la ficha o justificando la novedad.
+- El QR de un enlace puede ser de un punto crítico: quien marca con él queda en ese punto ese día.
+- Manual de usuario con la imagen del Comité, para todos los roles (menú de la cuenta y Administración), con descarga en PDF lista para compartir.
 - Una hora mal marcada se corrige; la original queda en el historial.
 - Con el turno del día cerrado, el enlace ya no deja volver a marcar.
 - El menú se organiza por grupos que se pliegan, en el orden del trabajo.

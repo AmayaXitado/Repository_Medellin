@@ -22,6 +22,8 @@ class GuardarColaboradorRequest extends FormRequest
             $this->merge(['documento' => User::normalizarDocumento($this->input('documento'))]);
         }
 
+        $this->merge(['dias_descanso' => array_values((array) $this->input('dias_descanso', []))]);
+
         if ($this->filled('nodo_id') && ! $this->filled('componente_id')) {
             $this->merge(['componente_id' => Nodo::find($this->input('nodo_id'))?->componente_id]);
         }
@@ -75,6 +77,17 @@ class GuardarColaboradorRequest extends FormRequest
                 'required',
                 Rule::exists('nodos', 'id')->where('componente_id', $this->input('componente_id')),
             ],
+            // Lo habitual: con su turno se sabe a qué hora esperarla cada día.
+            'tipo_turno_id' => [
+                'nullable',
+                Rule::exists('tipos_turno', 'id')->where('componente_id', $this->input('componente_id'))->where('es_turno', true),
+            ],
+            'punto_critico_id' => [
+                'nullable',
+                Rule::exists('puntos_criticos', 'id')->where('componente_id', $this->input('componente_id')),
+            ],
+            'dias_descanso' => ['nullable', 'array', 'max:6'],
+            'dias_descanso.*' => ['integer', 'between:1,7'],
         ];
     }
 
@@ -98,6 +111,9 @@ class GuardarColaboradorRequest extends FormRequest
             'documento' => 'cédula',
             'componente_id' => 'componente',
             'nodo_id' => 'nodo',
+            'tipo_turno_id' => 'turno habitual',
+            'punto_critico_id' => 'punto crítico habitual',
+            'dias_descanso' => 'días de descanso',
         ];
     }
 

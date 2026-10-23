@@ -8,6 +8,7 @@ use App\Enums\TipoNovedad;
 use App\Http\Controllers\Controller;
 use App\Models\Marcacion;
 use App\Models\NovedadTurno;
+use App\Models\TipoTurno;
 use App\Services\Auditor;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -41,6 +42,10 @@ class NovedadController extends Controller
 
         return view('admin.turnos.novedades.index', [
             'novedades' => $novedades,
+            // Para justificar un «no registró entrada»: D, VAC, I… de cada componente.
+            'ausenciasPorComponente' => TipoTurno::activos()->where('es_turno', false)
+                ->whereIn('componente_id', $novedades->pluck('componente_id')->unique())
+                ->orderBy('orden')->get()->groupBy('componente_id'),
             'estado' => $estado,
             'tipos' => TipoNovedad::cases(),
         ]);

@@ -25,6 +25,7 @@ class NovedadTurno extends Model
         'componente_id',
         'marcacion_id',
         'entrada_id',
+        'fecha',
         'tipo',
         'detalle',
         'minutos',
@@ -41,6 +42,7 @@ class NovedadTurno extends Model
             'estado' => EstadoNovedad::class,
             'minutos' => 'integer',
             'revisada_at' => 'datetime',
+            'fecha' => 'date',
         ];
     }
 

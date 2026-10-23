@@ -42,8 +42,8 @@
                     </p>
                     <p class="mt-1 text-sm text-[var(--text)]">{{ $novedad->detalle }}</p>
                     <p class="mt-1 text-xs text-[var(--muted)]">
-                        {{ $novedad->componente->nombre }}{{ $novedad->marcacion->nodo ? ' · '.$novedad->marcacion->nodo->nombre : '' }}
-                        · {{ $novedad->created_at->format('d/m/Y H:i') }}
+                        {{ $novedad->componente->nombre }}{{ $novedad->marcacion?->nodo ? ' · '.$novedad->marcacion->nodo->nombre : '' }}
+                        · {{ $novedad->fecha ? 'del '.$novedad->fecha->format('d/m/Y').' · ' : '' }}{{ $novedad->created_at->format('d/m/Y H:i') }}
                     </p>
                 </div>
 
@@ -59,15 +59,35 @@
                         <button name="estado" value="rechazada"
                                 class="rounded-md bg-[var(--danger)] px-3 py-2 text-sm font-medium text-white hover:brightness-90">Rechazar</button>
                     </form>
+                    @if($novedad->tipo === \App\Enums\TipoNovedad::SinEntrada)
+                        {{-- No vino porque estaba en D, VAC, I…: se justifica y ese día queda registrado. --}}
+                        @if(($ausenciasPorComponente[$novedad->componente_id] ?? collect())->isNotEmpty())
+                            <form method="POST" action="{{ route('admin.turnos.novedades.justificar', $novedad) }}" class="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+                                @csrf
+                                <select name="tipo_turno_id" required class="{{ $campo }}" aria-label="Tipo de ausencia">
+                                    @foreach($ausenciasPorComponente[$novedad->componente_id] as $tipo)
+                                        <option value="{{ $tipo->id }}">{{ $tipo->codigo }} · {{ $tipo->nombre }}</option>
+                                    @endforeach
+                                </select>
+                                <button class="rounded-md bg-[var(--card-soft)] px-3 py-2 text-sm font-medium text-[var(--text)] ring-1 ring-[var(--border)] hover:brightness-95">Justificar</button>
+                            </form>
+                        @endif
+                        @can('update', $novedad->colaborador)
+                            <a href="{{ route('admin.turnos.colaboradores.show', $novedad->colaborador) }}#agregar-marca" class="text-sm text-[var(--primary)] hover:underline">
+                                Sí vino: agregar la entrada que faltó
+                            </a>
+                        @endcan
+                    @else
                     {{-- Si la hora estaba mal, se corrige y el turno se vuelve a juzgar. --}}
                     <div class="flex gap-4">
                         @if($novedad->entrada && ! $novedad->entrada->estaAnulada())
                             @include('admin.turnos._corregir', ['marcacion' => $novedad->entrada, 'texto' => 'Corregir hora de entrada'])
                         @endif
-                        @unless($novedad->marcacion->estaAnulada())
+                        @if($novedad->marcacion && ! $novedad->marcacion->estaAnulada())
                             @include('admin.turnos._corregir', ['marcacion' => $novedad->marcacion, 'texto' => 'Corregir hora de '.mb_strtolower($novedad->marcacion->tipo->etiqueta())])
-                        @endunless
+                        @endif
                     </div>
+                    @endif
                     </div>
                 @else
                     <div class="text-right text-xs">

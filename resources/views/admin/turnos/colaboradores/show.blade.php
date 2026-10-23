@@ -72,6 +72,88 @@
                 </div>
             </dl>
         </div>
+
+        {{-- Lo habitual y las ausencias: con esto se sabe a quién esperar cada día. --}}
+        <div id="turno" class="mt-6 scroll-mt-4 rounded-lg bg-[var(--card)] p-4 ring-1 ring-[var(--border)]">
+            <h2 class="text-sm font-medium text-[var(--text)]">Turno y ausencias</h2>
+
+            <dl class="mt-3 space-y-2 text-sm">
+                <div class="flex justify-between gap-3">
+                    <dt class="text-[var(--muted)]">Turno habitual</dt>
+                    <dd class="text-right text-[var(--text)]">
+                        @if($colaborador->tipoTurno)
+                            <span class="font-medium">{{ $colaborador->tipoTurno->codigo }}</span> · {{ $colaborador->tipoTurno->horario() }}
+                            <span class="block text-xs text-[var(--muted)]">{{ $colaborador->tipoTurno->diasLegibles() }}</span>
+                        @else
+                            <span class="text-[var(--muted)]">Sin turno fijo</span>
+                        @endif
+                    </dd>
+                </div>
+                <div class="flex justify-between gap-3">
+                    <dt class="text-[var(--muted)]">Punto crítico</dt>
+                    <dd class="min-w-0 break-words text-right text-[var(--text)]">{{ $colaborador->puntoCritico?->nombre ?? '—' }}</dd>
+                </div>
+                <div class="flex justify-between gap-3">
+                    <dt class="text-[var(--muted)]">Descansa</dt>
+                    <dd class="text-right text-[var(--text)]">
+                        {{ collect($colaborador->dias_descanso ?? [])->map(fn ($d) => App\Models\TipoTurno::DIAS[(int) $d] ?? null)->filter()->join(', ') ?: '—' }}
+                    </dd>
+                </div>
+            </dl>
+
+            @if($ausencias->isNotEmpty())
+                <ul class="mt-4 divide-y divide-[var(--border)] border-t border-[var(--border)] text-sm">
+                    @foreach($ausencias as $ausencia)
+                        <li class="flex items-start gap-2 py-2">
+                            <span class="rounded bg-[var(--card-soft)] px-1.5 py-0.5 text-xs font-semibold text-[var(--text)]">{{ $ausencia->tipo->codigo }}</span>
+                            <span class="min-w-0 flex-1">
+                                <span class="text-[var(--text)]">{{ $ausencia->rango() }}</span>
+                                @if($ausencia->motivo)
+                                    <span class="block text-xs text-[var(--muted)]">{{ $ausencia->motivo }}</span>
+                                @endif
+                            </span>
+                            @can('update', $colaborador)
+                                <form method="POST" action="{{ route('admin.turnos.ausencias.destroy', $ausencia) }}"
+                                      onsubmit="return confirm('¿Quitar esta ausencia? Esos días se volverá a esperar a la persona.')">
+                                    @csrf @method('DELETE')
+                                    <button class="text-xs text-[var(--muted)] hover:text-[var(--danger)]">Quitar</button>
+                                </form>
+                            @endcan
+                        </li>
+                    @endforeach
+                </ul>
+            @endif
+
+            @can('update', $colaborador)
+                @if($tiposAusencia->isNotEmpty())
+                    <form method="POST" action="{{ route('admin.turnos.ausencias.store', $colaborador) }}"
+                          class="mt-4 space-y-2 border-t border-[var(--border)] pt-4">
+                        @csrf
+                        <p class="text-xs font-medium text-[var(--muted)]">Registrar ausencia</p>
+                        <select name="tipo_turno_id" required class="liquid-input w-full text-sm" aria-label="Tipo de ausencia">
+                            @foreach($tiposAusencia as $tipo)
+                                <option value="{{ $tipo->id }}" @selected(old('tipo_turno_id') == $tipo->id)>{{ $tipo->codigo }} · {{ $tipo->nombre }}</option>
+                            @endforeach
+                        </select>
+                        <div class="grid grid-cols-2 gap-2">
+                            <label class="text-xs text-[var(--muted)]">Desde
+                                <input type="date" name="desde" required value="{{ old('desde', now()->toDateString()) }}" class="liquid-input mt-1 w-full text-sm">
+                            </label>
+                            <label class="text-xs text-[var(--muted)]">Hasta
+                                <input type="date" name="hasta" required value="{{ old('hasta', now()->toDateString()) }}" class="liquid-input mt-1 w-full text-sm">
+                            </label>
+                        </div>
+                        <input type="text" name="motivo" maxlength="500" value="{{ old('motivo') }}" placeholder="Motivo (opcional)" class="liquid-input w-full text-sm">
+                        @if($errors->hasAny(['tipo_turno_id', 'desde', 'hasta']))
+                            <p class="text-xs text-[var(--danger)]">{{ $errors->first('tipo_turno_id') ?: $errors->first('desde') ?: $errors->first('hasta') }}</p>
+                        @endif
+                        <button class="w-full rounded-md bg-[var(--card-soft)] px-3 py-2 text-sm font-medium text-[var(--text)] ring-1 ring-[var(--border)] hover:brightness-95">
+                            Registrar
+                        </button>
+                    </form>
+                @endif
+            @endcan
+        </div>
     </aside>
 
     <div class="min-w-0 space-y-6 lg:col-span-2">
@@ -112,8 +194,8 @@
 
         @can('update', $colaborador)
             {{-- Corrección: una marca que faltó. Fila nueva con motivo y autor; nada se edita. --}}
-            <form method="POST" action="{{ route('admin.turnos.marcaciones.store', $colaborador) }}"
-                  class="rounded-lg bg-[var(--card)] p-4 ring-1 ring-[var(--border)]">
+            <form id="agregar-marca" method="POST" action="{{ route('admin.turnos.marcaciones.store', $colaborador) }}"
+                  class="scroll-mt-4 rounded-lg bg-[var(--card)] p-4 ring-1 ring-[var(--border)]">
                 @csrf
                 <h2 class="text-sm font-medium text-[var(--text)]">Agregar una marca que faltó</h2>
                 <p class="mb-3 text-xs text-[var(--muted)]">Queda como corrección, con tu nombre y el motivo. Las marcas existentes no se tocan.</p>

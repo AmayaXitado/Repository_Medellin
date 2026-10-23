@@ -197,3 +197,35 @@ viene (el número es el de la beta en pruebas, sin `-beta`).
 `tests/Feature/Turnos/*` y `tests/Feature/AvisosTest.php`: marcar de punta a punta,
 turno nocturno, doble toque, privacidad de la cédula, novedades, cierre automático,
 reporte en Excel (turnos y resumen mensual), permisos por rol y aislamiento entre dependencias.
+
+## Turnos automáticos
+
+- **Lo habitual de cada persona** (Personas de campo → editar): turno habitual (N1, T3…),
+  punto crítico habitual y días de descanso. Sin turno habitual no se la espera.
+- **Al marcar entrada** el sistema reconoce el turno por la hora: el de inicio más cercano
+  que aplique ese día (en festivo, solo los de «domingos y festivos» o los de todos los
+  días), dentro de 90 min antes y 180 min después. Si el habitual cabe, gana el habitual.
+  Queda guardado el turno, el punto (el del QR si el enlace es de un punto, si no el
+  habitual) y los minutos tarde. Pasada la tolerancia, novedad **Tardanza**.
+- **«No registró entrada»**: cada 15 minutos (`turnos:revisar-entradas`) se mira a quién se
+  esperaba (turno habitual que aplica ese día, sin descanso ni ausencia). 30 min después
+  del inicio sin entrada: novedad y aviso por la campana a **Edición, Coordinación y
+  Administración**. Si después marca, el aviso se cierra solo («corregida») y queda la
+  tardanza.
+- **Ausencias** (D, VAC, I, P, PNR…): por fechas, desde la ficha de la persona o desde
+  Novedades con «Justificar». Esos días no se la espera.
+- Las ventanas (90 / 180 / 30 min) son reglas del componente (`Componente::REGLAS`).
+  Los festivos están en `config/repositorio.php` (`festivos`, 2026–2027).
+
+### Prueba de estrés (solo desarrollo)
+
+```bash
+php artisan turnos:simular-dia 2026-10-20 --personas=400 --faltan=10 --tarde=20
+```
+
+Crea personas `SIM###` en «DEMO · Calle» con su turno, punto y descanso, algunas de
+vacaciones o incapacitadas, y simula el día: marcan a su hora, tarde o no marcan, y la
+revisión corre cada 15 minutos. Al final compara lo simulado con lo detectado (faltas que
+se escaparon y falsas alarmas: deben dar 0). **Las notificaciones son reales** para los
+usuarios locales. No corre en producción.
+
