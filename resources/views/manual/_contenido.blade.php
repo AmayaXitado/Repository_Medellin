@@ -249,6 +249,7 @@
 
     <h3>Novedades</h3>
     <p>Lo que se sale de lo esperado y debe revisarse. Llegan por la campana.</p>
+    <p><strong>Quién aprueba:</strong> Coordinación y Administración, y los usuarios de Edición que tengan marcado <strong>Aprueba novedades de turno</strong> (se marca persona por persona en <span class="ruta">Administración → Usuarios → Editar</span>). Los demás líderes las ven, pero no las aprueban. Con <strong>Descargar Excel</strong> salen las del filtro de la pantalla.</p>
     <table>
         <thead><tr><th>Novedad</th><th>Cuándo sale</th><th>Qué hacer</th></tr></thead>
         <tbody>
@@ -283,12 +284,21 @@
         <li><strong>Quién reporta:</strong> la cédula (tiene que estar registrada).</li>
         <li><strong>Requerimiento:</strong> nodo, fecha y hora, entidad que solicita, soporte (PDF o foto), descripción y ubicación.</li>
         <li><strong>Evidencias:</strong> tres fotos obligatorias, con sello de hora y lugar.</li>
-        <li><strong>Respuesta:</strong> la hora de respuesta. El tiempo se calcula solo; si pasa de <strong>3 horas</strong>, pide la justificación.</li>
     </ol>
+    <p>Al enviarla, la derivación queda <strong>pendiente</strong> y el tiempo empieza a correr desde la hora del requerimiento.</p>
+
+    <h3>Responder (líderes)</h3>
+    <ul>
+        <li>Al llegar una derivación, los líderes reciben un aviso por la campana, y otro <strong>cada 30 minutos</strong> mientras siga sin respuesta. Pasadas las <strong>3 horas</strong>, el aviso dice que está <strong>vencida</strong>.</li>
+        <li>En la derivación, <strong>Dar respuesta</strong>: se escribe qué se hizo y <strong>Marcar como solucionada</strong>. Ahí se detiene el tiempo. Si pasó de 3 horas, pide la justificación.</li>
+        <li>En la lista, las pendientes van primero, con el tiempo que llevan corriendo (en rojo si ya vencieron).</li>
+        <li><strong>Seguimiento:</strong> arriba de la lista se ve cuántas siguen sin respuesta y cuántas vencieron, el cumplimiento, qué nodos tienen casos sin responder y, en «Quién ha respondido», cada líder con sus respuestas a tiempo y su tiempo promedio. Respeta los filtros (fechas, nodo…).</li>
+        <li>En <span class="ruta">Notificaciones</span>, la pestaña <strong>Derivaciones</strong> las separa de las de turnos. Cada recordatorio reemplaza al anterior del mismo caso.</li>
+    </ul>
 
     <h3>Seguimiento</h3>
     <ul>
-        <li><span class="ruta">Atención territorial → Derivaciones</span>: lista con filtros por fechas, nodo, cumplimiento y búsqueda.</li>
+        <li><span class="ruta">Atención territorial → Derivaciones</span>: lista con filtros por estado (pendiente o solucionada), fechas, nodo, cumplimiento y búsqueda.</li>
         <li>Abrir, <strong>corregir</strong> (el tiempo se recalcula) o <strong>eliminar</strong> (solo Coordinación; las fotos se conservan).</li>
         <li><strong>Descargar Excel:</strong> encabezado negro, las fotos dentro de sus celdas y el soporte en PDF como enlace que abre sin cuenta durante 30 días.</li>
         <li><strong>Excel + fotos (ZIP):</strong> el Excel y una carpeta por caso con las fotos en tamaño original.</li>

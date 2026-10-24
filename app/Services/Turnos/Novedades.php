@@ -171,7 +171,10 @@ class Novedades
         return $novedad;
     }
 
-    /** A Coordinación y Administración de la dependencia (y a Edición si se pide), por la campana. */
+    /**
+     * A Coordinación, Administración y quien aprueba novedades de la
+     * dependencia (y a toda Edición si se pide), por la campana.
+     */
     protected function avisar(array $novedades, bool $conLideres = false): void
     {
         $roles = [RolDependencia::Coordinacion->value, RolDependencia::Administracion->value];
@@ -187,7 +190,8 @@ class Novedades
 
             $quienes = Dependencia::find($novedad->dependencia_id)
                 ?->usuarios()
-                ->wherePivotIn('rol', $roles)
+                ->where(fn ($q) => $q->whereIn('dependencia_usuario.rol', $roles)
+                    ->orWhere('dependencia_usuario.aprueba_novedades', true))
                 ->where('activo', true)
                 ->get();
 

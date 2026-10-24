@@ -10,10 +10,13 @@ use App\Models\Marcacion;
 use App\Models\NovedadTurno;
 use App\Models\TipoTurno;
 use App\Services\Auditor;
+use App\Support\Xlsx;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 /**
  * Lo que se salió de lo esperado en los turnos, esperando validación.
@@ -32,11 +35,8 @@ class NovedadController extends Controller
 
         $estado = $request->input('estado', EstadoNovedad::Pendiente->value);
 
-        $novedades = NovedadTurno::query()
-            ->with(['colaborador', 'componente', 'marcacion.nodo', 'marcacion.colaborador', 'entrada.colaborador', 'revisor'])
-            ->when($estado !== 'todas', fn ($q) => $q->where('estado', $estado))
-            ->when($request->filled('tipo'), fn ($q) => $q->where('tipo', $request->input('tipo')))
-            ->latest()
+        $novedades = $this->consulta($request)
+            ->with(['marcacion.nodo', 'marcacion.colaborador', 'entrada.colaborador'])
             ->paginate(config('repositorio.por_pagina'))
             ->withQueryString();
 
@@ -51,11 +51,48 @@ class NovedadController extends Controller
         ]);
     }
 
+    /** Las novedades del filtro en Excel, para revisarlas fuera o pasarlas a nómina. */
+    public function exportar(Request $request): BinaryFileResponse
+    {
+        $this->authorize('viewAny', Marcacion::class);
+
+        $filas = $this->consulta($request)->lazy()->map(fn (NovedadTurno $n) => [
+            $n->fecha?->format('d/m/Y'),
+            $n->colaborador?->documento,
+            $n->colaborador?->nombre,
+            $n->componente?->nombre,
+            $n->tipo->etiqueta(),
+            $n->detalle,
+            $n->estado === EstadoNovedad::Pendiente ? ['alerta' => $n->estado->etiqueta()] : $n->estado->etiqueta(),
+            $n->revisor?->name,
+            $n->revisada_at?->format('d/m/Y H:i'),
+            $n->comentario,
+        ]);
+
+        $ruta = Xlsx::guardar(tempnam(sys_get_temp_dir(), 'novedades'), 'Novedades', [
+            'Fecha', 'Cédula', 'Nombre', 'Componente', 'Novedad', 'Detalle', 'Estado', 'Revisó', 'Fecha de revisión', 'Comentario',
+        ], $filas);
+
+        return response()->download($ruta, 'novedades_'.now()->format('Y-m-d').'.xlsx')->deleteFileAfterSend();
+    }
+
+    /** Filtro común de la lista y del Excel: estado (pendientes por defecto) y tipo. */
+    protected function consulta(Request $request): Builder
+    {
+        $estado = $request->input('estado', EstadoNovedad::Pendiente->value);
+
+        return NovedadTurno::query()
+            ->with(['colaborador', 'componente', 'revisor'])
+            ->when($estado !== 'todas', fn ($q) => $q->where('estado', $estado))
+            ->when($request->filled('tipo'), fn ($q) => $q->where('tipo', $request->input('tipo')))
+            ->latest();
+    }
+
     public function revisar(Request $request, NovedadTurno $novedad): RedirectResponse
     {
         // Contra la dependencia de la novedad, no de su persona: una ajena se
         // niega con 403 aunque el aislamiento esconda a quien la originó.
-        abort_unless($request->user()->puedeEditarEn($novedad->dependencia_id), 403);
+        abort_unless($request->user()->puedeAprobarNovedadesEn($novedad->dependencia_id), 403);
         abort_unless($novedad->estaPendiente(), 422, 'Esta novedad ya fue revisada.');
 
         $datos = $request->validate([

@@ -200,7 +200,8 @@ class CorreccionYTurnoCerradoTest extends TestCase
     {
         $this->turno('17:00');
         $extra = NovedadTurno::withoutGlobalScopes()->sole();
-        $this->actingAs($this->editor)->patch(route('admin.turnos.novedades.revisar', $extra), ['estado' => 'aprobada']);
+        $this->editor->dependencias()->updateExistingPivot($this->dependencia->id, ['aprueba_novedades' => true]);
+        $this->actingAs($this->editor)->patch(route('admin.turnos.novedades.revisar', $extra), ['estado' => 'aprobada'])->assertRedirect();
 
         $turnos = $this->hojaXlsx($this->actingAs($this->editor)->get(route('admin.turnos.marcaciones.exportar')), 'Turnos');
 

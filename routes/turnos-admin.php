@@ -56,6 +56,7 @@ Route::get('marcaciones/exportar', [MarcacionController::class, 'exportar'])->na
 Route::post('colaboradores/{colaborador}/marcaciones', [MarcacionController::class, 'store'])->name('marcaciones.store');
 Route::patch('marcaciones/{marcacion}/corregir', [MarcacionController::class, 'corregir'])->name('marcaciones.corregir');
 Route::get('novedades', [NovedadController::class, 'index'])->name('novedades.index');
+Route::get('novedades/exportar', [NovedadController::class, 'exportar'])->name('novedades.exportar');
 Route::patch('novedades/{novedad}', [NovedadController::class, 'revisar'])->name('novedades.revisar');
 
 // Ausencias (D, VAC, I, P…): esos días no se espera a la persona.
@@ -65,6 +66,7 @@ Route::post('novedades/{novedad}/justificar', [AusenciaController::class, 'justi
 
 // Derivaciones y respuesta territorial (Edición). Se crean por el enlace por cédula.
 Route::get('derivaciones/exportar', [DerivacionController::class, 'exportar'])->name('derivaciones.exportar');
+Route::patch('derivaciones/{derivacion}/responder', [DerivacionController::class, 'responder'])->name('derivaciones.responder');
 Route::get('derivaciones/fotos', [DerivacionController::class, 'fotos'])->name('derivaciones.fotos');
 Route::resource('derivaciones', DerivacionController::class)
     ->only(['index', 'show', 'edit', 'update', 'destroy'])

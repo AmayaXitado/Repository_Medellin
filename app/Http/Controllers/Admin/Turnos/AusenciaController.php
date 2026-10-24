@@ -44,7 +44,7 @@ class AusenciaController extends Controller
     /** Justifica un «no registró entrada»: la ausencia de ese día y la novedad aprobada. */
     public function justificar(Request $request, NovedadTurno $novedad): RedirectResponse
     {
-        abort_unless($request->user()->puedeEditarEn($novedad->dependencia_id), 403);
+        abort_unless($request->user()->puedeAprobarNovedadesEn($novedad->dependencia_id), 403);
         abort_unless($novedad->tipo === TipoNovedad::SinEntrada && $novedad->estaPendiente(), 422);
 
         $colaborador = $novedad->colaborador;

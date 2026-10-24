@@ -28,6 +28,8 @@
             @endforeach
         </select>
     </form>
+    <a href="{{ route('admin.turnos.novedades.exportar', request()->query()) }}"
+       class="liquid-button-primary rounded-md px-3 py-1.5 text-sm font-medium">Descargar Excel</a>
 </div>
 
 <div class="space-y-3">
@@ -47,7 +49,9 @@
                     </p>
                 </div>
 
-                @if($novedad->estaPendiente())
+                @if($novedad->estaPendiente() && ! auth()->user()->puedeAprobarNovedadesEn($novedad->dependencia_id))
+                    <p class="text-right text-xs text-[var(--muted)]">Pendiente: la aprueba Coordinación o quien tenga «Aprueba novedades».</p>
+                @elseif($novedad->estaPendiente())
                     <div class="flex w-full flex-col items-end gap-2 sm:w-auto">
                     <form method="POST" action="{{ route('admin.turnos.novedades.revisar', $novedad) }}"
                           class="flex w-full flex-wrap items-center gap-2 sm:w-auto">
