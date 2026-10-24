@@ -54,6 +54,7 @@ de PHP **intl**, **xmlreader** y **zip**.
 
 | Página | Se abre desde | Quién |
 |---|---|---|
+| Usuarios (crear y editar siguen en UsuarioController) | Administración → «Usuarios» | Coordinación en adelante |
 | Componentes y nodos (panel lateral con reglas y nodos) | Administración → «Componentes y nodos» | Coordinación en adelante |
 | Tipos de turno | Personas de campo → «Tipos de turno» | Edición en adelante |
 | Puntos críticos (con «Ver en el mapa») | En turno ahora → «Puntos críticos» | Edición en adelante |

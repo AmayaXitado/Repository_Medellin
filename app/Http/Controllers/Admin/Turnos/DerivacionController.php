@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Derivacion;
 use App\Models\Documento;
 use App\Models\Nodo;
+use App\Notifications\DerivacionPendiente;
 use App\Services\AlmacenamientoDocumentos;
 use App\Services\Auditor;
 use App\Support\Xlsx;
@@ -20,10 +21,11 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use ZipArchive;
 
 /**
- * DERIVACIONES Y RESPUESTA TERRITORIAL: consultar, corregir y borrar lo que
- * llega por el enlace por cédula, y el reporte (Excel y ZIP con las fotos).
- * Crear es del formulario público. Rutas REST: index, show, edit, update,
- * destroy.
+ * DERIVACIONES Y RESPUESTA TERRITORIAL: lo que llega por el enlace por
+ * cédula entra pendiente; aquí los líderes lo responden (y se detiene el
+ * tiempo), lo corrigen o lo borran, y sale el reporte (Excel y ZIP con las
+ * fotos). Crear es del formulario público. Rutas REST: index, show, edit,
+ * update, destroy; y responder.
  */
 class DerivacionController extends Controller
 {
@@ -34,6 +36,7 @@ class DerivacionController extends Controller
         'HORA DEL REQUERIMIENTO', 'ENTIDAD QUE SOLICITA EL REQUERIMIENTO', 'SOPORTE DEL REQUERIMIENTO',
         'DESCRIPCION DEL CASO', 'UBICACION DEL REQUERIMIENTO', 'EVIDENCIAS # 1', 'EVIDENCIAS # 2',
         'EVIDENCIAS # 3', 'HORA DE RESPUESTA', 'TIEMPO DE RESPUESTA', 'JUSTIFICACION EN CASO DE NO CUMPLIR',
+        'ESTADO', 'RESPUESTA', 'RESPONDIDA POR', 'FECHA Y HORA DE RESPUESTA',
     ];
 
     /** Cuánto dura el enlace a un PDF de soporte dentro del Excel. */
@@ -50,9 +53,43 @@ class DerivacionController extends Controller
         $this->authorize('viewAny', Derivacion::class);
 
         return view('admin.turnos.derivaciones.index', [
-            'derivaciones' => $this->consulta($request)->paginate(config('repositorio.por_pagina'))->withQueryString(),
+            'derivaciones' => $this->consulta($request)->with('respondedor')->paginate(config('repositorio.por_pagina'))->withQueryString(),
             'nodos' => Nodo::whereHas('componente')->with('componente')->orderBy('nombre')->get(),
+            'traza' => $this->trazabilidad($request),
         ]);
+    }
+
+    /**
+     * El seguimiento del filtro: cuántas hay pendientes (y vencidas), cuántas
+     * se respondieron a tiempo, qué nodos tienen casos sin respuesta y quién
+     * ha respondido.
+     */
+    protected function trazabilidad(Request $request): array
+    {
+        $base = fn () => $this->consulta($request)->reorder()->setEagerLoads([]);
+        $meta = Derivacion::META_MINUTOS;
+
+        $pendientes = $base()->where('estado', Derivacion::PENDIENTE)->with('nodo')->get();
+        $solucionadas = $base()->where('estado', Derivacion::SOLUCIONADA)->toBase()
+            ->selectRaw('count(*) as total, sum(case when tiempo_respuesta_min <= ? then 1 else 0 end) as a_tiempo, avg(tiempo_respuesta_min) as promedio', [$meta])
+            ->first();
+
+        return [
+            'pendientes' => $pendientes->count(),
+            'vencidas' => $pendientes->reject->cumplio()->count(),
+            'solucionadas' => (int) $solucionadas->total,
+            'a_tiempo' => (int) $solucionadas->a_tiempo,
+            'promedio' => $solucionadas->promedio !== null ? Derivacion::duracion((int) round($solucionadas->promedio)) : null,
+            // Quién no: los nodos con casos sin respuesta, el más atrasado primero.
+            'sin_respuesta' => $pendientes->groupBy(fn ($d) => $d->nodo?->nombre ?? 'Sin nodo')
+                ->map(fn ($casos) => ['casos' => $casos->count(), 'vencidas' => $casos->reject->cumplio()->count(), 'mas_antigua' => $casos->max->minutos()])
+                ->sortByDesc('mas_antigua'),
+            // Quién sí: cada líder que ha respondido, con su cumplimiento.
+            'respondedores' => $base()->where('estado', Derivacion::SOLUCIONADA)->whereNotNull('respondida_por')
+                ->join('users', 'users.id', '=', 'derivaciones.respondida_por')->toBase()
+                ->selectRaw('users.name as nombre, count(*) as total, sum(case when tiempo_respuesta_min <= ? then 1 else 0 end) as a_tiempo, avg(tiempo_respuesta_min) as promedio', [$meta])
+                ->groupBy('users.id', 'users.name')->orderByDesc('total')->get(),
+        ];
     }
 
     public function show(Derivacion $derivacion): View
@@ -60,7 +97,7 @@ class DerivacionController extends Controller
         $this->authorize('view', $derivacion);
 
         return view('admin.turnos.derivaciones.show', [
-            'derivacion' => $derivacion->load(['nodo', 'componente', 'soporte', 'evidencia1', 'evidencia2', 'evidencia3']),
+            'derivacion' => $derivacion->load(['nodo', 'componente', 'respondedor', 'soporte', 'evidencia1', 'evidencia2', 'evidencia3']),
         ]);
     }
 
@@ -78,12 +115,15 @@ class DerivacionController extends Controller
     {
         $this->authorize('update', $derivacion);
 
-        $datos = $request->validate(Derivacion::reglas($derivacion->componente_id), [], Derivacion::ATRIBUTOS);
+        // La hora de respuesta solo se corrige en una ya solucionada: la de una
+        // pendiente la pone «Responder».
+        $solucionada = ! $derivacion->estaPendiente();
+        $datos = $request->validate(Derivacion::reglas($derivacion->componente_id)
+            + ($solucionada ? Derivacion::REGLAS_HORA_RESPUESTA + ['respuesta' => ['nullable', 'string', 'max:5000']] : []),
+            [], Derivacion::ATRIBUTOS);
 
-        $derivacion->fill($datos + [
-            'tiempo_respuesta_min' => Derivacion::tiempoValidado($datos),
-            'actualizado_por' => $request->user()->id,
-        ]);
+        $derivacion->fill($datos + ['actualizado_por' => $request->user()->id]
+            + ($solucionada ? ['tiempo_respuesta_min' => Derivacion::tiempoValidado($datos)] : []));
         $cambios = array_keys($derivacion->getDirty());
         $derivacion->save();
 
@@ -95,6 +135,47 @@ class DerivacionController extends Controller
         );
 
         return redirect()->route('admin.turnos.derivaciones.show', $derivacion)->with('exito', 'Derivación corregida.');
+    }
+
+    /** El líder responde: queda solucionada y el tiempo se detiene ahora. */
+    public function responder(Request $request, Derivacion $derivacion): RedirectResponse
+    {
+        $this->authorize('update', $derivacion);
+        abort_unless($derivacion->estaPendiente(), 422, 'Esta derivación ya fue respondida.');
+
+        $datos = $request->validate([
+            'respuesta' => ['required', 'string', 'max:5000'],
+            'justificacion' => ['nullable', 'string', 'max:5000'],
+        ], [], Derivacion::ATRIBUTOS);
+
+        $minutos = $derivacion->minutos();
+
+        if ($minutos > Derivacion::META_MINUTOS && blank($datos['justificacion'] ?? null)) {
+            return back()->withInput()->withErrors([
+                'justificacion' => 'Pasaron más de '.intdiv(Derivacion::META_MINUTOS, 60).' horas: escribe la justificación.',
+            ]);
+        }
+
+        $derivacion->update([
+            'estado' => Derivacion::SOLUCIONADA,
+            'respuesta' => $datos['respuesta'],
+            'justificacion' => $datos['justificacion'] ?? null,
+            'hora_respuesta' => now()->format('H:i'),
+            'tiempo_respuesta_min' => $minutos,
+            'respondida_at' => now(),
+            'respondida_por' => $request->user()->id,
+        ]);
+
+        DerivacionPendiente::retirar($derivacion);
+
+        $this->auditor->registrar(
+            AccionAuditoria::DerivacionRespondida,
+            $derivacion,
+            "Respondió la derivación #{$derivacion->id} en {$derivacion->tiempoLegible()}",
+        );
+
+        return redirect()->route('admin.turnos.derivaciones.show', $derivacion)
+            ->with('exito', "Derivación solucionada en {$derivacion->tiempoLegible()}.");
     }
 
     /** Se retira del reporte; sus archivos siguen en el repositorio. */
@@ -152,7 +233,7 @@ class DerivacionController extends Controller
     protected function excel(Request $request, string $ruta): string
     {
         $filas = $this->consulta($request)
-            ->with(['nodo', 'soporte.versionActual', 'evidencia1.versionActual', 'evidencia2.versionActual', 'evidencia3.versionActual'])
+            ->with(['nodo', 'respondedor', 'soporte.versionActual', 'evidencia1.versionActual', 'evidencia2.versionActual', 'evidencia3.versionActual'])
             ->lazy()
             ->map(fn (Derivacion $d) => [
                 $d->created_at->format('d/m/Y H:i:s'),
@@ -169,9 +250,13 @@ class DerivacionController extends Controller
                 $this->archivoEnCelda($d->evidencia1),
                 $this->archivoEnCelda($d->evidencia2),
                 $this->archivoEnCelda($d->evidencia3),
-                substr($d->hora_respuesta, 0, 5),
-                sprintf('%d:%02d', intdiv($d->tiempo_respuesta_min, 60), $d->tiempo_respuesta_min % 60),
+                $d->estaPendiente() ? null : substr($d->hora_respuesta, 0, 5),
+                sprintf('%d:%02d', intdiv($d->minutos(), 60), $d->minutos() % 60).($d->estaPendiente() ? ' (corriendo)' : ''),
                 $d->justificacion,
+                $d->estaPendiente() ? ['alerta' => 'Pendiente'] : 'Solucionada',
+                $d->respuesta,
+                $d->respondedor?->name,
+                $d->respondida_at?->format('d/m/Y H:i'),
             ]);
 
         return Xlsx::guardar($ruta, 'Derivaciones', self::ENCABEZADOS, $filas);
@@ -219,13 +304,14 @@ class DerivacionController extends Controller
         return $this->almacenamiento->descargar($documento->versionActual);
     }
 
-    /** Filtros: fechas del requerimiento, nodo, cumplimiento y texto libre. */
+    /** Filtros: estado, fechas del requerimiento, nodo, cumplimiento y texto libre. Las pendientes, primero. */
     protected function consulta(Request $request): Builder
     {
         return Derivacion::query()
             ->with('nodo')
             ->when($request->filled('desde'), fn ($q) => $q->whereDate('fecha_requerimiento', '>=', $request->date('desde')))
             ->when($request->filled('hasta'), fn ($q) => $q->whereDate('fecha_requerimiento', '<=', $request->date('hasta')))
+            ->when(in_array($request->input('estado'), [Derivacion::PENDIENTE, Derivacion::SOLUCIONADA], true), fn ($q) => $q->where('estado', $request->input('estado')))
             ->when($request->filled('nodo'), fn ($q) => $q->where('nodo_id', $request->integer('nodo')))
             ->when($request->input('cumplio') === 'si', fn ($q) => $q->where('tiempo_respuesta_min', '<=', Derivacion::META_MINUTOS))
             ->when($request->input('cumplio') === 'no', fn ($q) => $q->where('tiempo_respuesta_min', '>', Derivacion::META_MINUTOS))
@@ -234,6 +320,7 @@ class DerivacionController extends Controller
                 $q->where(fn ($q) => $q->where('nombre', 'like', $texto)->orWhere('cedula', 'like', $texto)
                     ->orWhere('entidad', 'like', $texto)->orWhere('descripcion', 'like', $texto));
             })
+            ->orderByRaw('estado = ? desc', [Derivacion::PENDIENTE])
             ->orderByDesc('fecha_requerimiento')
             ->orderByDesc('hora_requerimiento');
     }

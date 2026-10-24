@@ -185,6 +185,40 @@ class AdminMarcacionesYNovedadesTest extends TestCase
             ->get(route('admin.turnos.novedades.index'))
             ->assertSee('Detalle pendiente')
             ->assertDontSee('Detalle aprobada');
+
+        // El Excel sale con el mismo filtro: todas, si se piden todas.
+        $excel = $this->actingAs($this->coordinador)->get(route('admin.turnos.novedades.exportar', ['estado' => 'todas']))->assertOk();
+        $zip = new \ZipArchive();
+        $zip->open($excel->getFile()->getPathname());
+        $hoja = $zip->getFromName('xl/worksheets/sheet1.xml');
+        $zip->close();
+        $this->assertStringContainsString('Detalle pendiente', $hoja);
+        $this->assertStringContainsString('Detalle aprobada', $hoja);
+    }
+
+    public function test_solo_el_editor_con_aprueba_novedades_aprueba_y_se_marca_desde_usuarios(): void
+    {
+        $marca = Marcacion::factory()->de($this->persona)->create();
+        $novedad = NovedadTurno::create([
+            'dependencia_id' => $this->dependencia->id, 'colaborador_id' => $this->persona->id,
+            'componente_id' => $this->calle->id, 'marcacion_id' => $marca->id,
+            'tipo' => TipoNovedad::SinUbicacion, 'detalle' => 'Sin ubicación',
+        ]);
+        $deisy = $this->usuarioCon(RolDependencia::Edicion, $this->dependencia);
+
+        // Sin la casilla la ve, pero no la aprueba.
+        $this->actingAs($deisy)->get(route('admin.turnos.novedades.index'))->assertOk()->assertSee('Sin ubicación')->assertDontSee('Aprobar');
+        $this->actingAs($deisy)->patch(route('admin.turnos.novedades.revisar', $novedad), ['estado' => 'aprobada'])->assertForbidden();
+
+        $admin = $this->usuarioCon(RolDependencia::Administracion, $this->dependencia);
+        $this->actingAs($admin)->put(route('admin.usuarios.update', $deisy), [
+            'name' => $deisy->name, 'documento' => $deisy->documento, 'rol' => 'edicion', 'activo' => '1', 'aprueba_novedades' => '1',
+        ])->assertSessionHasNoErrors();
+        $this->assertTrue($deisy->fresh()->puedeAprobarNovedadesEn($this->dependencia));
+        $this->actingAs($admin)->get(route('admin.usuarios.edit', $deisy))->assertSee('Aprueba novedades de turno');
+
+        $this->actingAs($deisy->fresh())->patch(route('admin.turnos.novedades.revisar', $novedad), ['estado' => 'aprobada'])->assertRedirect();
+        $this->assertSame(EstadoNovedad::Aprobada, $novedad->fresh()->estado);
     }
 
     public function test_edicion_revisa_lectura_no_y_una_novedad_ajena_no_se_revisa(): void

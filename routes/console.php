@@ -120,6 +120,20 @@ Artisan::command('turnos:revisar-entradas', function (\App\Services\Turnos\Revis
 
 \Illuminate\Support\Facades\Schedule::command('turnos:revisar-entradas')->everyFifteenMinutes()->withoutOverlapping();
 
+// Derivaciones sin respuesta: se les recuerda a los líderes cada 30 minutos.
+Artisan::command('derivaciones:recordar', function () {
+    $pendientes = \App\Models\Derivacion::withoutGlobalScopes()
+        ->where('estado', \App\Models\Derivacion::PENDIENTE)
+        ->where(fn ($q) => $q->whereNull('ultimo_aviso_at')
+            ->orWhere('ultimo_aviso_at', '<=', now()->subMinutes(\App\Models\Derivacion::AVISO_CADA_MIN)))
+        ->get();
+
+    $pendientes->each(fn ($d) => \App\Notifications\DerivacionPendiente::enviar($d));
+    $this->info("Derivaciones recordadas: {$pendientes->count()}");
+})->purpose('Recuerda a los líderes las derivaciones sin respuesta');
+
+\Illuminate\Support\Facades\Schedule::command('derivaciones:recordar')->everyMinute()->withoutOverlapping();
+
 /*
 |--------------------------------------------------------------------------
 | Avisos de versión

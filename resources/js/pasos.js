@@ -149,52 +149,6 @@ function iniciar(form) {
     pintar();
 }
 
-/*
- * Derivaciones: el tiempo de respuesta a la vista, y la justificación
- * obligatoria cuando pasa la meta. Mismo cálculo que el servidor.
- */
-function iniciarTiempo(form) {
-    const desde = form.querySelector('[name="hora_requerimiento"]');
-    const hasta = form.querySelector('[name="hora_respuesta"]');
-    const salida = form.querySelector('[data-tiempo-respuesta]');
-    const justificacion = form.querySelector('[name="justificacion"]');
-    const meta = Number(form.dataset.metaMinutos || 60);
-
-    if (!desde || !hasta || !salida || !justificacion) {
-        return;
-    }
-
-    const calcular = () => {
-        if (!desde.value || !hasta.value) {
-            salida.classList.add('hidden');
-            justificacion.required = false;
-            return;
-        }
-
-        const [h1, m1] = desde.value.split(':').map(Number);
-        const [h2, m2] = hasta.value.split(':').map(Number);
-        let minutos = (h2 * 60 + m2) - (h1 * 60 + m1);
-
-        if (minutos < 0) {
-            minutos += 24 * 60;
-        }
-
-        const legible = minutos >= 60 ? `${Math.floor(minutos / 60)} h ${minutos % 60} min` : `${minutos} min`;
-        const cumple = minutos <= meta;
-
-        salida.textContent = cumple
-            ? `Tiempo de respuesta: ${legible} ✓ dentro de la meta`
-            : `Tiempo de respuesta: ${legible} · pasó la meta de ${meta / 60} h: justifica abajo`;
-        salida.className = 'rounded-lg px-3 py-2 text-sm font-medium '
-            + (cumple ? 'bg-success-soft text-[var(--success)]' : 'bg-[var(--card-soft)] text-[var(--danger)] ring-1 ring-[var(--border)]');
-        justificacion.required = !cumple;
-    };
-
-    desde.addEventListener('input', calcular);
-    hasta.addEventListener('input', calcular);
-    calcular();
-}
-
 /* En el paso de la cédula: no se sigue con una que no está registrada. */
 function iniciarCedula(form) {
     const paso = [...form.querySelectorAll('[data-paso]')].findIndex((p) => p.querySelector('[data-campo-cedula]'));
@@ -215,7 +169,6 @@ function iniciarTodos() {
     document.querySelectorAll('form[data-pasos]').forEach((form) => {
         iniciarCedula(form);
         iniciar(form);
-        iniciarTiempo(form);
     });
 }
 

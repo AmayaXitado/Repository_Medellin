@@ -182,6 +182,12 @@ class TurnosAutomaticosTest extends TestCase
         app(RevisorEntradas::class)->revisar();
         $novedad = NovedadTurno::withoutGlobalScopes()->sole();
 
+        // Sin «Aprueba novedades», un editor la ve pero no la justifica.
+        $this->actingAs($editor)->get(route('admin.turnos.novedades.index'))->assertOk()->assertDontSee('Justificar');
+        $this->actingAs($editor)->post(route('admin.turnos.novedades.justificar', $novedad), ['tipo_turno_id' => $this->tipo('I')->id])->assertForbidden();
+        $editor->dependencias()->updateExistingPivot($this->inclusion->id, ['aprueba_novedades' => true]);
+        $editor->unsetRelation('dependencias');
+
         $this->actingAs($editor)->get(route('admin.turnos.novedades.index'))->assertOk()->assertSee('No registró entrada')->assertSee('Justificar');
 
         $this->actingAs($editor)->post(route('admin.turnos.novedades.justificar', $novedad), [

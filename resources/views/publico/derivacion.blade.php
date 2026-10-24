@@ -11,8 +11,7 @@
 
     // Con errores del servidor, se abre el primer paso que tiene uno.
     $pasoDe = ['cedula' => 0, 'nodo_id' => 1, 'fecha_requerimiento' => 1, 'hora_requerimiento' => 1, 'entidad' => 1,
-        'soporte' => 1, 'descripcion' => 1, 'ubicacion' => 1, 'evidencia1' => 2, 'evidencia2' => 2, 'evidencia3' => 2,
-        'hora_respuesta' => 3, 'justificacion' => 3];
+        'soporte' => 1, 'descripcion' => 1, 'ubicacion' => 1, 'evidencia1' => 2, 'evidencia2' => 2, 'evidencia3' => 2];
     $pasoInicial = collect($errors->keys())->map(fn ($campo) => $pasoDe[$campo] ?? 0)->min() ?? 0;
     $seccion = 'space-y-5 rounded-xl bg-[var(--card)] p-5 ring-1 ring-[var(--border)]';
     $tituloSeccion = 'text-base font-semibold text-[var(--text)]';
@@ -28,7 +27,7 @@
 @if($registrada)
     <div class="mt-6 rounded-lg bg-success-soft p-4 text-center" role="status" data-sonido-al-cargar="envio">
         <p class="text-lg font-semibold text-[var(--success)]">Derivación #{{ $registrada['numero'] }} registrada</p>
-        <p class="mt-1 text-sm text-[var(--text)]">{{ $registrada['saludo'] }} · tiempo de respuesta {{ $registrada['tiempo'] }}</p>
+        <p class="mt-1 text-sm text-[var(--text)]">{{ $registrada['saludo'] }} · quedó pendiente: los líderes deben responderla antes de las {{ $registrada['limite'] }}</p>
     </div>
 @endif
 
@@ -43,8 +42,7 @@
 @endif
 
 <form method="POST" action="{{ route('derivacion.registrar', ['token' => $token]) }}" enctype="multipart/form-data"
-      data-pasos data-paso-inicial="{{ $pasoInicial }}" data-meta-minutos="{{ \App\Models\Derivacion::META_MINUTOS }}"
-      class="mt-6 space-y-5 scroll-mt-4">
+      data-pasos data-paso-inicial="{{ $pasoInicial }}"      class="mt-6 space-y-5 scroll-mt-4">
     @csrf
 
     {{-- La cabecera de progreso: la enseña el script (pasos.js). --}}
@@ -124,27 +122,6 @@
             <x-campo-archivo nombre="evidencia{{ $n }}" :requerido="$obligatoria" camara formatos="imagenes" sello="Derivación" />
         </div>
     @endforeach
-
-    </section>
-
-    <section data-paso data-titulo="Respuesta" class="{{ $seccion }}">
-        <h2 class="{{ $tituloSeccion }}">La respuesta</h2>
-
-    <div>
-        <label for="hora_respuesta" class="{{ $etiqueta }}">Hora de respuesta *</label>
-        <input id="hora_respuesta" name="hora_respuesta" type="time" required
-               value="{{ old('hora_respuesta') }}" class="{{ $campo }}">
-        <p class="{{ $ayuda }}">El tiempo de respuesta se calcula solo.</p>
-    </div>
-
-    <p data-tiempo-respuesta aria-live="polite" class="hidden"></p>
-
-    <div>
-        <label for="justificacion" class="{{ $etiqueta }}">Justificación en caso de no cumplir</label>
-        <textarea id="justificacion" name="justificacion" rows="3" maxlength="5000"
-                  class="{{ $campo }}">{{ old('justificacion') }}</textarea>
-        <p class="{{ $ayuda }}">Obligatoria si la respuesta tardó más de {{ intdiv(\App\Models\Derivacion::META_MINUTOS, 60) }} horas.</p>
-    </div>
 
     </section>
 

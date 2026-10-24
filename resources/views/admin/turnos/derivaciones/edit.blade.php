@@ -61,6 +61,12 @@
             <input id="ubicacion" name="ubicacion" type="text" required maxlength="500" value="{{ old('ubicacion', $derivacion->ubicacion) }}" class="{{ $campo }}">
         </div>
 
+        @unless($derivacion->estaPendiente())
+        <div>
+            <label for="respuesta" class="{{ $etiqueta }}">Respuesta</label>
+            <textarea id="respuesta" name="respuesta" rows="3" maxlength="5000" class="{{ $campo }}">{{ old('respuesta', $derivacion->respuesta) }}</textarea>
+        </div>
+
         <div>
             <label for="hora_respuesta" class="{{ $etiqueta }}">Hora de respuesta *</label>
             <input id="hora_respuesta" name="hora_respuesta" type="time" required
@@ -71,6 +77,7 @@
             <label for="justificacion" class="{{ $etiqueta }}">Justificación en caso de no cumplir</label>
             <textarea id="justificacion" name="justificacion" rows="3" maxlength="5000" class="{{ $campo }}">{{ old('justificacion', $derivacion->justificacion) }}</textarea>
         </div>
+        @endunless
 
         <div class="flex justify-end gap-3 border-t border-[var(--border)] pt-4">
             <a href="{{ route('admin.turnos.derivaciones.show', $derivacion) }}"
