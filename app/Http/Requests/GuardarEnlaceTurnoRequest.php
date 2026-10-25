@@ -27,6 +27,13 @@ class GuardarEnlaceTurnoRequest extends FormRequest
                     ->where('componente_id', $this->input('componente_id'))
                     ->where('activo', true),
             ],
+            // Opcional: el QR pegado en un punto crítico; quien marca con él, queda ahí.
+            'punto_critico_id' => [
+                'nullable',
+                Rule::exists('puntos_criticos', 'id')
+                    ->where('componente_id', $this->input('componente_id'))
+                    ->where('activo', true),
+            ],
             'nombre' => ['nullable', 'string', 'max:255'],
             // Vence al final de ese día (lo pone el controlador): hoy también vale.
             'expira_at' => ['nullable', 'date', 'after_or_equal:today'],
@@ -38,6 +45,7 @@ class GuardarEnlaceTurnoRequest extends FormRequest
         return [
             'componente_id' => 'componente',
             'nodo_id' => 'nodo',
+            'punto_critico_id' => 'punto crítico',
             'expira_at' => 'vencimiento',
         ];
     }

@@ -37,6 +37,7 @@ class Marcador
         protected AlmacenamientoDocumentos $almacenamiento,
         protected Auditor $auditor,
         protected Novedades $novedades,
+        protected Programacion $programacion,
     ) {
     }
 
@@ -116,6 +117,12 @@ class Marcador
                 $ahora = now();
                 $conUbicacion = isset($datos['lat'], $datos['lng']);
 
+                // En la entrada, el turno se reconoce solo por la hora (Programacion)
+                // y el punto es el del QR si es de un punto, o el habitual.
+                $turno = $tipo === TipoMarcacion::Entrada
+                    ? $this->programacion->reconocer($componente, $ahora, $colaborador->tipoTurno)
+                    : null;
+
                 $foto = null;
 
                 if (($datos['foto'] ?? null) instanceof UploadedFile) {
@@ -129,6 +136,9 @@ class Marcador
                     'componente_id' => $componente->id,
                     'nodo_id' => $nodo?->id,
                     'enlace_turno_id' => $enlace->id,
+                    'tipo_turno_id' => $turno['tipo']->id ?? null,
+                    'punto_critico_id' => $tipo === TipoMarcacion::Entrada ? ($enlace->punto_critico_id ?? $colaborador->punto_critico_id) : null,
+                    'minutos_tarde' => $turno['minutos_tarde'] ?? null,
                     'tipo' => $tipo,
                     'marcada_at' => $ahora,
                     'declarada_at' => $this->declarada($datos['declarada_at'] ?? null),

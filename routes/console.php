@@ -113,6 +113,27 @@ Artisan::command('turnos:cerrar-abiertas', function (\App\Services\Turnos\Marcad
 
 \Illuminate\Support\Facades\Schedule::command('turnos:cerrar-abiertas')->hourly()->withoutOverlapping();
 
+// Quien tenía turno (su turno habitual) y no marcó entrada: novedad y aviso.
+Artisan::command('turnos:revisar-entradas', function (\App\Services\Turnos\RevisorEntradas $revisor) {
+    $this->info('Novedades «no registró entrada»: '.$revisor->revisar());
+})->purpose('Anota a quien se esperaba en turno y no marcó entrada');
+
+\Illuminate\Support\Facades\Schedule::command('turnos:revisar-entradas')->everyFifteenMinutes()->withoutOverlapping();
+
+// Derivaciones sin respuesta: se les recuerda a los líderes cada 30 minutos.
+Artisan::command('derivaciones:recordar', function () {
+    $pendientes = \App\Models\Derivacion::withoutGlobalScopes()
+        ->where('estado', \App\Models\Derivacion::PENDIENTE)
+        ->where(fn ($q) => $q->whereNull('ultimo_aviso_at')
+            ->orWhere('ultimo_aviso_at', '<=', now()->subMinutes(\App\Models\Derivacion::AVISO_CADA_MIN)))
+        ->get();
+
+    $pendientes->each(fn ($d) => \App\Notifications\DerivacionPendiente::enviar($d));
+    $this->info("Derivaciones recordadas: {$pendientes->count()}");
+})->purpose('Recuerda a los líderes las derivaciones sin respuesta');
+
+\Illuminate\Support\Facades\Schedule::command('derivaciones:recordar')->everyMinute()->withoutOverlapping();
+
 /*
 |--------------------------------------------------------------------------
 | Avisos de versión

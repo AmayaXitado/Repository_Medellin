@@ -33,6 +33,9 @@ class Marcacion extends Model
         'componente_id',
         'nodo_id',
         'enlace_turno_id',
+        'tipo_turno_id',
+        'punto_critico_id',
+        'minutos_tarde',
         'tipo',
         'marcada_at',
         'declarada_at',
@@ -145,6 +148,17 @@ class Marcacion extends Model
     public function nodo(): BelongsTo
     {
         return $this->belongsTo(Nodo::class);
+    }
+
+    /** El turno que el sistema reconoció por la hora de la entrada. */
+    public function tipoTurno(): BelongsTo
+    {
+        return $this->belongsTo(TipoTurno::class);
+    }
+
+    public function puntoCritico(): BelongsTo
+    {
+        return $this->belongsTo(PuntoCritico::class);
     }
 
     public function enlace(): BelongsTo

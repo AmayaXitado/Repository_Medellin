@@ -17,6 +17,9 @@
     </div>
 
     <form method="GET" class="ml-auto flex flex-wrap items-end gap-2">
+        @can('viewAny', App\Models\PuntoCritico::class)
+            <a href="{{ route('admin.turnos.puntos-criticos') }}" class="rounded-md px-3 py-1.5 text-sm font-medium text-[var(--text)] ring-1 ring-[var(--border)] hover:bg-[var(--card-soft)]">Puntos críticos</a>
+        @endcan
         <select id="filtro-componente" name="componente" class="{{ $campo }}" onchange="this.form.submit()" aria-label="Componente">
             <option value="">Todos los componentes</option>
             @foreach($componentes as $componente)
@@ -40,6 +43,7 @@
             <tr>
                 <th class="px-4 py-3 font-medium">Persona</th>
                 <th class="px-4 py-3 font-medium">Dónde</th>
+                <th class="px-4 py-3 font-medium">Turno</th>
                 <th class="px-4 py-3 font-medium">Entró</th>
                 <th class="px-4 py-3 font-medium">Lleva</th>
             </tr>
@@ -60,6 +64,26 @@
                     </td>
                     <td class="px-4 py-3 text-[var(--muted)]">
                         {{ $marcacion->componente->nombre }}{{ $marcacion->nodo ? ' · '.$marcacion->nodo->nombre : '' }}
+                        @if($marcacion->puntoCritico)
+                            <span class="block text-xs">
+                                @if($marcacion->puntoCritico->urlMapa())
+                                    <a href="{{ $marcacion->puntoCritico->urlMapa() }}" target="_blank" rel="noopener" class="text-[var(--primary)] hover:underline">{{ $marcacion->puntoCritico->nombre }}</a>
+                                @else
+                                    {{ $marcacion->puntoCritico->nombre }}
+                                @endif
+                            </span>
+                        @endif
+                    </td>
+                    <td class="px-4 py-3">
+                        @if($marcacion->tipoTurno)
+                            <span class="rounded bg-[var(--card-soft)] px-1.5 py-0.5 text-xs font-semibold text-[var(--text)]">{{ $marcacion->tipoTurno->codigo }}</span>
+                            <span class="block text-xs text-[var(--muted)]">{{ $marcacion->tipoTurno->horario() }}</span>
+                            @if($marcacion->minutos_tarde > $marcacion->componente->regla('tolerancia_min'))
+                                <span class="block text-xs font-medium text-[var(--warning)]">{{ $marcacion->minutos_tarde }} min tarde</span>
+                            @endif
+                        @else
+                            <span class="text-xs text-[var(--muted)]">Sin reconocer</span>
+                        @endif
                     </td>
                     <td class="px-4 py-3 text-[var(--text)]">
                         {{ $marcacion->marcada_at->isToday() ? 'Hoy' : $marcacion->marcada_at->format('d/m') }}
@@ -77,7 +101,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="4" class="px-4 py-10 text-center text-[var(--muted)]">Nadie está en turno ahora mismo.</td>
+                    <td colspan="5" class="px-4 py-10 text-center text-[var(--muted)]">Nadie está en turno ahora mismo.</td>
                 </tr>
             @endforelse
         </tbody>

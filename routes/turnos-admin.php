@@ -11,18 +11,21 @@
 | Aquí solo van las rutas, sin repetir nada de eso.
 */
 
+use App\Http\Controllers\Admin\Turnos\AusenciaController;
+use App\Http\Controllers\Admin\Turnos\CargaMasivaColaboradoresController;
 use App\Http\Controllers\Admin\Turnos\ColaboradorController;
-use App\Http\Controllers\Admin\Turnos\ComponenteController;
 use App\Http\Controllers\Admin\Turnos\DerivacionController;
 use App\Http\Controllers\Admin\Turnos\EnlaceTurnoController;
 use App\Http\Controllers\Admin\Turnos\EnTurnoController;
 use App\Http\Controllers\Admin\Turnos\MarcacionController;
-use App\Http\Controllers\Admin\Turnos\NodoController;
 use App\Http\Controllers\Admin\Turnos\NovedadController;
 use Illuminate\Support\Facades\Route;
 
 // Personas de campo (Coordinación).
 Route::get('colaboradores', [ColaboradorController::class, 'index'])->name('colaboradores.index');
+// Carga masiva desde Excel (temporal, para el ingreso inicial).
+Route::get('colaboradores/carga-masiva/plantilla', [CargaMasivaColaboradoresController::class, 'plantilla'])->name('colaboradores.carga.plantilla');
+Route::post('colaboradores/carga-masiva', [CargaMasivaColaboradoresController::class, 'importar'])->name('colaboradores.carga.importar');
 Route::get('colaboradores/nuevo', [ColaboradorController::class, 'create'])->name('colaboradores.create');
 Route::post('colaboradores', [ColaboradorController::class, 'store'])->name('colaboradores.store');
 Route::get('colaboradores/{colaborador}', [ColaboradorController::class, 'show'])->name('colaboradores.show');
@@ -31,18 +34,12 @@ Route::put('colaboradores/{colaborador}', [ColaboradorController::class, 'update
 Route::patch('colaboradores/{colaborador}/verificar', [ColaboradorController::class, 'verificar'])->name('colaboradores.verificar');
 Route::patch('colaboradores/{colaborador}/estado', [ColaboradorController::class, 'estado'])->name('colaboradores.estado');
 
-// Componentes y sus nodos (Administración).
-Route::get('componentes', [ComponenteController::class, 'index'])->name('componentes.index');
-Route::get('componentes/nuevo', [ComponenteController::class, 'create'])->name('componentes.create');
-Route::post('componentes', [ComponenteController::class, 'store'])->name('componentes.store');
-Route::get('componentes/{componente}/editar', [ComponenteController::class, 'edit'])->name('componentes.edit');
-Route::put('componentes/{componente}', [ComponenteController::class, 'update'])->name('componentes.update');
-
-// Anidadas con scopeBindings: el nodo tiene que ser de ese componente.
-Route::scopeBindings()->group(function () {
-    Route::post('componentes/{componente}/nodos', [NodoController::class, 'store'])->name('nodos.store');
-    Route::put('componentes/{componente}/nodos/{nodo}', [NodoController::class, 'update'])->name('nodos.update');
-});
+// Componentes con sus reglas, cargos y nodos (Coordinación): tabla y panel de Filament.
+Route::view('componentes', 'admin.turnos.catalogo', [
+    'titulo' => 'Componentes y nodos',
+    'descripcion' => 'Calle, Básica, Estabilización… con sus reglas de turno, sus cargos y sus nodos.',
+    'componente' => 'turnos.componentes',
+])->middleware('can:viewAny,App\Models\Componente')->name('componentes.index');
 
 // Enlaces de turno (link + QR) y quién está en turno ahora (Coordinación).
 Route::get('enlaces', [EnlaceTurnoController::class, 'index'])->name('enlaces.index');
@@ -59,11 +56,33 @@ Route::get('marcaciones/exportar', [MarcacionController::class, 'exportar'])->na
 Route::post('colaboradores/{colaborador}/marcaciones', [MarcacionController::class, 'store'])->name('marcaciones.store');
 Route::patch('marcaciones/{marcacion}/corregir', [MarcacionController::class, 'corregir'])->name('marcaciones.corregir');
 Route::get('novedades', [NovedadController::class, 'index'])->name('novedades.index');
+Route::get('novedades/exportar', [NovedadController::class, 'exportar'])->name('novedades.exportar');
 Route::patch('novedades/{novedad}', [NovedadController::class, 'revisar'])->name('novedades.revisar');
+
+// Ausencias (D, VAC, I, P…): esos días no se espera a la persona.
+Route::post('colaboradores/{colaborador}/ausencias', [AusenciaController::class, 'store'])->name('ausencias.store');
+Route::delete('ausencias/{ausencia}', [AusenciaController::class, 'destroy'])->name('ausencias.destroy');
+Route::post('novedades/{novedad}/justificar', [AusenciaController::class, 'justificar'])->name('novedades.justificar');
 
 // Derivaciones y respuesta territorial (Edición). Se crean por el enlace por cédula.
 Route::get('derivaciones/exportar', [DerivacionController::class, 'exportar'])->name('derivaciones.exportar');
+Route::patch('derivaciones/{derivacion}/responder', [DerivacionController::class, 'responder'])->name('derivaciones.responder');
 Route::get('derivaciones/fotos', [DerivacionController::class, 'fotos'])->name('derivaciones.fotos');
 Route::resource('derivaciones', DerivacionController::class)
     ->only(['index', 'show', 'edit', 'update', 'destroy'])
     ->parameters(['derivaciones' => 'derivacion']);
+
+// Catálogos de la malla (Edición): tabla de Filament dentro de Documenta.
+Route::view('tipos-turno', 'admin.turnos.catalogo', [
+    'titulo' => 'Tipos de turno',
+    'descripcion' => 'Los códigos de la malla con su horario y las horas que cuenta nómina. Son los mismos códigos de nómina.',
+    'componente' => 'turnos.tipos-turno',
+    'volver' => ['admin.turnos.colaboradores.index', 'Personas de campo'],
+])->middleware('can:viewAny,App\Models\TipoTurno')->name('tipos-turno');
+
+Route::view('puntos-criticos', 'admin.turnos.catalogo', [
+    'titulo' => 'Puntos críticos',
+    'descripcion' => 'Las zonas a las que se asigna personal. Con sus coordenadas se ven en el mapa.',
+    'componente' => 'turnos.puntos-criticos',
+    'volver' => ['admin.turnos.en-turno', 'En turno ahora'],
+])->middleware('can:viewAny,App\Models\PuntoCritico')->name('puntos-criticos');

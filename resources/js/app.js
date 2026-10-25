@@ -5,6 +5,7 @@ import './copiar';
 import './qr';
 import './turno';
 import './pasos';
+import './contador';
 import './select-buscable';
 import './navegar-documentos';
 import './selects-dependientes';

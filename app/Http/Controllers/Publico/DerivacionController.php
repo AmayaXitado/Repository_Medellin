@@ -9,6 +9,7 @@ use App\Models\Derivacion;
 use App\Models\Documento;
 use App\Models\EnlaceTurno;
 use App\Models\User;
+use App\Notifications\DerivacionPendiente;
 use App\Services\AlmacenamientoDocumentos;
 use App\Services\Auditor;
 use App\Services\ContextoDependencia;
@@ -18,6 +19,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Throwable;
@@ -108,7 +110,11 @@ class DerivacionController extends Controller
             'evidencia3.required' => 'Falta la evidencia #3.',
         ], Derivacion::ATRIBUTOS + ['soporte' => 'soporte', 'evidencia1' => 'evidencia #1', 'evidencia2' => 'evidencia #2', 'evidencia3' => 'evidencia #3']);
 
-        $minutos = Derivacion::tiempoValidado($datos);
+        // El tiempo corre desde el requerimiento: no puede ser una hora que aún no llega.
+        $requerida = Carbon::parse($datos['fecha_requerimiento'].' '.$datos['hora_requerimiento']);
+        if ($requerida->isAfter(now()->addMinutes(5))) {
+            throw ValidationException::withMessages(['hora_requerimiento' => 'La hora del requerimiento no puede ser posterior a la hora actual.']);
+        }
 
         // La auditoría escribe en la dependencia del contexto: la da el enlace.
         $this->contexto->establecer($enlace->dependencia);
@@ -116,7 +122,7 @@ class DerivacionController extends Controller
         $rutas = [];
 
         try {
-            $derivacion = DB::transaction(function () use ($enlace, $colaborador, $datos, $minutos, $peticion, &$rutas) {
+            $derivacion = DB::transaction(function () use ($enlace, $colaborador, $datos, $peticion, &$rutas) {
                 $derivacion = Derivacion::create([
                     ...collect($datos)->only(array_keys(Derivacion::ATRIBUTOS))->all(),
                     'dependencia_id' => $enlace->dependencia_id,
@@ -126,7 +132,7 @@ class DerivacionController extends Controller
                     'cedula' => $colaborador->documento,
                     'nombre' => $colaborador->nombre,
                     'cargo' => $colaborador->cargo,
-                    'tiempo_respuesta_min' => $minutos,
+                    'estado' => Derivacion::PENDIENTE,
                 ]);
 
                 foreach (self::ARCHIVOS as $campo => $columna) {
@@ -156,12 +162,14 @@ class DerivacionController extends Controller
             ['origen' => 'Enlace por cédula', 'enlace' => $enlace->id],
         );
 
+        DerivacionPendiente::enviar($derivacion, nueva: true);
+
         return redirect()
             ->route('derivacion.enlace', ['token' => $token])
             ->with('derivacion.registrada', [
                 'numero' => $derivacion->id,
                 'saludo' => $colaborador->saludo(),
-                'tiempo' => $derivacion->tiempoLegible(),
+                'limite' => $derivacion->requeridaAt()->addMinutes(Derivacion::META_MINUTOS)->format('h:i a'),
             ]);
     }
 

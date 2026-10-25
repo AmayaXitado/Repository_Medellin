@@ -134,6 +134,10 @@ Route::middleware(['auth', 'usuario.activo', 'dependencia'])->group(function () 
     |----------------------------------------------------------------------
     */
 
+    // Manual de usuario: para todos los roles; la versión PDF es para «Guardar como PDF».
+    Route::view('manual', 'manual.index')->name('manual');
+    Route::view('manual/pdf', 'manual.pdf')->name('manual.pdf');
+
     Route::get('notificaciones', [NotificacionController::class, 'index'])->name('notificaciones.index');
     Route::get('notificaciones/contador', [NotificacionController::class, 'contador'])->name('notificaciones.contador');
     Route::post('notificaciones/leidas', [NotificacionController::class, 'marcarLeidas'])->name('notificaciones.leidas');

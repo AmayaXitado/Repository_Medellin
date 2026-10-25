@@ -13,7 +13,8 @@ use Illuminate\Validation\ValidationException;
 
 /**
  * Derivaciones y respuesta territorial: un caso que una persona de campo
- * escala, con cuándo llegó, cuándo se respondió y sus evidencias.
+ * escala con sus evidencias. Llega pendiente y el tiempo corre desde el
+ * requerimiento hasta que un líder lo responde en Documenta (solucionada).
  */
 #[ScopedBy([DependenciaScope::class])]
 class Derivacion extends Model
@@ -25,21 +26,32 @@ class Derivacion extends Model
     /** Pasado este tiempo de respuesta hay que justificar. */
     public const META_MINUTOS = 180;
 
+    /** Cada cuánto se les recuerda a los líderes una derivación sin respuesta. */
+    public const AVISO_CADA_MIN = 30;
+
+    public const PENDIENTE = 'pendiente';
+
+    public const SOLUCIONADA = 'solucionada';
+
     protected $fillable = [
         'dependencia_id', 'componente_id', 'enlace_turno_id', 'colaborador_id',
         'cedula', 'nombre', 'cargo', 'nodo_id',
         'fecha_requerimiento', 'hora_requerimiento', 'entidad', 'descripcion',
-        'ubicacion', 'hora_respuesta', 'tiempo_respuesta_min', 'justificacion',
+        'ubicacion', 'estado', 'respuesta', 'hora_respuesta', 'tiempo_respuesta_min', 'justificacion',
+        'respondida_at', 'respondida_por', 'ultimo_aviso_at',
         'soporte_documento_id', 'evidencia1_documento_id', 'evidencia2_documento_id', 'evidencia3_documento_id',
         'actualizado_por',
     ];
 
     protected function casts(): array
     {
-        return ['fecha_requerimiento' => 'date'];
+        return ['fecha_requerimiento' => 'date', 'respondida_at' => 'datetime', 'ultimo_aviso_at' => 'datetime'];
     }
 
-    /** Lo que se valida igual al registrar (vía pública) y al corregir (administración). */
+    /**
+     * El requerimiento: lo que llena la persona de campo y lo que se corrige
+     * en administración. La respuesta la da el líder (reglasRespuesta()).
+     */
     public static function reglas(int $componenteId): array
     {
         return [
@@ -49,10 +61,14 @@ class Derivacion extends Model
             'entidad' => ['required', 'string', 'max:255'],
             'descripcion' => ['required', 'string', 'max:5000'],
             'ubicacion' => ['required', 'string', 'max:500'],
-            'hora_respuesta' => ['required', 'date_format:H:i'],
-            'justificacion' => ['nullable', 'string', 'max:5000'],
         ];
     }
+
+    /** Corregir la hora de una ya solucionada. */
+    public const REGLAS_HORA_RESPUESTA = [
+        'hora_respuesta' => ['required', 'date_format:H:i'],
+        'justificacion' => ['nullable', 'string', 'max:5000'],
+    ];
 
     public const ATRIBUTOS = [
         'nodo_id' => 'nodo que atiende',
@@ -62,6 +78,7 @@ class Derivacion extends Model
         'descripcion' => 'descripción del caso',
         'ubicacion' => 'ubicación del requerimiento',
         'hora_respuesta' => 'hora de respuesta',
+        'respuesta' => 'respuesta',
         'justificacion' => 'justificación',
     ];
 
@@ -98,18 +115,47 @@ class Derivacion extends Model
         return (int) $desde->diffInMinutes($hasta);
     }
 
+    public function estaPendiente(): bool
+    {
+        return $this->estado === self::PENDIENTE;
+    }
+
+    /** Cuándo se pidió: desde aquí corre el tiempo. */
+    public function requeridaAt(): Carbon
+    {
+        return Carbon::parse($this->fecha_requerimiento->toDateString().' '.substr($this->hora_requerimiento, 0, 5));
+    }
+
+    /** Pendiente: lo que lleva hasta ahora. Solucionada: lo que tardó. */
+    public function minutos(): int
+    {
+        return $this->estaPendiente()
+            ? max(0, (int) $this->requeridaAt()->diffInMinutes(now()))
+            : (int) $this->tiempo_respuesta_min;
+    }
+
     public function cumplio(): bool
     {
-        return $this->tiempo_respuesta_min <= self::META_MINUTOS;
+        return $this->minutos() <= self::META_MINUTOS;
     }
 
     /** «1 h 25 min», como se lee en el reporte. */
     public function tiempoLegible(): string
     {
-        $h = intdiv($this->tiempo_respuesta_min, 60);
-        $m = $this->tiempo_respuesta_min % 60;
+        return self::duracion($this->minutos());
+    }
+
+    public static function duracion(int $minutos): string
+    {
+        $h = intdiv($minutos, 60);
+        $m = $minutos % 60;
 
         return $h ? "{$h} h {$m} min" : "{$m} min";
+    }
+
+    public function respondedor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'respondida_por');
     }
 
     public function componente(): BelongsTo

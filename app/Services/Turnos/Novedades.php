@@ -7,10 +7,13 @@ use App\Enums\OrigenMarcacion;
 use App\Enums\RolDependencia;
 use App\Enums\TipoMarcacion;
 use App\Enums\TipoNovedad;
+use App\Models\Colaborador;
 use App\Models\Dependencia;
 use App\Models\Marcacion;
 use App\Models\NovedadTurno;
 use App\Models\Scopes\DependenciaScope;
+use App\Models\TipoTurno;
+use Carbon\CarbonInterface;
 use App\Notifications\NovedadTurnoDetectada;
 use Illuminate\Support\Facades\Notification;
 
@@ -39,6 +42,29 @@ class Novedades
             if ($marcacion->fuera_de_zona) {
                 $nuevas[] = $this->anotar($marcacion, TipoNovedad::FueraDeZona, 'Marcó '.mb_strtolower($marcacion->tipo->etiqueta()).' lejos de '.($marcacion->nodo?->nombre ?? 'su nodo').'.');
             }
+        }
+
+        // Si ya había salido «no registró entrada» y por fin marcó, ese aviso
+        // se cierra solo: llegó tarde (la tardanza se anota abajo), no faltó.
+        if (! $soloDuracion && $marcacion->tipo === TipoMarcacion::Entrada) {
+            NovedadTurno::withoutGlobalScopes()
+                ->where('colaborador_id', $marcacion->colaborador_id)
+                ->where('tipo', TipoNovedad::SinEntrada->value)
+                ->where('estado', EstadoNovedad::Pendiente->value)
+                ->whereDate('fecha', '>=', $marcacion->marcada_at->copy()->subDay())
+                ->update([
+                    'estado' => EstadoNovedad::Corregida->value,
+                    'comentario' => "Marcó entrada a las {$marcacion->marcada_at->format('H:i')}.",
+                    'revisada_at' => now(),
+                ]);
+        }
+
+        // Tarde respecto al turno reconocido, pasada la tolerancia del componente.
+        if (! $soloDuracion && $marcacion->tipo === TipoMarcacion::Entrada && $marcacion->tipoTurno
+            && $marcacion->minutos_tarde > (int) $marcacion->componente->regla('tolerancia_min')) {
+            $nuevas[] = $this->anotar($marcacion, TipoNovedad::Tardanza,
+                "Llegó {$this->horas($marcacion->minutos_tarde)} tarde a su turno {$marcacion->tipoTurno->codigo} ({$marcacion->tipoTurno->horario()}).",
+                $marcacion->minutos_tarde);
         }
 
         if ($marcacion->tipo === TipoMarcacion::Salida) {
@@ -115,9 +141,48 @@ class Novedades
         ]);
     }
 
-    /** A Coordinación y Administración de la dependencia, por la campana. */
-    protected function avisar(array $novedades): void
+    /**
+     * Quien se esperaba ese día (turno habitual) y no marcó entrada a tiempo.
+     * Una sola por persona y día. Avisa también a los líderes (Edición).
+     */
+    public function sinEntrada(Colaborador $colaborador, TipoTurno $tipo, CarbonInterface $inicio): ?NovedadTurno
     {
+        $existe = NovedadTurno::withoutGlobalScopes()
+            ->where('colaborador_id', $colaborador->id)
+            ->whereDate('fecha', $inicio)
+            ->where('tipo', TipoNovedad::SinEntrada->value)
+            ->exists();
+
+        if ($existe) {
+            return null;
+        }
+
+        $novedad = NovedadTurno::withoutGlobalScopes()->create([
+            'tipo' => TipoNovedad::SinEntrada->value,
+            'dependencia_id' => $colaborador->dependencia_id,
+            'colaborador_id' => $colaborador->id,
+            'componente_id' => $colaborador->componente_id,
+            'fecha' => $inicio->toDateString(),
+            'detalle' => "Tenía turno {$tipo->codigo} a las {$inicio->format('H:i')} ({$tipo->nombre}) y no marcó entrada.",
+        ]);
+
+        $this->avisar([$novedad], conLideres: true);
+
+        return $novedad;
+    }
+
+    /**
+     * A Coordinación, Administración y quien aprueba novedades de la
+     * dependencia (y a toda Edición si se pide), por la campana.
+     */
+    protected function avisar(array $novedades, bool $conLideres = false): void
+    {
+        $roles = [RolDependencia::Coordinacion->value, RolDependencia::Administracion->value];
+
+        if ($conLideres) {
+            $roles[] = RolDependencia::Edicion->value;
+        }
+
         foreach ($novedades as $novedad) {
             if (! $novedad->wasRecentlyCreated) {
                 continue;
@@ -125,7 +190,8 @@ class Novedades
 
             $quienes = Dependencia::find($novedad->dependencia_id)
                 ?->usuarios()
-                ->wherePivotIn('rol', [RolDependencia::Coordinacion->value, RolDependencia::Administracion->value])
+                ->where(fn ($q) => $q->whereIn('dependencia_usuario.rol', $roles)
+                    ->orWhere('dependencia_usuario.aprueba_novedades', true))
                 ->where('activo', true)
                 ->get();
 

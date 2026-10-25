@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\GuardarColaboradorRequest;
 use App\Models\Colaborador;
 use App\Models\Componente;
+use App\Models\TipoTurno;
 use App\Models\User;
 use App\Services\Auditor;
 use App\Services\ContextoDependencia;
@@ -85,10 +86,14 @@ class ColaboradorController extends Controller
     {
         $this->authorize('view', $colaborador);
 
-        $colaborador->load(['componente', 'nodo', 'verificador']);
+        $colaborador->load(['componente', 'nodo', 'verificador', 'tipoTurno', 'puntoCritico']);
 
         return view('admin.turnos.colaboradores.show', [
             'colaborador' => $colaborador,
+            'ausencias' => $colaborador->ausencias()->with(['tipo', 'registrador'])->latest('desde')->limit(10)->get(),
+            // D, VAC, I, P… del componente: los códigos que no son turno.
+            'tiposAusencia' => TipoTurno::where('componente_id', $colaborador->componente_id)
+                ->activos()->where('es_turno', false)->orderBy('orden')->get(),
             'marcaciones' => $colaborador->marcaciones()->with('nodo')->latest('marcada_at')->limit(20)->get(),
             'recepciones' => $colaborador->recepciones()->with('documento')->latest()->limit(10)->get(),
         ]);
@@ -182,6 +187,10 @@ class ColaboradorController extends Controller
 
     protected function componentesConNodos()
     {
-        return Componente::activos()->with(['nodos' => fn ($q) => $q->activos()])->orderBy('nombre')->get();
+        return Componente::activos()->with([
+            'nodos' => fn ($q) => $q->activos(),
+            'tiposTurno' => fn ($q) => $q->activos()->where('es_turno', true),
+            'puntosCriticos' => fn ($q) => $q->activos(),
+        ])->orderBy('nombre')->get();
     }
 }
