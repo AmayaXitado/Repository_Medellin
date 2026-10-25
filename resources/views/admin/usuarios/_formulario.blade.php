@@ -13,7 +13,6 @@
     $ayuda = 'mt-1 text-xs text-[var(--muted)]';
     $error = 'mt-1 text-xs font-medium text-[var(--danger)]';
     $tarjeta = 'rounded-xl bg-[var(--card)] p-5 ring-1 ring-[var(--border)] sm:p-6';
-    $tituloTarjeta = 'text-base font-semibold text-[var(--text)]';
     $iniciales = $u ? collect(explode(' ', $u->name))->filter()->take(2)->map(fn ($p) => mb_substr($p, 0, 1))->join('') : '+';
 @endphp
 
@@ -21,17 +20,7 @@
     <div class="space-y-6 lg:col-span-2">
 
         {{-- 1. La persona --}}
-        <section class="{{ $tarjeta }}">
-            <div class="mb-4 flex items-start gap-3">
-                <span class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[var(--card-soft)] text-[var(--primary)] ring-1 ring-[var(--border)]">
-                    <svg class="size-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.5 20.1a7.5 7.5 0 0 1 15 0"/></svg>
-                </span>
-                <div>
-                    <h2 class="{{ $tituloTarjeta }}">Datos de la persona</h2>
-                    <p class="text-xs text-[var(--muted)]">El documento es el usuario con el que entra, aquí y en Authentik.</p>
-                </div>
-            </div>
-
+        <x-seccion-ficha icono="persona" titulo="Datos de la persona" descripcion="El documento es el usuario con el que entra, aquí y en Authentik.">
             <div class="grid gap-4 sm:grid-cols-2">
                 <div class="sm:col-span-2">
                     <label for="name" class="{{ $etiqueta }}">Nombre completo *</label>
@@ -66,20 +55,10 @@
                     @enderror
                 </div>
             </div>
-        </section>
+        </x-seccion-ficha>
 
         {{-- 2. Qué puede hacer --}}
-        <section class="{{ $tarjeta }}">
-            <div class="mb-4 flex items-start gap-3">
-                <span class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[var(--card-soft)] text-[var(--primary)] ring-1 ring-[var(--border)]">
-                    <svg class="size-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.04A11.96 11.96 0 0 1 3.6 6 12 12 0 0 0 3 9.75c0 5.6 3.82 10.3 9 11.62 5.18-1.33 9-6.03 9-11.62 0-1.31-.21-2.57-.6-3.75h-.15c-3.2 0-6.1-1.25-8.25-3.29Z"/></svg>
-                </span>
-                <div>
-                    <h2 class="{{ $tituloTarjeta }}">Rol en {{ $dependenciaActual->nombre }} *</h2>
-                    <p class="text-xs text-[var(--muted)]">Solo para esta dependencia. Puedes dar hasta tu propio rol.</p>
-                </div>
-            </div>
-
+        <x-seccion-ficha icono="escudo" :titulo="'Rol en '.$dependenciaActual->nombre.' *'" descripcion="Solo para esta dependencia. Puedes dar hasta tu propio rol.">
             <div class="grid gap-3 sm:grid-cols-2">
                 @foreach($roles as $rol)
                     <label class="relative flex cursor-pointer flex-col gap-1 rounded-lg p-4 ring-1 ring-[var(--border)] transition hover:bg-[var(--card-soft)]
@@ -107,26 +86,14 @@
                     </span>
                 </span>
             </label>
-        </section>
+        </x-seccion-ficha>
 
         {{--
             3. Contraseña. La que se ponga aquí es la misma con la que la
             persona entrará por Authentik: Documenta la crea allá tal cual.
         --}}
-        <section class="{{ $tarjeta }}">
-            <div class="mb-4 flex items-start gap-3">
-                <span class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[var(--card-soft)] text-[var(--primary)] ring-1 ring-[var(--border)]">
-                    <svg class="size-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"/></svg>
-                </span>
-                <div>
-                    <h2 class="{{ $tituloTarjeta }}">Contraseña{{ $esNuevo ? ' *' : '' }}</h2>
-                    <p class="text-xs text-[var(--muted)]">
-                        {{ $esNuevo ? 'Con esta entra, aquí y en Authentik.' : 'Déjala vacía para no cambiarla.' }}
-                        Sin largo mínimo (puede ser el documento menos el último dígito). Entrégasela por un medio seguro.
-                    </p>
-                </div>
-            </div>
-
+        <x-seccion-ficha icono="candado" :titulo="'Contraseña'.($esNuevo ? ' *' : '')"
+            :descripcion="($esNuevo ? 'Con esta entra, aquí y en Authentik.' : 'Déjala vacía para no cambiarla.').' Sin largo mínimo (puede ser el documento menos el último dígito). Entrégasela por un medio seguro.'">
             <div class="grid gap-4 sm:grid-cols-2">
                 <div>
                     <label for="password" class="{{ $etiqueta }}">{{ $esNuevo ? 'Contraseña' : 'Nueva contraseña' }}</label>
@@ -138,7 +105,7 @@
                     <input id="password_confirmation" name="password_confirmation" type="password" class="{{ $campo }}" autocomplete="new-password">
                 </div>
             </div>
-        </section>
+        </x-seccion-ficha>
     </div>
 
     {{-- Panel lateral: la cuenta de un vistazo y los botones, siempre a la mano. --}}
