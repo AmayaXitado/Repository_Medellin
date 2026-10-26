@@ -57,6 +57,11 @@ class Componente extends Model
         'autoregistro' => true,
         // Los cargos que se pueden elegir para sus personas de campo.
         'cargos' => [],
+        // Los que registran supervisiones territoriales (DOC-11, RN-39).
+        'cargos_supervision' => [],
+        // DOC-15 (RN-46): una ubicación con más error que esto (metros) es
+        // imprecisa: no se juzga fuera de zona y queda como novedad.
+        'precision_minima_m' => 500,
     ];
 
     protected $fillable = ['dependencia_id', 'nombre', 'slug', 'activo', 'config'];
@@ -99,6 +104,14 @@ class Componente extends Model
     public function cargos(): array
     {
         return array_values((array) $this->regla('cargos', []));
+    }
+
+    /** ¿Ese cargo registra supervisiones? Sin importar mayúsculas ni espacios. */
+    public function supervisaConCargo(?string $cargo): bool
+    {
+        $normal = fn ($c) => mb_strtolower(trim(preg_replace('/\s+/', ' ', (string) $c)));
+
+        return $cargo !== null && in_array($normal($cargo), array_map($normal, (array) $this->regla('cargos_supervision', [])), true);
     }
 
     public function dependencia(): BelongsTo

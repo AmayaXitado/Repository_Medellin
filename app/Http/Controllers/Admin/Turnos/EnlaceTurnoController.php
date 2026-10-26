@@ -36,7 +36,7 @@ class EnlaceTurnoController extends Controller
 
         return view('admin.turnos.enlaces.index', [
             'enlaces' => EnlaceTurno::with(['componente', 'nodo', 'creador'])
-                ->withCount(['marcaciones', 'derivaciones'])
+                ->withCount(['marcaciones', 'derivaciones', 'supervisiones'])
                 ->latest()
                 ->paginate(config('repositorio.por_pagina')),
         ]);

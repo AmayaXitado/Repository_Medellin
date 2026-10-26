@@ -45,6 +45,7 @@ enum AccionAuditoria: string
     case DerivacionRegistrada = 'derivacion.registrada';
     case DerivacionActualizada = 'derivacion.actualizada';
     case DerivacionRespondida = 'derivacion.respondida';
+    case SupervisionRegistrada = 'supervision.registrada';
     case DerivacionEliminada = 'derivacion.eliminada';
     case ComponenteGuardado = 'componente.guardado';
     case NodoGuardado = 'nodo.guardado';
@@ -96,6 +97,7 @@ enum AccionAuditoria: string
             self::DerivacionRegistrada => 'Registró una derivación',
             self::DerivacionActualizada => 'Corrigió una derivación',
             self::DerivacionRespondida => 'Respondió una derivación',
+            self::SupervisionRegistrada => 'Registró una supervisión territorial',
             self::DerivacionEliminada => 'Eliminó una derivación',
             self::ComponenteGuardado => 'Creó o cambió un componente',
             self::NodoGuardado => 'Creó o cambió un nodo',

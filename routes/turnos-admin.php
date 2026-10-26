@@ -19,6 +19,7 @@ use App\Http\Controllers\Admin\Turnos\EnlaceTurnoController;
 use App\Http\Controllers\Admin\Turnos\EnTurnoController;
 use App\Http\Controllers\Admin\Turnos\MarcacionController;
 use App\Http\Controllers\Admin\Turnos\NovedadController;
+use App\Http\Controllers\Admin\Turnos\SupervisionController;
 use Illuminate\Support\Facades\Route;
 
 // Personas de campo (Coordinación).
@@ -67,6 +68,10 @@ Route::post('novedades/{novedad}/justificar', [AusenciaController::class, 'justi
 // Derivaciones y respuesta territorial (Edición). Se crean por el enlace por cédula.
 Route::get('derivaciones/exportar', [DerivacionController::class, 'exportar'])->name('derivaciones.exportar');
 Route::patch('derivaciones/{derivacion}/responder', [DerivacionController::class, 'responder'])->name('derivaciones.responder');
+// Supervisión territorial (DOC-11): consultar y descargar.
+Route::get('supervisiones', [SupervisionController::class, 'index'])->name('supervisiones.index');
+Route::get('supervisiones/exportar', [SupervisionController::class, 'exportar'])->name('supervisiones.exportar');
+Route::get('supervisiones/{supervision}', [SupervisionController::class, 'show'])->name('supervisiones.show');
 Route::get('derivaciones/fotos', [DerivacionController::class, 'fotos'])->name('derivaciones.fotos');
 Route::resource('derivaciones', DerivacionController::class)
     ->only(['index', 'show', 'edit', 'update', 'destroy'])

@@ -171,7 +171,7 @@
     <h3>Lo que ve quien envía</h3>
     <ul>
         <li>Un formulario sencillo en el celular: su identificación o sus datos, y los archivos.</li>
-        <li><strong>Tomar foto</strong> abre la cámara: la foto lleva un <strong>sello</strong> con la hora en grande, la fecha, la dirección, las coordenadas y el tipo (Evidencia, Turno, Derivación). <strong>Elegir archivo</strong> sube desde la galería, sin sello.</li>
+        <li><strong>Tomar foto</strong> abre la cámara: la foto lleva un <strong>sello</strong> con la hora en grande, la fecha, la dirección, las coordenadas y el tipo (Evidencia, Turno, Derivación, Apoyo Territorial). <strong>Elegir archivo</strong> sube desde la galería, sin sello.</li>
         <li>Al terminar recibe una confirmación con lo que envió. A quien creó el enlace le llega un aviso por la campana.</li>
     </ul>
     <div class="nota">
@@ -198,8 +198,10 @@
     <ol class="pasos">
         <li>Escanea el QR con la cámara del celular.</li>
         <li>Escribe su cédula. Si el componente lo permite, la primera vez llena sus datos; después, solo la cédula.</li>
-        <li>Toma la foto (si el componente la exige) y toca <strong>Registrar marca</strong>. El sistema decide si es <strong>entrada</strong> o <strong>salida</strong>.</li>
+        <li>Al entrar, responde si <strong>recibió los elementos de protección personal (EPP)</strong>: Sí o No. Un «No» llega a Novedades como <strong>Sin EPP</strong>.</li>
+        <li>Toma la foto con <strong>Tomar foto</strong> (solo con la cámara, no desde la galería) y toca <strong>Registrar marca</strong>. El sistema decide si es <strong>entrada</strong> o <strong>salida</strong>.</li>
     </ol>
+    <p><strong>Si el teléfono da una ubicación aproximada</strong> (frecuente en iPhone con «Ubicación precisa» apagada), el enlace lo avisa y dice cómo activarla; se puede registrar de todos modos y queda la novedad <strong>Ubicación imprecisa</strong> en lugar de un «fuera de zona» falso. En iPhone: <span class="ruta">Ajustes → Privacidad y seguridad → Localización → Sitios web de Safari → Ubicación precisa</span>.</p>
     <ul>
         <li>Al marcar la entrada, el sistema <strong>reconoce el turno por la hora</strong> (por ejemplo, 4:55 → N1; 20:50 → N7; domingo o festivo 6:05 → C13) y anota si llegó tarde.</li>
         <li>Cuando completa su turno del día, el enlace ya no le deja volver a marcar.</li>
@@ -302,6 +304,23 @@
         <li>Abrir, <strong>corregir</strong> (el tiempo se recalcula) o <strong>eliminar</strong> (solo Coordinación; las fotos se conservan).</li>
         <li><strong>Descargar Excel:</strong> encabezado negro, las fotos dentro de sus celdas y el soporte en PDF como enlace que abre sin cuenta durante 30 días.</li>
         <li><strong>Excel + fotos (ZIP):</strong> el Excel y una carpeta por caso con las fotos en tamaño original.</li>
+    </ul>
+
+    <h3>Supervisión territorial</h3>
+    <p>Reemplaza el Forms «Registros de supervisión». Lo llena el <strong>Apoyo al control territorial</strong> con su cédula, por un enlace de tipo <strong>Supervisión territorial</strong> (se crea en <span class="ruta">Enlaces por cédula</span>).</p>
+    <ol class="pasos">
+        <li><strong>Quién supervisa:</strong> su cédula. Si su cargo no supervisa, el enlace no lo deja seguir.</li>
+        <li><strong>La visita:</strong> punto crítico (o «Otro»), nodo, turno, fecha y hora, la cédula de los dinamizadores (el segundo es opcional) y la descripción del punto.</li>
+        <li><strong>Calificación:</strong> nueve criterios y la calificación global de la dupla, de 1 a 5.</li>
+        <li><strong>Hallazgos:</strong> incidencias, casos escalados (y cuál), casos prioritarios, recomendaciones y observaciones.</li>
+        <li><strong>Evidencias:</strong> una o dos fotos, tomadas con la cámara.</li>
+    </ol>
+    <ul>
+        <li><span class="ruta">Atención territorial → Supervisión</span>: lista con filtros (cédula del dinamizador, quién supervisó, nodo, punto, fechas), detalle con las calificaciones y <strong>Descargar Excel</strong> con las fotos dentro.</li>
+        <li><strong>Analítica</strong> (arriba de la lista, con los filtros aplicados): total, promedios, incidencias, el promedio de cada criterio, los dinamizadores con promedio más bajo (tocando uno se ven solo sus supervisiones) y tablas por dinamizador, supervisor y nodo. El Excel trae esas mismas hojas.</li>
+        <li>Quién puede supervisar se define en <span class="ruta">Componentes y nodos → Cargos que supervisan</span>.</li>
+        <li><strong>Hay que estar en turno:</strong> quien supervisa y los dinamizadores tienen que haber marcado entrada. Lo mismo para reportar una derivación o enviar evidencias con la cédula.</li>
+        <li>Las supervisiones con incidencia relevante o crítica, casos escalados o calificación global de 1 o 2 llegan por la campana (pestaña <strong>Supervisión</strong>) a líderes y Coordinación.</li>
     </ul>
 </section>
 

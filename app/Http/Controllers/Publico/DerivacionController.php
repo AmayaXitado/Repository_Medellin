@@ -14,6 +14,7 @@ use App\Services\AlmacenamientoDocumentos;
 use App\Services\Auditor;
 use App\Services\ContextoDependencia;
 use App\Services\Turnos\IdentificadorColaborador;
+use App\Services\Turnos\Marcador;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -31,6 +32,8 @@ use Throwable;
  */
 class DerivacionController extends Controller
 {
+    public const AVISO_SIN_TURNO = 'Para reportar una derivación tienes que estar en turno: marca tu entrada primero.';
+
     /** Campo del formulario => columna, en el orden del reporte. */
     protected const ARCHIVOS = [
         'soporte' => 'soporte_documento_id',
@@ -44,6 +47,7 @@ class DerivacionController extends Controller
         protected AlmacenamientoDocumentos $almacenamiento,
         protected ContextoDependencia $contexto,
         protected Auditor $auditor,
+        protected Marcador $marcador,
     ) {
     }
 
@@ -72,6 +76,11 @@ class DerivacionController extends Controller
         $colaborador = $this->identificador->buscar($enlace->dependencia_id, $datos['cedula']);
         $existe = $colaborador !== null && $colaborador->activo;
 
+        // DOC-13 (RN-43): solo quien está en turno reporta.
+        if ($existe && ! $this->marcador->estaEnTurno($colaborador)) {
+            return response()->json(['existe' => false, 'saludo' => '', 'aviso' => self::AVISO_SIN_TURNO]);
+        }
+
         return response()->json(['existe' => $existe, 'saludo' => $existe ? $colaborador->saludo() : '']);
     }
 
@@ -94,6 +103,10 @@ class DerivacionController extends Controller
             throw ValidationException::withMessages([
                 'cedula' => 'Esta identificación no está registrada o no está habilitada. Comunícate con Coordinación.',
             ]);
+        }
+
+        if (! $this->marcador->estaEnTurno($colaborador)) {
+            throw ValidationException::withMessages(['cedula' => self::AVISO_SIN_TURNO]);
         }
 
         $maximo = 'max:'.config('repositorio.tamano_maximo_kb');

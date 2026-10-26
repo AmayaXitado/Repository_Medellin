@@ -29,6 +29,7 @@ class EnlaceTurno extends Model
     public const TIPOS = [
         'turno' => 'Turnos (entrada y salida)',
         'derivacion' => 'Derivaciones y respuesta territorial',
+        'supervision' => 'Supervisión territorial',
     ];
 
     protected $fillable = [
@@ -67,6 +68,10 @@ class EnlaceTurno extends Model
             return route('derivacion.enlace', ['token' => $this->token()]);
         }
 
+        if ($this->esSupervision()) {
+            return route('supervision.enlace', ['token' => $this->token()]);
+        }
+
         return Route::has('turno.enlace')
             ? route('turno.enlace', ['token' => $this->token()])
             : url('t/'.$this->token());
@@ -75,6 +80,11 @@ class EnlaceTurno extends Model
     public function esDerivacion(): bool
     {
         return $this->tipo === 'derivacion';
+    }
+
+    public function esSupervision(): bool
+    {
+        return $this->tipo === 'supervision';
     }
 
     public function etiquetaTipo(): string
@@ -137,5 +147,10 @@ class EnlaceTurno extends Model
     public function derivaciones(): HasMany
     {
         return $this->hasMany(Derivacion::class);
+    }
+
+    public function supervisiones(): HasMany
+    {
+        return $this->hasMany(Supervision::class);
     }
 }
