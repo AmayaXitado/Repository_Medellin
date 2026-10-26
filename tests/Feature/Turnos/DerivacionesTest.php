@@ -44,10 +44,12 @@ class DerivacionesTest extends TestCase
         $this->dependencia = Dependencia::factory()->create();
         $this->calle = Componente::factory()->create(['dependencia_id' => $this->dependencia->id, 'nombre' => 'Calle']);
         $this->nodo = Nodo::factory()->create(['componente_id' => $this->calle->id, 'nombre' => 'Nodo 2']);
-        Colaborador::factory()->create([
+        $jose = Colaborador::factory()->create([
             'dependencia_id' => $this->dependencia->id, 'documento' => '1017000111',
             'nombre' => 'José Amaya Pérez', 'cargo' => 'Monitor de ruta', 'componente_id' => $this->calle->id,
         ]);
+        // DOC-13: para reportar hay que estar en turno.
+        \App\Models\Marcacion::factory()->de($jose)->create(['marcada_at' => now()->subHours(3)]);
         $this->token = EnlaceTurno::generarToken();
         EnlaceTurno::factory()->de($this->calle)->conToken($this->token)->create(['tipo' => 'derivacion']);
         $this->lider = $this->usuarioCon(RolDependencia::Edicion, $this->dependencia);
@@ -86,6 +88,21 @@ class DerivacionesTest extends TestCase
         $this->registrar(['evidencia3' => null])->assertSessionHasErrors('evidencia3');
         $this->assertSame('Derivaciones · Calle', $d->evidencia1->carpeta->nombre);
         $this->assertDatabaseHas('auditorias', ['accion' => 'derivacion.registrada', 'auditable_id' => $d->id]);
+    }
+
+    public function test_doc13_ca03_quien_no_esta_en_turno_no_reporta(): void
+    {
+        $sinTurno = Colaborador::factory()->en($this->calle)->create(['documento' => '1017000222']);
+
+        $this->postJson(route('derivacion.cedula', ['token' => $this->token]), ['cedula' => '1017000222'])
+            ->assertJson(['existe' => false, 'aviso' => 'Para reportar una derivación tienes que estar en turno: marca tu entrada primero.']);
+        $this->registrar(['cedula' => '1017000222'])
+            ->assertSessionHasErrors(['cedula' => 'Para reportar una derivación tienes que estar en turno: marca tu entrada primero.']);
+        $this->assertSame(0, Derivacion::count());
+
+        // Con entrada marcada, sí (DOC-13 CA-05).
+        \App\Models\Marcacion::factory()->de($sinTurno)->create(['marcada_at' => now()->subHour()]);
+        $this->registrar(['cedula' => '1017000222'])->assertSessionHasNoErrors();
     }
 
     public function test_una_cedula_no_registrada_no_entra(): void

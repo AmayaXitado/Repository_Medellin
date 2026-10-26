@@ -8,7 +8,7 @@
  * - Al enviar, espera la ubicación (con tope) y la pone en campos ocultos.
  *   Sin señal se envía igual: el servidor lo anota como novedad.
  */
-import { datosDeUbicacion, pedirUbicacionAhora, prepararUbicacion } from './foto-georreferencial';
+import { COMO_ACTIVAR_PRECISA, datosDeUbicacion, pedirUbicacionAhora, prepararUbicacion } from './foto-georreferencial';
 
 const TEXTOS = {
     entrada: 'Registrar entrada',
@@ -20,8 +20,24 @@ function iniciar(formulario) {
     const boton = formulario.querySelector('[data-turno-boton]');
     const textoBase = boton?.textContent.trim() ?? '';
     let enviando = false;
+    // DOC-15: con ubicación aproximada, el primer toque avisa y el segundo envía igual.
+    let imprecisaConfirmada = false;
+    const precisionMinima = Number(formulario.dataset.precisionMinima || 0);
+    const ubicacionObligatoria = formulario.dataset.ubicacionObligatoria === '1';
+    const avisoUbicacion = (texto) => {
+        const aviso = formulario.querySelector('[data-turno-ubicacion]');
+
+        if (aviso && texto) {
+            aviso.textContent = texto;
+            aviso.classList.remove('hidden');
+        }
+    };
+
+    // El último motivo de no tener ubicación, tal cual, para armar el aviso sin repetirlo.
+    let ultimoMotivo = '';
 
     prepararUbicacion((motivo) => {
+        ultimoMotivo = motivo;
         const aviso = formulario.querySelector('[data-turno-ubicacion]');
 
         if (aviso) {
@@ -30,10 +46,20 @@ function iniciar(formulario) {
         }
     });
 
+    // DOC-12: la pregunta de los EPP solo en la entrada. Oculta, no se exige.
+    const epp = formulario.querySelector('[data-turno-epp]');
+    const mostrarEpp = (visible) => {
+        epp?.classList.toggle('hidden', !visible);
+        epp?.querySelectorAll('input').forEach((radio) => { radio.required = visible; });
+    };
+
     formulario.addEventListener('cedula:consultada', (evento) => {
+        mostrarEpp(evento.detail?.accion === 'entrada');
+
         if (boton) {
             const accion = evento.detail?.accion;
             boton.textContent = TEXTOS[accion] ?? textoBase;
+            boton.dataset.textoAccion = boton.textContent;
             // Con el turno del día cerrado no hay nada que marcar: si la hora
             // está mal, la corrige Coordinación, no un segundo envío.
             boton.disabled = accion === 'cerrado';
@@ -63,6 +89,33 @@ function iniciar(formulario) {
         await Promise.race([pedirUbicacionAhora(), new Promise((r) => setTimeout(r, 10000))]);
 
         const ubicacion = datosDeUbicacion();
+
+        // No se envía para que el servidor lo rechace: así no se pierde la foto ya tomada.
+        const detenerse = (textoBoton) => {
+            enviando = false;
+
+            if (boton) {
+                boton.disabled = false;
+                boton.textContent = textoBoton;
+            }
+        };
+
+        if (!ubicacion && ubicacionObligatoria) {
+            // La foto ya tomada se conserva: solo hay que volver a tocar el botón.
+            const motivo = ultimoMotivo.replace(/\s*Luego vuelve a tomar la foto\.?$/, '') || 'Activa la ubicación (GPS) y permite el acceso.';
+            avisoUbicacion(`Este turno exige tu ubicación y el teléfono no la está entregando. ${motivo} Luego vuelve a tocar el botón.`);
+            detenerse(boton?.dataset.textoAccion || textoBase);
+            return;
+        }
+
+        if (ubicacion && precisionMinima && ubicacion.precision > precisionMinima && !imprecisaConfirmada) {
+            const km = (ubicacion.precision / 1000).toLocaleString('es-CO', { maximumFractionDigits: 1 });
+            avisoUbicacion(`Tu teléfono está dando una ubicación aproximada (±${km} km). Activa la ubicación precisa: ${COMO_ACTIVAR_PRECISA} Luego vuelve a tocar el botón.`);
+            imprecisaConfirmada = true;
+            detenerse('Registrar de todos modos');
+            return;
+        }
+
         const poner = (nombre, valor) => {
             const campo = formulario.querySelector(`[name="${nombre}"]`);
 

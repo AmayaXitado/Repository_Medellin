@@ -96,3 +96,23 @@ campo) van por tarjetas con panel lateral. *(23 al 26 de octubre)*
 
 **D-23 · Manual de usuario.** En Administración y en el menú de la cuenta, con la imagen
 del Comité y descarga en PDF. *(octubre)*
+
+## Del 26 de octubre
+
+**D-24 · Supervisión territorial en la aplicación.** El Forms «Registros de supervisión V6»
+pasa a Documenta (Atención territorial → Supervisión), por enlace por cédula, para el
+cargo «Apoyo al control territorial». Los dinamizadores se identifican por cédula; si el
+punto no está en el catálogo, «Otro». El sello de sus fotos dice «Apoyo Territorial».
+
+**D-25 · EPP y solo cámara en turnos.** Al marcar entrada se responde si recibió los EPP
+(un «No» es novedad «Sin EPP»), y la foto del turno solo se toma con la cámara.
+
+**D-26 · Registrar solo en turno.** Supervisión, derivaciones y evidencias por cédula
+exigen estar en turno; en supervisión, también los dinamizadores. Lo importante de una
+supervisión avisa a Edición y Coordinación.
+
+**D-28 · Ubicación imprecisa.** Ante los problemas de ubicación con iPhone: avisar a la persona cómo activar la ubicación precisa, no marcar «fuera de zona» con una ubicación aproximada (novedad «Ubicación imprecisa») y no enviar sin ubicación cuando es obligatoria. Edwar revisará cómo sale en producción.
+
+**D-27 · Sin exigir verificación (por ahora).** Quien se registró sola por el QR y está
+«por verificar» puede marcar y registrar igual, para no interrumpir la operación. Se
+revisará más adelante (exigirla para registrar, no para marcar, sería lo recomendado).

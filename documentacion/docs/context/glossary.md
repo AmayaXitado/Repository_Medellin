@@ -33,6 +33,9 @@
 | **Derivación** | Caso que una persona de campo escala (lo pide una entidad: Policía, Línea 123…) y que se debe responder en máximo 3 h. En el Excel heredado se llama «novedad» («quien escala la novedad») (`derivaciones`) |
 | **Solucionada** | Derivación que un líder ya respondió; su tiempo quedó detenido |
 | **Vencida** | Derivación pendiente que ya pasó la meta de 3 h |
+| **Supervisión** | Visita del Apoyo al control territorial a una dupla de dinamizadores en un punto crítico, calificada de 1 a 5 (`supervisiones`) |
+| **Dinamizador** | Persona de campo que atiende un punto crítico, normalmente en dupla; es a quien se supervisa |
+| **EPP** | Elementos de protección personal. Al marcar entrada se responde si se recibieron |
 | **Evidencia** | Foto con sello de hora y lugar, de un envío, una marcación o una derivación |
 | **Sello** | Franja estampada en la foto: hora grande, fecha, dirección y coordenadas (D-01) |
 | **Aviso** | Mensaje por la campana a usuarios (de versión o enviado por Administración) |

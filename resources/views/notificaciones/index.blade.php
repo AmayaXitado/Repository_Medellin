@@ -18,6 +18,7 @@
     $tipos = \App\Http\Controllers\NotificacionController::TIPOS;
     $colores = [
         'derivaciones' => 'text-[var(--danger)] ring-[var(--danger)]',
+        'supervision' => 'text-[var(--warning)] ring-[var(--warning)]',
         'turnos' => 'text-[var(--warning)] ring-[var(--warning)]',
         'documentos' => 'text-[var(--primary)] ring-[var(--primary)]',
         'avisos' => 'text-[var(--success)] ring-[var(--success)]',

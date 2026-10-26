@@ -50,6 +50,12 @@ class Marcador
             ->first();
     }
 
+    /** DOC-13 (RN-43): en turno = su última marcación vigente es una entrada. */
+    public function estaEnTurno(?Colaborador $colaborador): bool
+    {
+        return $colaborador !== null && $this->estadoDe($colaborador) !== null;
+    }
+
     /** Lo que haría ahora: entrada si no está en turno, salida si lo está. */
     public function siguienteTipo(Colaborador $colaborador): TipoMarcacion
     {
@@ -81,7 +87,7 @@ class Marcador
 
     /**
      * Marca por el enlace. $datos: nodo_id, lat, lng, precision_m, municipio,
-     * declarada_at, foto (UploadedFile), ip, agente.
+     * declarada_at, foto (UploadedFile), epp (bool|null, solo en la entrada), ip, agente.
      *
      * Devuelve la marcación creada, o la anterior si fue un doble toque
      * (entonces wasRecentlyCreated es false).
@@ -116,6 +122,9 @@ class Marcador
                 $tipo = $this->siguienteTipo($colaborador);
                 $ahora = now();
                 $conUbicacion = isset($datos['lat'], $datos['lng']);
+                // DOC-15 (RN-46): con kilómetros de error no se puede decir si estaba en su zona.
+                $imprecisa = $conUbicacion && isset($datos['precision_m'])
+                    && (float) $datos['precision_m'] > (float) $componente->regla('precision_minima_m');
 
                 // En la entrada, el turno se reconoce solo por la hora (Programacion)
                 // y el punto es el del QR si es de un punto, o el habitual.
@@ -148,9 +157,12 @@ class Marcador
                     'municipio' => $conUbicacion ? ($datos['municipio'] ?? null) : null,
                     'documento_id' => $foto?->id,
                     'origen' => OrigenMarcacion::Enlace,
-                    'fuera_de_zona' => $conUbicacion && $this->fueraDeZona($nodo, (float) $datos['lat'], (float) $datos['lng']),
+                    'fuera_de_zona' => $conUbicacion && ! $imprecisa && $this->fueraDeZona($nodo, (float) $datos['lat'], (float) $datos['lng']),
+                    'ubicacion_imprecisa' => $imprecisa,
                     'fuera_de_turno' => false,
                     'sin_ubicacion' => ! $conUbicacion,
+                    // DOC-12: solo la entrada pregunta por los EPP; lo demás queda sin dato.
+                    'epp_recibidos' => $tipo === TipoMarcacion::Entrada && isset($datos['epp']) ? (bool) $datos['epp'] : null,
                     'ip' => $datos['ip'] ?? null,
                     'agente' => isset($datos['agente']) ? substr((string) $datos['agente'], 0, 255) : null,
                 ]);

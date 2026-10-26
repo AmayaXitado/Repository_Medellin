@@ -12,7 +12,7 @@
 | Repositorio | Documentos, carpetas, versiones, custodia, comentarios | `carpetas`, `documentos`, `documento_versiones`, `tipos_documento`, `etiquetas`, `grupos_custodia`, `comentarios_documento` |
 | Recepción externa | Lo que llega de fuera por enlaces de carga | `enlaces_carga`, `recepciones` |
 | Turnos | Personas de campo, marcación, novedades, catálogo de la malla, ausencias | `componentes`, `nodos`, `colaboradores`, `enlaces_turno`, `marcaciones`, `novedades_turno`, `tipos_turno`, `puntos_criticos`, `ausencias` |
-| Atención territorial | Derivaciones y su respuesta | `derivaciones` |
+| Atención territorial | Derivaciones y su respuesta; supervisión territorial | `derivaciones`, `supervisiones` |
 | Administración | Dependencias, usuarios, auditoría, avisos | `dependencias`, `users`, `dependencia_usuario`, `auditorias`, `avisos`, `notifications` |
 
 `enlaces_turno` lo comparten Turnos y Atención territorial: el mismo enlace por cédula
@@ -252,6 +252,45 @@ del reporte y sus fotos siguen en el repositorio. Es una excepción explícita a
 original, las fotos dentro de sus celdas y el soporte en PDF como enlace firmado que vence
 a los 30 días; un ZIP con las fotos originales.
 *Origen:* D-16.
+
+**RN-39. Quién supervisa.** Solo registran supervisiones las personas de campo activas
+cuyo cargo está en «Cargos que supervisan» del componente (en Calle: «Apoyo al control
+territorial»), sin importar mayúsculas ni espacios.
+*Origen:* DOC-11 · *Código:* `Componente::supervisaConCargo`.
+
+**RN-40. A quién se supervisa.** Los dinamizadores se identifican por cédula y deben ser
+personas de campo registradas y activas de la dependencia; no pueden ser quien supervisa.
+El enlace solo muestra su saludo recortado.
+*Origen:* DOC-11 · *Código:* `Publico\SupervisionController`.
+
+**RN-41. EPP al entrar.** Toda entrada por el enlace de turnos responde si recibió los
+elementos de protección personal. Un «No» crea la novedad «Sin EPP», pendiente.
+*Origen:* DOC-12 · *Código:* `TurnoController::marcar`, `Novedades::evaluar`.
+
+**RN-42. Foto de turno solo con la cámara.** En el enlace de turnos (y en el de
+supervisión) la foto se toma en el momento; no se elige de la galería.
+*Origen:* DOC-12, DOC-11 · *Código:* `<x-campo-archivo :galeria="false">`.
+
+**RN-43. Registrar solo en turno.** Para registrar una supervisión, una derivación o un
+envío de evidencias por cédula, la persona tiene que estar en turno: su última marcación
+vigente es una entrada. Una cédula nueva no está en turno (se registra marcando entrada).
+*Origen:* DOC-13 · *Código:* `Marcador::estaEnTurno`.
+
+**RN-44. Se supervisa a quien está en turno.** Los dinamizadores de una supervisión
+también tienen que estar en turno.
+*Origen:* DOC-13.
+
+**RN-45. Avisos de supervisión.** Incidencia Relevante o Crítica, casos escalados o
+calificación global de 1 o 2 avisan por la campana a Edición y Coordinación, en la pestaña
+«Supervisión».
+*Origen:* DOC-13 · *Código:* `SupervisionImportante`.
+
+**RN-46. Ubicación imprecisa.** Una ubicación con error mayor a la «Precisión mínima» del
+componente (500 m de fábrica; típico de un iPhone con «Ubicación precisa» apagada) se
+guarda y cuenta como ubicación, pero no se juzga «fuera de zona»: queda la novedad
+«Ubicación imprecisa». El teléfono avisa antes de enviar, con las instrucciones de su
+sistema, y deja «Registrar de todos modos».
+*Origen:* DOC-15 · *Código:* `Marcador::marcar`, `resources/js/turno.js`.
 
 ### Comunicación
 

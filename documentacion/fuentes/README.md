@@ -14,6 +14,7 @@ Evidencia de entrada: lo que se pidió, lo que respondieron las áreas y lo que 
 | F-07 | [`decisiones-2026-10.md`](decisiones-2026-10.md) | Decisiones de Edwar en las sesiones de desarrollo de octubre de 2026 |
 | F-08 | Malla de turnos «MG OCTUBRE 2026» y formulario del QR (Google Sheets, privados) | Códigos de turno, horarios, horas de nómina y puntos críticos de Calle. Transcritos en `database/seeders/CatalogoTurnosCalleSeeder.php` |
 | F-09 | Ejemplos de Nómina: reporte de novedades, liquidación de recargos, liquidación de nómina (Excel, **no se versionan**: datos personales) | Planilla por persona y día con códigos; RN / RFN / RFD; valor hora = salario ÷ 210 |
+| F-11 | Formulario «REGISTROS DE SUPERVISIÓN V6 (respuestas)» (Google Forms, Excel en Descargas, **no se versiona**: nombres y cédulas) | Las 31 preguntas de la supervisión territorial; ~565 registros desde octubre |
 | F-10 | [`CHANGELOG.md`](../../CHANGELOG.md) | Lo publicado, en palabras para el usuario |
 
 ## Cómo se agrega una fuente

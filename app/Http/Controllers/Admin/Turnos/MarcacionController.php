@@ -91,7 +91,7 @@ class MarcacionController extends Controller
     protected const ENCABEZADOS_TURNOS = [
         'Cédula', 'Nombre', 'Cargo', 'Componente', 'Nodo', 'Entrada', 'Salida',
         'Permanencia (h)', 'Descanso (h)', 'Horas trabajadas', 'Jornada (h)', 'Horas ordinarias', 'Horas extra', 'Extras aprobadas',
-        'Novedad', 'Cómo cerró',
+        'Novedad', 'Cómo cerró', 'EPP',
     ];
 
     /** Las cuentas de un turno, en minutos. Lo usan las dos pestañas. */
@@ -140,6 +140,12 @@ class MarcacionController extends Controller
             },
             $f['novedad'] ? "{$f['novedad']->tipo->etiqueta()} ({$f['novedad']->estado->etiqueta()})" : '',
             $salida?->origen->etiqueta() ?? 'Sigue abierto',
+            // DOC-12: lo que respondió al entrar; las entradas viejas o manuales no lo tienen.
+            match ($f['entrada']->epp_recibidos) {
+                true => 'SI',
+                false => ['alerta' => 'NO'],
+                null => 'Sin dato',
+            },
         ];
     }
 

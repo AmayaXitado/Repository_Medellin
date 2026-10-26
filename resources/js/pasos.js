@@ -159,7 +159,7 @@ function iniciarCedula(form) {
 
     form.addEventListener('cedula:consultada', (e) => {
         const motivo = e.detail && !e.detail.existe
-            ? 'Esta identificación no está registrada. Pide a Coordinación que te registre.'
+            ? (e.detail.aviso || 'Esta identificación no está registrada. Pide a Coordinación que te registre.')
             : '';
         form.dispatchEvent(new CustomEvent('pasos:bloquear', { detail: { paso, motivo } }));
     });

@@ -115,6 +115,11 @@ class TurnoController extends Controller
             'municipio' => ['nullable', 'string', 'max:255'],
             'tomadas' => ['nullable', 'array'],
             'tomadas.*' => ['nullable', 'string', 'max:40'],
+            // DOC-12: los EPP se preguntan en la entrada (quien es nueva siempre entra).
+            'epp' => [
+                $colaborador === null || $this->marcador->estadoParaMarcar($colaborador, $componente) === 'entrada' ? 'required' : 'nullable',
+                'in:si,no',
+            ],
         ];
 
         if ($colaborador === null) {
@@ -123,6 +128,7 @@ class TurnoController extends Controller
 
         $datos = $peticion->validate($reglas, [
             'foto.required' => 'Toma la foto antes de registrar.',
+            'epp.required' => 'Responde si recibiste los EPP.',
         ], [
             'foto' => 'foto',
             'colaborador.nombre' => 'nombre completo',
@@ -153,6 +159,7 @@ class TurnoController extends Controller
                 'municipio' => $datos['municipio'] ?? null,
                 'declarada_at' => $datos['tomadas'][0] ?? null,
                 'foto' => $peticion->file('foto'),
+                'epp' => isset($datos['epp']) ? $datos['epp'] === 'si' : null,
                 'ip' => $peticion->ip(),
                 'agente' => $peticion->userAgent(),
             ]);
@@ -177,7 +184,7 @@ class TurnoController extends Controller
     {
         $enlace = EnlaceTurno::porToken($token);
 
-        return $enlace?->estaVigente() && ! $enlace->esDerivacion() && $enlace->componente?->activo ? $enlace : null;
+        return $enlace?->estaVigente() && $enlace->tipo === 'turno' && $enlace->componente?->activo ? $enlace : null;
     }
 
     protected function noDisponible(): Response

@@ -66,6 +66,7 @@ class PublicoMarcarTest extends TestCase
             'lng' => -75.5658,
             'precision_m' => 15,
             'municipio' => 'Medellín, Antioquia',
+            'epp' => 'si',
         ]);
     }
 

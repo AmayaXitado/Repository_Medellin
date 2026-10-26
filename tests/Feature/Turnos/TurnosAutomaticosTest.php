@@ -71,7 +71,7 @@ class TurnosAutomaticosTest extends TestCase
     {
         $this->travelTo(Carbon::parse($cuando));
         $this->post(route('turno.marcar', ['token' => $token ?? $this->token]), [
-            'cedula' => $persona->documento, 'lat' => 6.25, 'lng' => -75.56,
+            'cedula' => $persona->documento, 'lat' => 6.25, 'lng' => -75.56, 'epp' => 'si',
         ])->assertSessionHasNoErrors();
     }
 

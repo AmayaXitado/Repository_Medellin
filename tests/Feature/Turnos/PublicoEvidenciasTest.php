@@ -59,6 +59,8 @@ class PublicoEvidenciasTest extends TestCase
         $persona = Colaborador::factory()->en($this->calle, $this->nodo3)->create([
             'documento' => '43555666', 'nombre' => 'Laura Gómez', 'correo' => 'laura@cem.co', 'entidad' => 'CEM',
         ]);
+        // DOC-13: hay que estar en turno.
+        \App\Models\Marcacion::factory()->de($persona)->create(['marcada_at' => now()->subHour()]);
 
         $this->enviar(['cedula' => '43.555.666'])->assertSessionHasNoErrors()->assertRedirect();
 
@@ -69,16 +71,20 @@ class PublicoEvidenciasTest extends TestCase
         $this->assertSame(3, $recepcion->nodo, 'El nodo de siempre (1 a 6) sale del nodo de la persona.');
     }
 
-    public function test_la_primera_vez_se_registra_con_el_envio(): void
+    /** DOC-13 CA-04: una cédula nueva no está en turno; se registra marcando su entrada. */
+    public function test_doc13_ca04_sin_turno_no_envia_evidencias_ni_se_registra(): void
     {
         $this->enviar([
             'cedula' => '1020304050',
             'colaborador' => ['nombre' => 'Pedro Nuevo', 'nodo_id' => $this->nodo3->id, 'cargo' => 'Conductor camioneta'],
-        ])->assertSessionHasNoErrors();
+        ])->assertSessionHasErrors(['cedula' => 'Para enviar evidencias tienes que estar en turno: marca tu entrada primero.']);
 
-        $pedro = Colaborador::withoutGlobalScopes()->where('documento', '1020304050')->sole();
-        $this->assertFalse($pedro->estaVerificado());
-        $this->assertSame($pedro->id, Recepcion::withoutGlobalScopes()->sole()->colaborador_id);
+        Colaborador::factory()->en($this->calle)->create(['documento' => '43555666']);
+        $this->enviar(['cedula' => '43555666'])
+            ->assertSessionHasErrors(['cedula' => 'Para enviar evidencias tienes que estar en turno: marca tu entrada primero.']);
+
+        $this->assertSame(0, Recepcion::withoutGlobalScopes()->count());
+        $this->assertFalse(Colaborador::withoutGlobalScopes()->where('documento', '1020304050')->exists());
     }
 
     public function test_una_cedula_nueva_sin_datos_no_envia_ni_registra(): void
@@ -91,8 +97,12 @@ class PublicoEvidenciasTest extends TestCase
 
     public function test_la_consulta_de_cedula_solo_existe_en_enlaces_de_componente(): void
     {
-        Colaborador::factory()->en($this->calle)->create(['documento' => '43555666', 'nombre' => 'Laura Gómez']);
+        $laura = Colaborador::factory()->en($this->calle)->create(['documento' => '43555666', 'nombre' => 'Laura Gómez']);
 
+        $this->postJson(route('envio.cedula', ['token' => $this->token]), ['cedula' => '43555666'])
+            ->assertJson(['existe' => false, 'aviso' => 'Para enviar evidencias tienes que estar en turno: marca tu entrada primero.']);
+
+        \App\Models\Marcacion::factory()->de($laura)->create(['marcada_at' => now()->subHour()]);
         $this->postJson(route('envio.cedula', ['token' => $this->token]), ['cedula' => '43555666'])
             ->assertExactJson(['existe' => true, 'saludo' => 'Lau…']);
 

@@ -62,5 +62,10 @@ geolocalización, interfaz, puesta en marcha) y se enlazan desde aquí; no se du
 | Jornada esperada por tipo de turno | DOC-8 | Por escribir | Por especificar |
 | Planilla mensual con códigos para Nómina | DOC-9 | Por escribir | Por especificar |
 | Recargos nocturno, dominical y festivo (RN, RFD, RFN) | DOC-10 | Por escribir | Por especificar |
+| Registro de supervisión territorial | DOC-11 | [Aprobada](specs/supervision-territorial/spec.md) | Construida |
+| EPP al marcar entrada y foto solo con la cámara | DOC-12 | [Aprobada](specs/turno-epp-y-camara/spec.md) | Construida |
+| Ubicación imprecisa (iPhone) y nombres largos de archivo | DOC-15 | [Aprobada](specs/ubicacion-imprecisa/spec.md) | Construida |
+| Analítica de supervisión y Excel con resumen | DOC-14 | [Aprobada](specs/analitica-supervision/spec.md) | Construida |
+| Registrar solo en turno · avisos de supervisión | DOC-13 | [Aprobada](specs/registro-en-turno-y-avisos-supervision/spec.md) | Construida |
 
 Seguimiento: en el repositorio (`tasks.md`). Notion queda para cuando se conecte.

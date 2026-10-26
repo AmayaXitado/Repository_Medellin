@@ -33,6 +33,27 @@ function sinExtension(nombre) {
 }
 
 /**
+ * ¿Se puede reescribir la lista de archivos de un input? Hay navegadores con
+ * DataTransfer pero sin 'items' (el WebKit de pruebas lo tiene a medias):
+ * mirar solo si existe dejaba pasar y el script se caía al primer archivo.
+ * Se prueba de verdad, una vez.
+ */
+let reescribible = null;
+function puedeReescribirArchivos() {
+    if (reescribible === null) {
+        try {
+            const prueba = new DataTransfer();
+            prueba.items.add(new File([''], 'prueba.txt', { type: 'text/plain' }));
+            reescribible = prueba.files.length === 1;
+        } catch {
+            reescribible = false;
+        }
+    }
+
+    return reescribible;
+}
+
+/**
  * Copia el nombre del archivo al campo indicado, sin extensión. Solo con un
  * archivo y solo si está vacío: lo que ya escribió la persona manda.
  */
@@ -61,7 +82,7 @@ function iniciar(campo) {
     // Sin DataTransfer no se puede reescribir la lista del input, así que
     // tampoco se podría quitar un archivo suelto. Mejor dejar el campo
     // nativo tal cual que ofrecer una X que no funciona.
-    if (typeof DataTransfer === 'undefined') {
+    if (!puedeReescribirArchivos()) {
         return;
     }
 
