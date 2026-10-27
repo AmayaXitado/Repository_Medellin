@@ -42,7 +42,8 @@
 @endif
 
 <form method="POST" action="{{ route('turno.marcar', ['token' => $token]) }}" enctype="multipart/form-data"
-      data-turno class="mt-6 space-y-6">
+      data-turno data-precision-minima="{{ (int) $componente->regla('precision_minima_m') }}"
+      data-ubicacion-obligatoria="{{ $componente->regla('ubicacion_obligatoria') ? '1' : '0' }}" class="mt-6 space-y-6">
     @csrf
 
     <x-campos.cedula :consulta="route('turno.cedula', ['token' => $token])" :componente="$componente" />
@@ -53,12 +54,26 @@
         en otro nodo usa el QR de ese nodo.
     --}}
 
+    {{-- DOC-12: solo en la entrada; turno.js la muestra según lo que toque. --}}
+    <fieldset data-turno-epp>
+        <legend class="text-sm font-medium text-[var(--text)]">¿Recibiste los elementos de protección personal (EPP)? *</legend>
+        <div class="mt-2 grid grid-cols-2 gap-3">
+            @foreach(['si' => 'Sí', 'no' => 'No'] as $valor => $texto)
+                <label class="flex cursor-pointer items-center justify-center rounded-lg px-4 py-3 text-base font-semibold text-[var(--text)] ring-1 ring-[var(--border)] transition
+                              has-[:checked]:bg-[var(--primary)] has-[:checked]:text-white has-[:checked]:ring-[var(--primary)]">
+                    <input type="radio" name="epp" value="{{ $valor }}" required class="sr-only" @checked(old('epp') === $valor)>
+                    {{ $texto }}
+                </label>
+            @endforeach
+        </div>
+    </fieldset>
+
     <div>
         <p class="text-sm font-medium text-[var(--text)]">
             Foto {!! $fotoObligatoria ? '*' : '<span class="font-normal text-[var(--muted)]">(opcional)</span>' !!}
         </p>
         <p class="mt-1 text-xs text-[var(--muted)]">Se le estampa la hora y el lugar. Tómala en el sitio.</p>
-        <x-campo-archivo nombre="foto" :requerido="$fotoObligatoria" camara formatos="publico" sello="Turno" />
+        <x-campo-archivo nombre="foto" :requerido="$fotoObligatoria" camara :galeria="false" formatos="publico" sello="Turno" />
     </div>
 
     {{-- Las llena turno.js justo antes de enviar. --}}

@@ -17,6 +17,7 @@ use App\Services\CalendarioHabil;
 use App\Services\CargaPorTandas;
 use App\Services\ContextoDependencia;
 use App\Services\Turnos\IdentificadorColaborador;
+use App\Services\Turnos\Marcador;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
@@ -44,12 +45,15 @@ class EnvioPublicoController extends Controller
      */
     public const MAXIMO_ARCHIVOS = 50;
 
+    public const AVISO_SIN_TURNO = 'Para enviar evidencias tienes que estar en turno: marca tu entrada primero.';
+
     public function __construct(
         protected AlmacenamientoDocumentos $almacenamiento,
         protected Auditor $auditor,
         protected ContextoDependencia $contexto,
         protected CalendarioHabil $calendario,
         protected IdentificadorColaborador $identificador,
+        protected Marcador $marcador,
     ) {
     }
 
@@ -406,6 +410,11 @@ class EnvioPublicoController extends Controller
         $colaborador = $this->identificador->buscar($enlace->dependencia_id, $datos['cedula']);
         $existe = $colaborador?->activo ?? false;
 
+        // DOC-13 (RN-43): para enviar hay que estar en turno; una cédula nueva no lo está.
+        if (! $this->marcador->estaEnTurno($existe ? $colaborador : null)) {
+            return response()->json(['existe' => false, 'saludo' => '', 'aviso' => self::AVISO_SIN_TURNO]);
+        }
+
         return response()->json(['existe' => $existe, 'saludo' => $existe ? $colaborador->saludo() : '']);
     }
 
@@ -454,6 +463,11 @@ class EnvioPublicoController extends Controller
             throw ValidationException::withMessages([
                 'cedula' => 'Tu identificación no está registrada. Pide a Coordinación que te registre.',
             ]);
+        }
+
+        // DOC-13 (RN-43): para enviar evidencias hay que estar en turno; una cédula nueva no lo está.
+        if (! $this->marcador->estaEnTurno($colaborador)) {
+            throw ValidationException::withMessages(['cedula' => self::AVISO_SIN_TURNO]);
         }
 
         return $colaborador;

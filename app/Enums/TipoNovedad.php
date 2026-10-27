@@ -11,6 +11,8 @@ enum TipoNovedad: string
     case FueraDeZona = 'fuera_de_zona';
     case Tardanza = 'tardanza';
     case SinEntrada = 'sin_entrada';
+    case SinEpp = 'sin_epp';
+    case UbicacionImprecisa = 'ubicacion_imprecisa';
 
     public function etiqueta(): string
     {
@@ -22,6 +24,8 @@ enum TipoNovedad: string
             self::FueraDeZona => 'Fuera de zona',
             self::Tardanza => 'Tardanza',
             self::SinEntrada => 'No registró entrada',
+            self::SinEpp => 'Sin EPP',
+            self::UbicacionImprecisa => 'Ubicación imprecisa',
         };
     }
 }

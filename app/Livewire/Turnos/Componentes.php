@@ -118,6 +118,12 @@ class Componentes extends Component implements HasActions, HasSchemas, HasTable
                         ->helperText('Los que se eligen de una lista al registrar a una persona de este componente. Vacío: cargo libre.')
                         ->default([])
                         ->formatStateUsing(fn ($state) => $state ?? []),
+                    TagsInput::make('config.cargos_supervision')
+                        ->label('Cargos que supervisan')
+                        ->placeholder('Ej: Apoyo al control territorial')
+                        ->helperText('Quienes tienen estos cargos pueden registrar supervisiones territoriales con su cédula.')
+                        ->default([])
+                        ->formatStateUsing(fn ($state) => $state ?? []),
                     Toggle::make('activo')
                         ->label('Componente activo')
                         ->helperText('Inactivo, sus enlaces dejan de funcionar. Su historia se conserva.')
@@ -165,6 +171,7 @@ class Componentes extends Component implements HasActions, HasSchemas, HasTable
                     self::casilla('foto_obligatoria', 'Foto obligatoria', 'Con sello de hora y ubicación.'),
                     self::casilla('ubicacion_obligatoria', 'Ubicación obligatoria', 'Si no, marca igual y queda como novedad.'),
                     self::casilla('autoregistro', 'Se registran solas', 'La primera vez llenan sus datos. Si no, Coordinación las registra antes.'),
+                    self::regla('precision_minima_m', 'Precisión mínima (m)', 50, 20000, 'Una ubicación con más error que esto (p. ej. un iPhone con «Ubicación precisa» apagada) se toma como imprecisa: no se juzga fuera de zona y queda como novedad.'),
                 ]),
 
             Section::make('Nodos')
@@ -222,10 +229,12 @@ class Componentes extends Component implements HasActions, HasSchemas, HasTable
     protected static function preparar(array $data, ?Componente $record = null): array
     {
         $config = array_replace(Componente::REGLAS, $record?->config ?? [], $data['config'] ?? []);
-        $config['cargos'] = array_values(array_unique(array_filter(array_map(
-            fn ($cargo) => trim(preg_replace('/\s+/', ' ', (string) $cargo)),
-            (array) ($config['cargos'] ?? []),
-        ))));
+        foreach (['cargos', 'cargos_supervision'] as $lista) {
+            $config[$lista] = array_values(array_unique(array_filter(array_map(
+                fn ($cargo) => trim(preg_replace('/\s+/', ' ', (string) $cargo)),
+                (array) ($config[$lista] ?? []),
+            ))));
+        }
 
         return [
             ...$data,

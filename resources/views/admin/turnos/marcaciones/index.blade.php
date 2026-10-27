@@ -97,10 +97,17 @@
                                 {{ $marcacion->municipio ?? 'Ver en el mapa' }}
                             </a>
                         @endif
-                        @if($marcacion->fuera_de_zona)
+                        @if($marcacion->ubicacion_imprecisa)
+                            <span class="mt-0.5 inline-block rounded bg-warning-soft px-1.5 py-0.5 text-xs text-[var(--warning)]" title="El teléfono dio una ubicación aproximada (±{{ number_format(($marcacion->precision_m ?? 0) / 1000, 1, ',', '.') }} km)">Ubicación imprecisa</span>
+                        @elseif($marcacion->fuera_de_zona)
                             <span class="mt-0.5 inline-block rounded bg-warning-soft px-1.5 py-0.5 text-xs text-[var(--warning)]">Fuera de zona</span>
                         @elseif($marcacion->sin_ubicacion && $marcacion->origen === \App\Enums\OrigenMarcacion::Enlace)
                             <span class="mt-0.5 inline-block rounded bg-warning-soft px-1.5 py-0.5 text-xs text-[var(--warning)]">Sin ubicación</span>
+                        @endif
+                        @if($marcacion->epp_recibidos === false)
+                            <span class="mt-0.5 inline-block rounded bg-[var(--card-soft)] px-1.5 py-0.5 text-xs font-medium text-[var(--danger)] ring-1 ring-[var(--danger)]">Sin EPP</span>
+                        @elseif($marcacion->epp_recibidos === true)
+                            <span class="mt-0.5 inline-block rounded bg-[var(--card-soft)] px-1.5 py-0.5 text-xs font-medium text-[var(--success)] ring-1 ring-[var(--success)]" title="Confirmó que recibió los elementos de protección personal">EPP ✓</span>
                         @endif
                     </td>
                     <td class="px-4 py-3">

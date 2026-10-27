@@ -109,7 +109,8 @@ class SimularDiaTurnos extends Command
                 continue;
             }
 
-            $marcador->marcar($e['persona'], $enlace, ['lat' => 6.2476, 'lng' => -75.5658, 'precision_m' => 10, 'municipio' => 'Medellín, Antioquia']);
+            // DOC-12: en la entrada, un 3 % dice que no recibió los EPP.
+            $marcador->marcar($e['persona'], $enlace, ['lat' => 6.2476, 'lng' => -75.5658, 'precision_m' => 10, 'municipio' => 'Medellín, Antioquia', 'epp' => mt_rand(1, 100) > 3]);
             $marcas++;
         }
         Carbon::setTestNow();
@@ -204,6 +205,7 @@ class SimularDiaTurnos extends Command
             ['Marcas registradas (entradas + salidas)', $marcas],
             ['Entradas con turno reconocido', $entradas->whereNotNull('tipo_turno_id')->count().' de '.$entradas->count()],
             ['Tardanzas anotadas', (clone $novedades)->where('tipo', TipoNovedad::Tardanza->value)->count()],
+            ['Entradas sin EPP (novedad «Sin EPP»)', (clone $novedades)->where('tipo', TipoNovedad::SinEpp->value)->count()],
             ['Simuladas sin marcar', $faltaron->count()],
             ['Avisos «no registró entrada» enviados', (clone $avisos)->count()],
             ['  · se cerraron solos (llegaron tarde)', (clone $avisos)->where('estado', 'corregida')->count()],

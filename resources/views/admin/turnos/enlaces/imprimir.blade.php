@@ -23,7 +23,7 @@
 </head>
 <body>
     <div class="hoja">
-        <h1>{{ $enlace->esDerivacion() ? 'Reporta aquí la derivación' : 'Marca tu turno aquí' }}</h1>
+        <h1>{{ $enlace->esDerivacion() ? 'Reporta aquí la derivación' : ($enlace->esSupervision() ? 'Registra aquí la supervisión' : 'Marca tu turno aquí') }}</h1>
         <p class="sub">{{ $donde }}{{ $enlace->nombre ? ' · '.$enlace->nombre : '' }}</p>
 
         <div class="qr" data-qr="{{ $enlace->url() }}"></div>
@@ -33,6 +33,9 @@
             @if($enlace->esDerivacion())
                 <li>Escribe tu cédula: tiene que estar registrada.</li>
                 <li>Llena el caso, adjunta el soporte y toma las evidencias.</li>
+            @elseif($enlace->esSupervision())
+                <li>Escribe tu cédula: es solo para el Apoyo al control territorial.</li>
+                <li>Escribe la cédula de los dinamizadores, califica de 1 a 5 y toma las evidencias.</li>
             @else
                 <li>Escribe tu cédula. La primera vez te pide tus datos; después, solo la cédula.</li>
                 <li>Toca <strong>Registrar entrada</strong> al llegar y <strong>Registrar salida</strong> al irte.</li>

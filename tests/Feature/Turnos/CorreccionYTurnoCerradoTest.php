@@ -59,7 +59,7 @@ class CorreccionYTurnoCerradoTest extends TestCase
     private function marcar(array $datos = [])
     {
         return $this->post(route('turno.marcar', ['token' => $this->token]), $datos + [
-            'cedula' => '1017000111', 'lat' => 6.2476, 'lng' => -75.5658,
+            'cedula' => '1017000111', 'lat' => 6.2476, 'lng' => -75.5658, 'epp' => 'si',
         ]);
     }
 

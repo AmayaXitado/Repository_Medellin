@@ -55,6 +55,18 @@ const COMO_PERMITIR = esSafari
         ? 'toca el candado junto a la dirección de la página → Permisos → Ubicación → Permitir. Si no aparece, revisa Ajustes del teléfono → Aplicaciones → tu navegador → Permisos → Ubicación.'
         : 'haz clic en el ícono junto a la dirección de la página y permite la ubicación.';
 
+/**
+ * DOC-15: cómo encender la ubicación precisa en cada teléfono. Sin ella, iOS
+ * (y a veces Android) entrega una ubicación aproximada, con kilómetros de error.
+ */
+export const COMO_ACTIVAR_PRECISA = esSafari
+    ? 'Ajustes → Privacidad y seguridad → Localización → Sitios web de Safari → activa «Ubicación precisa».'
+    : esIphone
+        ? 'Ajustes → busca este navegador (Chrome, Opera…) → Ubicación → activa «Ubicación precisa».'
+    : esAndroid
+        ? 'Ajustes → Ubicación → activa «Usar ubicación precisa» (o «Precisión de la ubicación de Google»).'
+        : 'Activa el GPS o conéctate a una red Wi-Fi.';
+
 const MOTIVOS = {
     1: 'No hay permiso de ubicación: ' + COMO_PERMITIR + ' Luego vuelve a tomar la foto.',
     2: 'El teléfono no está entregando la ubicación. Revisa que la ubicación (GPS) esté activada en los ajustes del teléfono.',

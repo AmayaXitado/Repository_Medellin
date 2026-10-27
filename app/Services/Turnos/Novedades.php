@@ -39,6 +39,18 @@ class Novedades
                 $nuevas[] = $this->anotar($marcacion, TipoNovedad::SinUbicacion, 'Marcó '.mb_strtolower($marcacion->tipo->etiqueta()).' sin ubicación.');
             }
 
+            // DOC-15 (RN-46): el teléfono dio una ubicación aproximada.
+            if ($marcacion->ubicacion_imprecisa) {
+                $km = round($marcacion->precision_m / 1000, 1);
+                $nuevas[] = $this->anotar($marcacion, TipoNovedad::UbicacionImprecisa,
+                    'Marcó '.mb_strtolower($marcacion->tipo->etiqueta())." con una ubicación aproximada (±{$km} km): el teléfono no tiene activada la ubicación precisa.");
+            }
+
+            // DOC-12 (RN-41): entró diciendo que no recibió los EPP.
+            if ($marcacion->tipo === TipoMarcacion::Entrada && $marcacion->epp_recibidos === false) {
+                $nuevas[] = $this->anotar($marcacion, TipoNovedad::SinEpp, 'Marcó entrada sin haber recibido los elementos de protección personal.');
+            }
+
             if ($marcacion->fuera_de_zona) {
                 $nuevas[] = $this->anotar($marcacion, TipoNovedad::FueraDeZona, 'Marcó '.mb_strtolower($marcacion->tipo->etiqueta()).' lejos de '.($marcacion->nodo?->nombre ?? 'su nodo').'.');
             }

@@ -15,6 +15,7 @@
 
 use App\Http\Controllers\Admin\Turnos\DerivacionController as AdminDerivacionController;
 use App\Http\Controllers\Publico\DerivacionController;
+use App\Http\Controllers\Publico\SupervisionController;
 use App\Http\Controllers\Publico\TurnoController;
 use Illuminate\Support\Facades\Route;
 
@@ -42,6 +43,23 @@ Route::post('d/{token}/cedula', [DerivacionController::class, 'cedula'])
 Route::post('d/{token}', [DerivacionController::class, 'registrar'])
     ->middleware('throttle:turno-marca')
     ->name('derivacion.registrar');
+
+// Supervisión territorial (DOC-11): el mismo enlace por cédula, su propio formulario.
+Route::get('s/{token}', [SupervisionController::class, 'mostrar'])
+    ->middleware('throttle:envio-formulario')
+    ->name('supervision.enlace');
+
+Route::post('s/{token}/cedula', [SupervisionController::class, 'cedula'])
+    ->middleware('throttle:cedula-consulta')
+    ->name('supervision.cedula');
+
+Route::post('s/{token}/dinamizador', [SupervisionController::class, 'dinamizador'])
+    ->middleware('throttle:cedula-consulta')
+    ->name('supervision.dinamizador');
+
+Route::post('s/{token}', [SupervisionController::class, 'registrar'])
+    ->middleware('throttle:turno-marca')
+    ->name('supervision.registrar');
 
 // Un archivo de una derivación desde el Excel del reporte: enlace firmado y con vencimiento.
 Route::get('derivaciones/archivo/{documento}', [AdminDerivacionController::class, 'archivo'])

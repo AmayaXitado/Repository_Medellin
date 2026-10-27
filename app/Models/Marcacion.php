@@ -50,6 +50,8 @@ class Marcacion extends Model
         'fuera_de_zona',
         'fuera_de_turno',
         'sin_ubicacion',
+        'epp_recibidos',
+        'ubicacion_imprecisa',
         'ip',
         'agente',
         'anulada_at',
@@ -74,6 +76,8 @@ class Marcacion extends Model
             'fuera_de_zona' => 'boolean',
             'fuera_de_turno' => 'boolean',
             'sin_ubicacion' => 'boolean',
+            'epp_recibidos' => 'boolean',
+            'ubicacion_imprecisa' => 'boolean',
             'anulada_at' => 'datetime',
         ];
     }

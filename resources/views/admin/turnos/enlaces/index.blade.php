@@ -7,7 +7,7 @@
     <div>
         <h1 class="text-lg font-semibold text-[var(--text)]">Enlaces por cédula</h1>
         <p class="text-sm text-[var(--muted)]">
-            Turnos y derivaciones: quien lo abre se identifica con su cédula. Compártelo por WhatsApp o imprime su QR.
+            Turnos, derivaciones y supervisión: quien lo abre se identifica con su cédula. Compártelo por WhatsApp o imprime su QR.
         </p>
     </div>
 
@@ -42,7 +42,7 @@
                         @endif
                     </td>
                     <td class="px-4 py-3 text-[var(--text)]">{{ $enlace->etiquetaTipo() }}</td>
-                    <td class="px-4 py-3 text-[var(--muted)]">{{ $enlace->esDerivacion() ? $enlace->derivaciones_count : $enlace->marcaciones_count }}</td>
+                    <td class="px-4 py-3 text-[var(--muted)]">{{ $enlace->esDerivacion() ? $enlace->derivaciones_count : ($enlace->esSupervision() ? $enlace->supervisiones_count : $enlace->marcaciones_count) }}</td>
                     <td class="px-4 py-3 text-[var(--muted)]">
                         {{ $enlace->created_at->format('d/m/Y') }}
                         <span class="block text-xs">{{ $enlace->creador?->name }}</span>

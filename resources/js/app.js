@@ -6,6 +6,7 @@ import './qr';
 import './turno';
 import './pasos';
 import './contador';
+import './supervision';
 import './select-buscable';
 import './navegar-documentos';
 import './selects-dependientes';

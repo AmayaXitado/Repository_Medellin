@@ -156,13 +156,20 @@ function iniciar(campo) {
             mostrarSaludo('Hola, ' + datos.saludo);
             abrirRegistro(false);
             recordar(cedula);
+        } else if (datos.aviso) {
+            // Registrada pero no puede seguir (no está en turno, otro cargo): se dice por qué
+            // y no se abre el registro, que no le sirve.
+            mostrarSaludo('');
+            abrirRegistro(false);
+            avisar(datos.aviso);
         } else {
             mostrarSaludo('');
             abrirRegistro(true);
 
             // Un formulario sin registro (derivaciones) no deja entrar a quien no está.
+            // El servidor puede decir por qué no (supervisión: «solo para el Apoyo…»).
             if (registro.children.length === 0) {
-                avisar('Esta identificación no está registrada. Pide a Coordinación que te registre.');
+                avisar(datos.aviso || 'Esta identificación no está registrada. Pide a Coordinación que te registre.');
             }
         }
     };
