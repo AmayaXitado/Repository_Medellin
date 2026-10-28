@@ -171,7 +171,7 @@ class Componentes extends Component implements HasActions, HasSchemas, HasTable
                     self::casilla('foto_obligatoria', 'Foto obligatoria', 'Con sello de hora y ubicación.'),
                     self::casilla('ubicacion_obligatoria', 'Ubicación obligatoria', 'Si no, marca igual y queda como novedad.'),
                     self::casilla('autoregistro', 'Se registran solas', 'La primera vez llenan sus datos. Si no, Coordinación las registra antes.'),
-                    self::regla('precision_minima_m', 'Precisión mínima (m)', 50, 20000, 'Una ubicación con más error que esto (p. ej. un iPhone con «Ubicación precisa» apagada) se toma como imprecisa: no se juzga fuera de zona y queda como novedad.'),
+                    self::regla('precision_minima_m', 'Precisión mínima (m)', 50, 20000, 'Una ubicación con más error que esto (p. ej. un iPhone con «Ubicación exacta» apagada) se toma como imprecisa: no se juzga fuera de zona y queda como novedad.'),
                 ]),
 
             Section::make('Nodos')

@@ -74,6 +74,9 @@
         Las cuentas las crea Coordinación o Administración. Si dice que tu usuario no está registrado o que tu cuenta está desactivada, comunícate con ellos.
     </div>
 
+    <h3>Mi perfil</h3>
+    <p>En el menú de tu cuenta → <strong>Mi perfil</strong>: tu nombre y cargo, la apariencia (claro, oscuro o la del sistema, que te acompaña en cualquier equipo) y el cambio de contraseña. El documento y el rol los cambia quien administra los usuarios.</p>
+
     <h3>La pantalla</h3>
     <ul>
         <li><strong>Menú lateral:</strong> los módulos agrupados (Turnos, Atención territorial, Administración). Cada grupo se pliega y el menú recuerda cómo lo dejaste. En el celular se abre con el botón <span class="tecla">☰</span>.</li>
@@ -171,7 +174,8 @@
     <h3>Lo que ve quien envía</h3>
     <ul>
         <li>Un formulario sencillo en el celular: su identificación o sus datos, y los archivos.</li>
-        <li><strong>Tomar foto</strong> abre la cámara: la foto lleva un <strong>sello</strong> con la hora en grande, la fecha, la dirección, las coordenadas y el tipo (Evidencia, Turno, Derivación, Apoyo Territorial). <strong>Elegir archivo</strong> sube desde la galería, sin sello.</li>
+        <li>Si el enlace es de un componente (por cédula), la persona tiene que estar <strong>en turno</strong>: con su entrada marcada. Si no, ve «Para enviar evidencias tienes que estar en turno: marca tu entrada primero.». Las personas nuevas se registran marcando su primera entrada.</li>
+        <li><strong>Tomar foto</strong> abre la cámara: la foto lleva un <strong>sello</strong> con la hora en grande, la fecha, la dirección, las coordenadas y el tipo (Evidencia, Turno, Derivación, Apoyo Territorial). <strong>Elegir archivo</strong> sube desde la galería, sin sello (en los enlaces de turnos y de supervisión no existe: solo cámara).</li>
         <li>Al terminar recibe una confirmación con lo que envió. A quien creó el enlace le llega un aviso por la campana.</li>
     </ul>
     <div class="nota">
@@ -201,7 +205,7 @@
         <li>Al entrar, responde si <strong>recibió los elementos de protección personal (EPP)</strong>: Sí o No. Un «No» llega a Novedades como <strong>Sin EPP</strong>.</li>
         <li>Toma la foto con <strong>Tomar foto</strong> (solo con la cámara, no desde la galería) y toca <strong>Registrar marca</strong>. El sistema decide si es <strong>entrada</strong> o <strong>salida</strong>.</li>
     </ol>
-    <p><strong>Si el teléfono da una ubicación aproximada</strong> (frecuente en iPhone con «Ubicación precisa» apagada), el enlace lo avisa y dice cómo activarla; se puede registrar de todos modos y queda la novedad <strong>Ubicación imprecisa</strong> en lugar de un «fuera de zona» falso. En iPhone: <span class="ruta">Ajustes → Privacidad y seguridad → Localización → Sitios web de Safari → Ubicación precisa</span>.</p>
+    <p><strong>Si el teléfono da una ubicación aproximada</strong> (frecuente en iPhone con «Ubicación exacta» apagada), el enlace lo avisa y dice cómo activarla; se puede registrar de todos modos y queda la novedad <strong>Ubicación imprecisa</strong> en lugar de un «fuera de zona» falso. En iPhone: <span class="ruta">Ajustes → Privacidad y seguridad → Localización → Sitios web de Safari → «Al usar la app» y «Ubicación exacta»</span>.</p>
     <ul>
         <li>Al marcar la entrada, el sistema <strong>reconoce el turno por la hora</strong> (por ejemplo, 4:55 → N1; 20:50 → N7; domingo o festivo 6:05 → C13) y anota si llegó tarde.</li>
         <li>Cuando completa su turno del día, el enlace ya no le deja volver a marcar.</li>
@@ -216,6 +220,7 @@
 
     <h3>Personas de campo</h3>
     <p>En <span class="ruta">Turnos → Personas de campo</span> está todo el personal, con buscador por nombre o cédula. Quienes se registraron solas por el enlace aparecen como <strong>pendientes de verificar</strong>: revisa sus datos y verifícalas.</p>
+    <p><strong>Muchas a la vez:</strong> <strong>Descargar Excel de carga</strong> trae la plantilla (con una hoja de valores válidos y otra de instrucciones). Se llena la hoja «Personas» desde la fila 2 y se sube con <strong>Carga masiva</strong>. Es todo o nada: si una fila tiene un error, no se carga ninguna y se dice qué fila corregir. Solo se lee la primera hoja.</p>
 
     <h3>Lo habitual de cada persona</h3>
     <p>Al <strong>editar</strong> a una persona, además de componente, nodo y cargo:</p>
@@ -260,6 +265,8 @@
             <tr><td><strong>Horas extra / Turno corto</strong></td><td>Trabajó más o menos de la jornada (descontado el descanso).</td><td>Aprobar o rechazar; o corregir la hora si fue un error.</td></tr>
             <tr><td><strong>Sin salida</strong></td><td>No marcó salida y el turno se cerró solo.</td><td>Corregir la hora de salida real.</td></tr>
             <tr><td><strong>Sin ubicación / Fuera de zona</strong></td><td>Marcó sin GPS o lejos de su nodo.</td><td>Revisar y decidir.</td></tr>
+            <tr><td><strong>Ubicación imprecisa</strong></td><td>El teléfono dio una ubicación aproximada (iPhone con «Ubicación exacta» apagada).</td><td>Pedirle que la active; aprobar si estaba en su punto.</td></tr>
+            <tr><td><strong>Sin EPP</strong></td><td>Al entrar respondió que no recibió los elementos de protección personal.</td><td>Entregarlos y aprobar o rechazar con comentario.</td></tr>
         </tbody>
     </table>
 
@@ -283,7 +290,7 @@
     <h3>El formulario (para el personal de campo)</h3>
     <p>Se comparte con un enlace por cédula de tipo <strong>Derivaciones</strong>. Va por pasos, con barra de progreso:</p>
     <ol class="pasos">
-        <li><strong>Quién reporta:</strong> la cédula (tiene que estar registrada).</li>
+        <li><strong>Quién reporta:</strong> la cédula (tiene que estar registrada y <strong>en turno</strong>, con su entrada marcada).</li>
         <li><strong>Requerimiento:</strong> nodo, fecha y hora, entidad que solicita, soporte (PDF o foto), descripción y ubicación.</li>
         <li><strong>Evidencias:</strong> tres fotos obligatorias, con sello de hora y lugar.</li>
     </ol>
@@ -331,13 +338,19 @@
 
     <h3>Componentes y nodos</h3>
     <p>Crear componentes (Calle, Básica…), sus nodos y la lista de cargos, y ajustar sus reglas: jornada, tolerancia, descanso, foto u ubicación obligatoria, autorregistro, turnos por día y cuándo reconocer el turno o avisar «no registró entrada». Todo en un panel lateral: <strong>Nuevo componente</strong> o <strong>Editar</strong> en su fila. Los nodos se agregan, se ordenan arrastrando y se desactivan ahí mismo (no se borran).</p>
+    <ul>
+        <li><strong>Cargos que supervisan:</strong> los cargos que pueden registrar supervisiones (en Calle, «Apoyo al control territorial»). Tiene que estar escrito igual que en «Cargos».</li>
+        <li><strong>Precisión mínima (m):</strong> una ubicación con más error que esto (500 m de fábrica) se toma como imprecisa: no cuenta como «fuera de zona» y queda la novedad «Ubicación imprecisa».</li>
+    </ul>
 
     <h3>Usuarios</h3>
     <ol class="pasos">
         <li>Ve a <span class="ruta">Administración → Usuarios</span> → <strong>Dar acceso</strong>.</li>
         <li>Nombre, número de documento (es su usuario) y correo.</li>
         <li>Asigna el <strong>rol</strong> en cada dependencia. Puedes desactivar a alguien sin borrarlo.</li>
+        <li>Para un usuario de Edición, marca <strong>Aprueba novedades de turno</strong> si debe aprobarlas (Coordinación y Administración siempre pueden).</li>
     </ol>
+    <p>En la lista se busca por nombre, correo o documento (con o sin puntos) y se filtra por rol, estado o «Aprueba novedades». <strong>Revocar</strong> quita el acceso a esta dependencia sin borrar la cuenta; pide confirmación. Nadie gestiona a quien tiene un rol mayor que el suyo.</p>
 
     <h3>Tipos de documento</h3>
     <p>Las categorías para clasificar documentos (Acta, Informe, Contrato…) y filtrar en el explorador.</p>
@@ -364,9 +377,12 @@
     <ul>
         <li>Alguien comentó un archivo tuyo, o respondió donde comentaste.</li>
         <li>Llegaron archivos por un enlace de carga que creaste.</li>
-        <li>Novedades de turno, incluida «No registró entrada» (líderes y Coordinación).</li>
+        <li>Novedades de turno, incluida «No registró entrada» (líderes y Coordinación; las demás, a quien las aprueba).</li>
+        <li>Derivaciones: al llegar y cada 30 minutos mientras sigan sin respuesta (líderes). Cada recordatorio reemplaza al anterior y desaparecen al responderla.</li>
+        <li>Supervisiones con incidencia relevante o crítica, casos escalados o calificación global de 1 o 2 (líderes y Coordinación).</li>
         <li>Avisos de Administración y las novedades de cada nueva versión.</li>
     </ul>
+    <p>En <span class="ruta">Notificaciones</span> se separan por pestañas: <strong>Derivaciones · Supervisión · Turnos · Documentos · Avisos</strong>, cada una con su número de sin leer.</p>
 </section>
 
 {{-- ============================================================ --}}
