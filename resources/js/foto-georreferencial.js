@@ -60,9 +60,9 @@ const COMO_PERMITIR = esSafari
  * (y a veces Android) entrega una ubicación aproximada, con kilómetros de error.
  */
 export const COMO_ACTIVAR_PRECISA = esSafari
-    ? 'Ajustes → Privacidad y seguridad → Localización → Sitios web de Safari → activa «Ubicación precisa».'
+    ? 'Ajustes → Privacidad y seguridad → Localización → Sitios web de Safari → «Al usar la app» y activa «Ubicación exacta».'
     : esIphone
-        ? 'Ajustes → busca este navegador (Chrome, Opera…) → Ubicación → activa «Ubicación precisa».'
+        ? 'Ajustes → busca este navegador (Chrome, Opera…) → Ubicación → «Al usar la app» y activa «Ubicación exacta».'
     : esAndroid
         ? 'Ajustes → Ubicación → activa «Usar ubicación precisa» (o «Precisión de la ubicación de Google»).'
         : 'Activa el GPS o conéctate a una red Wi-Fi.';

@@ -37,7 +37,7 @@ Cada viñeta, corta y para quien no programa.
 - Supervisión territorial (Atención territorial → Supervisión): el Apoyo al control territorial registra cada visita con su cédula, por un enlace o QR de tipo «Supervisión territorial»: punto crítico, dinamizadores por cédula, nueve criterios de 1 a 5, hallazgos y dos evidencias tomadas con la cámara. Lista con filtros, detalle y Excel con las fotos. El cargo que puede supervisar se elige en Componentes y nodos («Cargos que supervisan»).
 - Al marcar entrada se responde «¿Recibiste los elementos de protección personal (EPP)?». Un «No» llega como novedad «Sin EPP». La respuesta sale en Marcaciones y en el reporte.
 - La foto del turno se toma solo con la cámara: ya no se puede elegir de la galería.
-- Ubicación aproximada (iPhone con «Ubicación precisa» apagada): al marcar, el teléfono avisa cómo activarla y deja «Registrar de todos modos»; la marca ya no sale como «fuera de zona» falsa, sino como novedad «Ubicación imprecisa». Se ajusta en Componentes y nodos («Precisión mínima»).
+- Ubicación aproximada (iPhone con «Ubicación exacta» apagada): al marcar, el teléfono avisa cómo activarla y deja «Registrar de todos modos»; la marca ya no sale como «fuera de zona» falsa, sino como novedad «Ubicación imprecisa». Se ajusta en Componentes y nodos («Precisión mínima»).
 - Si el turno exige ubicación y el teléfono no la da, el enlace avisa antes de enviar y no se pierde la foto tomada.
 - Los nombres de archivo muy largos se parten en varias líneas y ya no se salen de la tarjeta.
 - Para registrar una supervisión, una derivación o enviar evidencias con la cédula hay que estar en turno (entrada marcada). En supervisión, los dinamizadores también. Si no, el formulario dice «marca tu entrada primero».
