@@ -291,6 +291,39 @@ class MarcacionController extends Controller
         return back()->with('exito', 'Hora corregida. La marca anterior queda anulada en el historial.');
     }
 
+    /** DOC-18: entrada ↔ salida, a la misma hora. Para enderezar un turno invertido. */
+    public function cambiarTipo(Request $request, Marcacion $marcacion, Marcador $marcador): RedirectResponse
+    {
+        $this->authorize('anular', $marcacion);
+
+        $motivo = $request->validate(['motivo' => ['required', 'string', 'min:5', 'max:500']])['motivo'];
+        $tipo = $marcacion->esEntrada() ? TipoMarcacion::Salida : TipoMarcacion::Entrada;
+
+        try {
+            $marcador->corregir($marcacion, $marcacion->marcada_at, $motivo, $request->user(), $tipo);
+        } catch (TurnoCerrado $e) {
+            return back()->withErrors(['motivo' => $e->getMessage()]);
+        }
+
+        return back()->with('exito', "Ahora es una {$tipo->etiqueta()}. La marca anterior queda anulada en el historial.");
+    }
+
+    /** DOC-18: quitar una marca de más. Queda tachada en el historial y deja de contar. */
+    public function anular(Request $request, Marcacion $marcacion, Marcador $marcador): RedirectResponse
+    {
+        $this->authorize('anular', $marcacion);
+
+        $motivo = $request->validate(['motivo' => ['required', 'string', 'min:5', 'max:500']])['motivo'];
+
+        try {
+            $marcador->anular($marcacion, $motivo, $request->user());
+        } catch (TurnoCerrado $e) {
+            return back()->withErrors(['motivo' => $e->getMessage()]);
+        }
+
+        return back()->with('exito', 'Marca anulada. Ya no cuenta, y queda en el historial con tu nombre y el motivo.');
+    }
+
     /** Del primer día del mes hasta hoy, si no se pide otro rango. */
     protected function rango(Request $request): array
     {

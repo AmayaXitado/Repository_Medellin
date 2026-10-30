@@ -139,6 +139,7 @@ class Componentes extends Component implements HasActions, HasSchemas, HasTable
                     self::regla('horas_max_turno', 'Duración máxima del turno (horas)', 1, 24, 'Una entrada sin salida pasado este tiempo se cierra sola y queda como novedad.')
                         ->gte('config.jornada_horas'),
                     self::regla('turnos_por_dia', 'Turnos por día', 1, 6, 'Cumplidos, el enlace ya no deja marcar ese día.'),
+                    self::regla('salida_minima_min', 'Salida mínima (minutos)', 0, 240, 'Volver a marcar antes de esto, después de la entrada, no cuenta como salida: es un reintento. Si alguien se va antes, Coordinación agrega la salida.'),
                 ]),
 
             Section::make('Descanso no remunerado')

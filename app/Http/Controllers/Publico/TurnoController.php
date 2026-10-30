@@ -67,7 +67,7 @@ class TurnoController extends Controller
         return response()->json([
             'existe' => true,
             'saludo' => $colaborador->saludo(),
-            // 'entrada', 'salida', o 'cerrado' si ya hizo su turno del día.
+            // 'entrada', 'salida', 'reciente' si acaba de entrar, o 'cerrado' si ya hizo su turno del día.
             'accion' => $this->marcador->estadoParaMarcar($colaborador, $enlace->componente),
         ]);
     }

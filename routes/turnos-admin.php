@@ -56,6 +56,8 @@ Route::get('marcaciones', [MarcacionController::class, 'index'])->name('marcacio
 Route::get('marcaciones/exportar', [MarcacionController::class, 'exportar'])->name('marcaciones.exportar');
 Route::post('colaboradores/{colaborador}/marcaciones', [MarcacionController::class, 'store'])->name('marcaciones.store');
 Route::patch('marcaciones/{marcacion}/corregir', [MarcacionController::class, 'corregir'])->name('marcaciones.corregir');
+Route::patch('marcaciones/{marcacion}/tipo', [MarcacionController::class, 'cambiarTipo'])->name('marcaciones.tipo');
+Route::patch('marcaciones/{marcacion}/anular', [MarcacionController::class, 'anular'])->name('marcaciones.anular');
 Route::get('novedades', [NovedadController::class, 'index'])->name('novedades.index');
 Route::get('novedades/exportar', [NovedadController::class, 'exportar'])->name('novedades.exportar');
 Route::patch('novedades/{novedad}', [NovedadController::class, 'revisar'])->name('novedades.revisar');

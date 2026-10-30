@@ -120,7 +120,7 @@
                     <td class="px-4 py-3 text-right">
                         @if($marcacion->estaAnulada())
                             <span class="text-xs text-[var(--muted)]" title="{{ $marcacion->motivo_anulacion }}">
-                                Corregida por {{ $marcacion->anulador?->name ?? '—' }}
+                                {{ $marcacion->reemplazada_por_id ? 'Corregida' : 'Anulada' }} por {{ $marcacion->anulador?->name ?? '—' }}
                             </span>
                         @else
                             @include('admin.turnos._corregir', ['marcacion' => $marcacion])
