@@ -159,8 +159,10 @@ la hora que cuenta es la del servidor (la del teléfono se guarda aparte).
 **RN-17. Las marcaciones no se editan.** Corregir anula la original y crea otra con
 motivo y autor. No se permite una salida antes de su entrada, una hora del futuro ni
 corregir dos veces la misma marca. Las novedades que dependían de ella pasan a
-«Corregida» y el turno se vuelve a juzgar.
-*Origen:* F-03 §1, F-04 §2 · *Código:* `Marcador::corregir`, `Marcacion::vigentes`.
+«Corregida» y el turno se vuelve a juzgar. Coordinación y Administración además pueden
+**cambiarle el tipo** (entrada ↔ salida, misma hora, sin exigir coherencia con las vecinas) o
+**anularla** sin reemplazo; tampoco se borra: queda tachada con quién y por qué (DOC-18).
+*Origen:* F-03 §1, F-04 §2, DOC-18 · *Código:* `Marcador::corregir`, `Marcador::anular`, `Marcacion::vigentes`.
 
 **RN-18. Sin señal se marca igual.** Sin ubicación se marca y queda la novedad «Sin
 ubicación», salvo que el componente exija ubicación. Fuera del radio del nodo: «Fuera de
@@ -291,6 +293,13 @@ guarda y cuenta como ubicación, pero no se juzga «fuera de zona»: queda la no
 «Ubicación imprecisa». El teléfono avisa antes de enviar, con las instrucciones de su
 sistema, y deja «Registrar de todos modos».
 *Origen:* DOC-15 · *Código:* `Marcador::marcar`, `resources/js/turno.js`.
+
+**RN-47. Salida mínima.** Una marca antes de la «Salida mínima» del componente (30 min de
+fábrica) después de la última marca —entrada o salida— no cambia el tipo: es un reintento de
+quien creyó que la anterior no llegó. Se responde «Ya estaba registrada tu entrada/salida» y
+no se crea nada; al poner la cédula, el botón dice «Tu marca ya quedó registrada ✓» y no deja
+enviar. Una salida o entrada real antes de ese tiempo la agrega Coordinación.
+*Origen:* DOC-17 · *Código:* `Marcador::esReintento`, `resources/js/turno.js`.
 
 ### Comunicación
 

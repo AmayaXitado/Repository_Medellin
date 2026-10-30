@@ -45,6 +45,9 @@ class Componente extends Model
         'sin_descanso_hasta_h' => 4,
         'descanso_completo_desde_h' => 6,
         'horas_max_turno' => 14,
+        // DOC-17: una salida a menos de esto de la entrada es un reintento
+        // (la entrada llegó y el teléfono no se enteró), no una salida.
+        'salida_minima_min' => 30,
         // Cuántos turnos puede abrir una persona en un mismo día. Cumplidos,
         // el enlace ya no la deja marcar: lo que falte lo corrige Coordinación.
         'turnos_por_dia' => 1,
