@@ -63,13 +63,19 @@ class Marcador
     }
 
     /**
-     * Lo que puede hacer ahora en ese componente: 'entrada', 'salida', o
+     * Lo que puede hacer ahora en ese componente: 'entrada', 'salida',
+     * 'reciente' si acaba de marcar (DOC-17), o
      * 'cerrado' si ya hizo los turnos que permite el día (regla
      * turnos_por_dia). Cerrado, lo que haya que corregir lo corrige
      * Coordinación o Edición, no la persona marcando otra vez.
      */
     public function estadoParaMarcar(Colaborador $colaborador, Componente $componente): string
     {
+        // DOC-17: recién marcó; otro botón aquí solo invita al error.
+        if (($ultima = $this->ultimaDe($colaborador)) && $this->esReintento($ultima, $componente)) {
+            return 'reciente';
+        }
+
         if ($this->estadoDe($colaborador)) {
             return TipoMarcacion::Salida->value;
         }
@@ -83,6 +89,26 @@ class Marcador
             ->count();
 
         return $turnosHoy >= (int) $componente->regla('turnos_por_dia') ? 'cerrado' : TipoMarcacion::Entrada->value;
+    }
+
+    protected function ultimaDe(Colaborador $colaborador): ?Marcacion
+    {
+        return Marcacion::withoutGlobalScope(DependenciaScope::class)
+            ->vigentes()
+            ->where('colaborador_id', $colaborador->id)
+            ->latest('marcada_at')
+            ->first();
+    }
+
+    /**
+     * DOC-17 (RN-47): una marca de hace menos de salida_minima_min. Otra marca
+     * entonces es un reintento —la anterior llegó y el teléfono no se enteró—,
+     * no el paso de entrada a salida ni al revés (eso invertía el turno de
+     * noche). Si de verdad salió o volvió antes, lo agrega Coordinación.
+     */
+    protected function esReintento(Marcacion $ultima, Componente $componente): bool
+    {
+        return $ultima->marcada_at->diffInMinutes(now()) < (int) $componente->regla('salida_minima_min');
     }
 
     /**
@@ -102,17 +128,13 @@ class Marcador
                 // el segundo espera y ya ve la marca del primero.
                 Colaborador::withoutGlobalScopes()->whereKey($colaborador->id)->lockForUpdate()->first();
 
-                $ultima = Marcacion::withoutGlobalScope(DependenciaScope::class)
-                    ->vigentes()
-                    ->where('colaborador_id', $colaborador->id)
-                    ->latest('marcada_at')
-                    ->first();
-
-                if ($ultima && $ultima->marcada_at->diffInSeconds(now()) < self::SEGUNDOS_DOBLE_TOQUE) {
-                    return $ultima;
-                }
+                $ultima = $this->ultimaDe($colaborador);
 
                 $componente = $enlace->componente;
+
+                if ($ultima && ($ultima->marcada_at->diffInSeconds(now()) < self::SEGUNDOS_DOBLE_TOQUE || $this->esReintento($ultima, $componente))) {
+                    return $ultima;
+                }
 
                 if ($this->estadoParaMarcar($colaborador, $componente) === 'cerrado') {
                     throw new TurnoCerrado('Ya registraste tu turno de hoy. Si hay un error en la hora, avísale a Coordinación para que lo corrija.');
@@ -228,22 +250,30 @@ class Marcador
      * apunta a la nueva. Las novedades que dependían de ella pasan a
      * «corregida», y el turno se vuelve a juzgar con la hora buena.
      */
-    public function corregir(Marcacion $original, CarbonInterface $hora, string $motivo, User $autor): Marcacion
+    public function corregir(Marcacion $original, CarbonInterface $hora, string $motivo, User $autor, ?TipoMarcacion $tipo = null): Marcacion
     {
         if ($original->estaAnulada()) {
             throw new TurnoCerrado('Esa marca ya se corrigió. Corrige la que la reemplazó.');
         }
 
-        $this->exigirCoherencia($original, $hora);
+        $tipo ??= $original->tipo;
 
-        $nueva = DB::transaction(function () use ($original, $hora, $motivo, $autor) {
+        // DOC-18: cambiar el tipo es para enderezar una secuencia invertida,
+        // donde las vecinas también están mal: ahí solo se exige que no sea futura.
+        if ($tipo === $original->tipo) {
+            $this->exigirCoherencia($original, $hora);
+        } elseif ($hora->isFuture()) {
+            throw new TurnoCerrado('La hora corregida no puede ser del futuro.');
+        }
+
+        $nueva = DB::transaction(function () use ($original, $hora, $motivo, $autor, $tipo) {
             $nueva = Marcacion::create([
                 'dependencia_id' => $original->dependencia_id,
                 'colaborador_id' => $original->colaborador_id,
                 'componente_id' => $original->componente_id,
                 'nodo_id' => $original->nodo_id,
                 'enlace_turno_id' => $original->enlace_turno_id,
-                'tipo' => $original->tipo,
+                'tipo' => $tipo,
                 'marcada_at' => $hora,
                 'origen' => OrigenMarcacion::Manual,
                 'motivo' => "Corrige la {$original->tipo->etiqueta()} del {$original->marcada_at->format('d/m/Y H:i')}: {$motivo}",
@@ -259,23 +289,17 @@ class Marcador
                 'reemplazada_por_id' => $nueva->id,
             ]);
 
-            NovedadTurno::withoutGlobalScopes()
-                ->where(fn ($q) => $q->where('marcacion_id', $original->id)->orWhere('entrada_id', $original->id))
-                ->where('estado', EstadoNovedad::Pendiente->value)
-                ->update([
-                    'estado' => EstadoNovedad::Corregida->value,
-                    'comentario' => "Se corrigió la hora: {$motivo}",
-                    'revisada_por' => $autor->id,
-                    'revisada_at' => now(),
-                ]);
+            $this->cerrarNovedadesDe($original, "Se corrigió la hora: {$motivo}", $autor);
 
             return $nueva;
         });
 
+        $cambio = $tipo === $original->tipo ? '' : " ({$original->tipo->etiqueta()} → {$tipo->etiqueta()})";
+
         $this->auditor->registrar(
             AccionAuditoria::TurnoCorreccion,
             $nueva,
-            "Corrigió la {$original->tipo->etiqueta()} de {$original->colaborador->nombre}: "
+            "Corrigió la {$original->tipo->etiqueta()} de {$original->colaborador->nombre}{$cambio}: "
                 ."{$original->marcada_at->format('d/m/Y H:i')} → {$hora->format('d/m/Y H:i')} ({$motivo})",
             ['anulada' => $original->id],
         );
@@ -289,6 +313,49 @@ class Marcador
         }
 
         return $nueva;
+    }
+
+    /**
+     * DOC-18: quitar una marca que no debió existir (un reintento, una marca
+     * de más). No se borra: queda anulada, sin reemplazo, con quién y por qué,
+     * y deja de contar para el turno y el reporte.
+     */
+    public function anular(Marcacion $marcacion, string $motivo, User $autor): void
+    {
+        if ($marcacion->estaAnulada()) {
+            throw new TurnoCerrado('Esa marca ya está anulada.');
+        }
+
+        DB::transaction(function () use ($marcacion, $motivo, $autor) {
+            $marcacion->update([
+                'anulada_at' => now(),
+                'anulada_por' => $autor->id,
+                'motivo_anulacion' => $motivo,
+            ]);
+
+            $this->cerrarNovedadesDe($marcacion, "Se anuló la marca: {$motivo}", $autor);
+        });
+
+        $this->auditor->registrar(
+            AccionAuditoria::TurnoCorreccion,
+            $marcacion,
+            "Anuló la {$marcacion->tipo->etiqueta()} de {$marcacion->colaborador->nombre} del "
+                ."{$marcacion->marcada_at->format('d/m/Y H:i')} ({$motivo})",
+        );
+    }
+
+    /** Las novedades pendientes que dependían de una marca que ya no vale. */
+    protected function cerrarNovedadesDe(Marcacion $marcacion, string $comentario, User $autor): void
+    {
+        NovedadTurno::withoutGlobalScopes()
+            ->where(fn ($q) => $q->where('marcacion_id', $marcacion->id)->orWhere('entrada_id', $marcacion->id))
+            ->where('estado', EstadoNovedad::Pendiente->value)
+            ->update([
+                'estado' => EstadoNovedad::Corregida->value,
+                'comentario' => $comentario,
+                'revisada_por' => $autor->id,
+                'revisada_at' => now(),
+            ]);
     }
 
     /** Una salida no puede quedar antes de su entrada, ni una entrada después de su salida. */

@@ -189,7 +189,7 @@
                             @endif
                             <span class="ml-auto">
                                 @if($marcacion->estaAnulada())
-                                    <span class="text-xs text-[var(--muted)]" title="{{ $marcacion->motivo_anulacion }}">Corregida</span>
+                                    <span class="text-xs text-[var(--muted)]" title="{{ $marcacion->motivo_anulacion }}">{{ $marcacion->reemplazada_por_id ? 'Corregida' : 'Anulada' }}</span>
                                 @else
                                     @include('admin.turnos._corregir', ['marcacion' => $marcacion])
                                 @endif

@@ -209,6 +209,7 @@
     <ul>
         <li>Al marcar la entrada, el sistema <strong>reconoce el turno por la hora</strong> (por ejemplo, 4:55 → N1; 20:50 → N7; domingo o festivo 6:05 → C13) y anota si llegó tarde.</li>
         <li>Cuando completa su turno del día, el enlace ya no le deja volver a marcar.</li>
+        <li>Si vuelve a marcar antes de 30 minutos de su última marca (porque creyó que no se registró), no cuenta: ve «Tu marca ya quedó registrada». Si de verdad se fue antes, Coordinación agrega la salida. Los 30 minutos se cambian en Componentes y nodos («Salida mínima»).</li>
         <li>Si olvida la salida, el turno se cierra solo al pasar el máximo de horas y queda como novedad «Sin salida».</li>
     </ul>
 </section>
@@ -237,6 +238,7 @@
     <ul>
         <li><strong>Agregar una marca que faltó:</strong> en la ficha, con la hora real y el motivo.</li>
         <li><strong>Corregir hora:</strong> en cualquier marca. La original no se borra: queda anulada en el historial y la nueva la reemplaza.</li>
+        <li><strong>Cambiar a entrada / salida</strong> y <strong>Anular marca</strong> (Coordinación y Administración, dentro de «Corregir hora», con motivo): para un turno invertido o una marca de más. Nada se borra: la marca queda tachada como «Anulada» con tu nombre y el motivo, y deja de contar en el turno y el reporte.</li>
     </ul>
 
     <h3>Tipos de turno y puntos críticos</h3>
@@ -340,6 +342,7 @@
     <p>Crear componentes (Calle, Básica…), sus nodos y la lista de cargos, y ajustar sus reglas: jornada, tolerancia, descanso, foto u ubicación obligatoria, autorregistro, turnos por día y cuándo reconocer el turno o avisar «no registró entrada». Todo en un panel lateral: <strong>Nuevo componente</strong> o <strong>Editar</strong> en su fila. Los nodos se agregan, se ordenan arrastrando y se desactivan ahí mismo (no se borran).</p>
     <ul>
         <li><strong>Cargos que supervisan:</strong> los cargos que pueden registrar supervisiones (en Calle, «Apoyo al control territorial»). Tiene que estar escrito igual que en «Cargos».</li>
+        <li><strong>Salida mínima (minutos):</strong> volver a marcar antes de esto, después de la última marca, es un reintento: no cambia de entrada a salida ni al revés (30 de fábrica).</li>
         <li><strong>Precisión mínima (m):</strong> una ubicación con más error que esto (500 m de fábrica) se toma como imprecisa: no cuenta como «fuera de zona» y queda la novedad «Ubicación imprecisa».</li>
     </ul>
 
