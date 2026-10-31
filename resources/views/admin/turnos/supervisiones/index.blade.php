@@ -82,7 +82,7 @@
                 @php($color = fn ($n) => $n >= 4 ? 'text-[var(--success)]' : ($n >= 3 ? 'text-[var(--warning)]' : 'text-[var(--danger)]'))
                 <tr>
                     <td class="px-4 py-3 text-[var(--muted)]">{{ $s->id }}</td>
-                    <td class="whitespace-nowrap px-4 py-3 text-[var(--text)]">{{ $s->visita_at->format('d/m/Y · H:i') }}</td>
+                    <td class="whitespace-nowrap px-4 py-3 text-[var(--text)]">{{ $s->visita_at->format('d/m/Y').' · '.$s->visita_at->hora() }}</td>
                     <td class="px-4 py-3 text-[var(--text)]">
                         {{ $s->puntoNombre() }}
                         <span class="block text-xs text-[var(--muted)]">{{ $s->nodo?->nombre }}{{ $s->lat === null ? ' · sin ubicación' : '' }}</span>

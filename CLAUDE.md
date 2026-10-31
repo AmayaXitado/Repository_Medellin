@@ -86,6 +86,8 @@ Desde ahora:
   personales al navegador; solo el saludo recortado. Las URL de los QR impresos no cambian.
 - Cambios de base de datos solo con migraciones. Notificaciones: canal `database`, con
   `mensaje` y `url` relativa.
+- Horas en pantalla y en mensajes en 12 h: `->hora()` («5:09 p. m.») y `->fechaHora()`
+  (macros en `AppServiceProvider`). Los Excel para Nómina y los `datetime-local` siguen en 24 h.
 - Textos de la interfaz en español claro, para quien no programa. Colores con las variables
   de `resources/css/app.css` (`--primary`, `--card`, `--border`…), en claro y oscuro.
 

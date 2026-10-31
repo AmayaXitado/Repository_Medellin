@@ -234,7 +234,7 @@ class Marcador
         $this->auditor->registrar(
             AccionAuditoria::TurnoCorreccion,
             $marcacion,
-            "Agregó una {$tipo->etiqueta()} de {$colaborador->nombre} del {$cuando->format('d/m/Y H:i')}: {$motivo}",
+            "Agregó una {$tipo->etiqueta()} de {$colaborador->nombre} del {$cuando->fechaHora()}: {$motivo}",
         );
 
         if ($tipo === TipoMarcacion::Salida) {
@@ -276,7 +276,7 @@ class Marcador
                 'tipo' => $tipo,
                 'marcada_at' => $hora,
                 'origen' => OrigenMarcacion::Manual,
-                'motivo' => "Corrige la {$original->tipo->etiqueta()} del {$original->marcada_at->format('d/m/Y H:i')}: {$motivo}",
+                'motivo' => "Corrige la {$original->tipo->etiqueta()} del {$original->marcada_at->fechaHora()}: {$motivo}",
                 'registrada_por' => $autor->id,
                 // La ubicación y la foto eran de la marca original: siguen ahí.
                 'sin_ubicacion' => true,
@@ -300,7 +300,7 @@ class Marcador
             AccionAuditoria::TurnoCorreccion,
             $nueva,
             "Corrigió la {$original->tipo->etiqueta()} de {$original->colaborador->nombre}{$cambio}: "
-                ."{$original->marcada_at->format('d/m/Y H:i')} → {$hora->format('d/m/Y H:i')} ({$motivo})",
+                ."{$original->marcada_at->fechaHora()} → {$hora->fechaHora()} ({$motivo})",
             ['anulada' => $original->id],
         );
 
@@ -340,7 +340,7 @@ class Marcador
             AccionAuditoria::TurnoCorreccion,
             $marcacion,
             "Anuló la {$marcacion->tipo->etiqueta()} de {$marcacion->colaborador->nombre} del "
-                ."{$marcacion->marcada_at->format('d/m/Y H:i')} ({$motivo})",
+                ."{$marcacion->marcada_at->fechaHora()} ({$motivo})",
         );
     }
 
@@ -369,7 +369,7 @@ class Marcador
             $entrada = $this->vecina($original, TipoMarcacion::Entrada, antes: true);
 
             if ($entrada && $hora->lte($entrada->marcada_at)) {
-                throw new TurnoCerrado("La salida no puede quedar antes de la entrada ({$entrada->marcada_at->format('d/m/Y H:i')}).");
+                throw new TurnoCerrado("La salida no puede quedar antes de la entrada ({$entrada->marcada_at->fechaHora()}).");
             }
 
             return;
@@ -378,7 +378,7 @@ class Marcador
         $salida = $this->salidaDe($original);
 
         if ($salida && $hora->gte($salida->marcada_at)) {
-            throw new TurnoCerrado("La entrada no puede quedar después de la salida ({$salida->marcada_at->format('d/m/Y H:i')}).");
+            throw new TurnoCerrado("La entrada no puede quedar después de la salida ({$salida->marcada_at->fechaHora()}).");
         }
     }
 
@@ -441,7 +441,7 @@ class Marcador
             $this->auditor->registrar(
                 AccionAuditoria::TurnoCierreAutomatico,
                 $salida,
-                "Cerró el turno de {$entrada->colaborador->nombre} sin salida (entró el {$entrada->marcada_at->format('d/m/Y H:i')})",
+                "Cerró el turno de {$entrada->colaborador->nombre} sin salida (entró el {$entrada->marcada_at->fechaHora()})",
             );
 
             $this->novedades->evaluar($salida);
@@ -497,7 +497,7 @@ class Marcador
         $documento = Documento::create([
             'dependencia_id' => $componente->dependencia_id,
             'carpeta_id' => $carpeta->id,
-            'nombre' => "{$tipo->etiqueta()} · {$colaborador->nombre} · {$cuando->format('d/m/Y H:i')}",
+            'nombre' => "{$tipo->etiqueta()} · {$colaborador->nombre} · {$cuando->fechaHora()}",
             'fecha_documento' => $cuando->toDateString(),
         ]);
 

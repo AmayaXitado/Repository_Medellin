@@ -234,10 +234,13 @@
     <h3>Ausencias: descanso, vacaciones, incapacidad, permiso</h3>
     <p>En la ficha de la persona, tarjeta <strong>Turno y ausencias</strong> → <strong>Registrar ausencia</strong>: elige el código (D, VAC, I, P, PNR…) y las fechas desde y hasta. Esos días no se la espera y no sale como falta.</p>
 
+    <h3>Los turnos en la ficha</h3>
+    <p>La ficha de la persona muestra sus turnos <strong>por quincena</strong> (1–15 y 16–fin de mes), con flechas ‹ › para ir a otras. Arriba, el resumen: turnos, horas trabajadas, novedades pendientes y correcciones. Cada fila es un turno: <em>entrada → salida</em>, las horas trabajadas (sin el descanso), el nodo, el EPP y sus novedades (⚠ pendiente, ✓ aprobada, ✕ rechazada). Una salida del día siguiente dice «(+1)»; de más días, su fecha. «en turno» es que aún no ha salido; «sin salida», que le faltó. Una marca <strong>sin pareja</strong> aparece en amarillo arriba: casi siempre sobra o es del otro tipo. Para corregir, toca la hora. Lo corregido o anulado no ocupa filas: está en <strong>Historial de correcciones de la quincena</strong>, con quién y el motivo.</p>
+
     <h3>Marcas que faltaron o con error</h3>
     <ul>
         <li><strong>Agregar una marca que faltó:</strong> en la ficha, con la hora real y el motivo.</li>
-        <li><strong>Corregir hora:</strong> en cualquier marca. La original no se borra: queda anulada en el historial y la nueva la reemplaza.</li>
+        <li><strong>Corregir hora:</strong> toca la hora de la marca. La original no se borra: queda anulada en el historial y la nueva la reemplaza.</li>
         <li><strong>Cambiar a entrada / salida</strong> y <strong>Anular marca</strong> (Coordinación y Administración, dentro de «Corregir hora», con motivo): para un turno invertido o una marca de más. Nada se borra: la marca queda tachada como «Anulada» con tu nombre y el motivo, y deja de contar en el turno y el reporte.</li>
     </ul>
 

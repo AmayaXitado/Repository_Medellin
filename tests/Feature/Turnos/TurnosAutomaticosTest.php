@@ -150,7 +150,7 @@ class TurnosAutomaticosTest extends TestCase
         $this->assertTrue($novedad->colaborador->is($falta));
         $this->assertSame('2026-10-20', $novedad->fecha->toDateString());
         $this->assertNull($novedad->marcacion_id);
-        $this->assertStringContainsString('N1 a las 05:00', $novedad->detalle);
+        $this->assertStringContainsString('N1 a las 5:00 a. m.', $novedad->detalle);
 
         Notification::assertSentTo($editor, NovedadTurnoDetectada::class);
         Notification::assertSentTo($coordinador, NovedadTurnoDetectada::class);
@@ -170,7 +170,7 @@ class TurnosAutomaticosTest extends TestCase
         $this->marcar($persona, '2026-10-20 06:10');
 
         $this->assertSame('corregida', $aviso->fresh()->estado->value);
-        $this->assertStringContainsString('06:10', $aviso->fresh()->comentario);
+        $this->assertStringContainsString('6:10 a. m.', $aviso->fresh()->comentario);
         $this->assertSame(70, NovedadTurno::withoutGlobalScopes()->where('tipo', TipoNovedad::Tardanza->value)->sole()->minutos);
     }
 

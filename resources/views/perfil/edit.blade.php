@@ -54,7 +54,7 @@
                     @endif
                     <div class="flex justify-between gap-2">
                         <dt class="text-[var(--muted)]">Último acceso</dt>
-                        <dd class="text-[var(--text)]">{{ $yo->ultimo_acceso_at?->format('d/m/Y H:i') ?? '—' }}</dd>
+                        <dd class="text-[var(--text)]">{{ $yo->ultimo_acceso_at?->fechaHora() ?? '—' }}</dd>
                     </div>
                 </dl>
                 <p class="mt-4 text-xs text-[var(--muted)]">El documento y el rol los cambia quien administra los usuarios.</p>

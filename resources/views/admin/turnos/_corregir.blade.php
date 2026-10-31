@@ -14,7 +14,7 @@
           class="mt-2 flex w-72 flex-col gap-2 rounded-lg bg-[var(--card-soft)] p-3 ring-1 ring-[var(--border)]">
         @csrf @method('PATCH')
         <p class="text-xs text-[var(--muted)]">
-            {{ $marcacion->tipo->etiqueta() }} marcada el {{ $marcacion->marcada_at->format('d/m/Y H:i') }}.
+            {{ $marcacion->tipo->etiqueta() }} marcada el {{ $marcacion->marcada_at->fechaHora() }}.
             La original queda en el historial, anulada.
         </p>
         <input name="marcada_at" type="datetime-local" required max="{{ now()->format('Y-m-d\TH:i') }}"
