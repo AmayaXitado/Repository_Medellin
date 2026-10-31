@@ -45,7 +45,7 @@
                     <p class="mt-1 text-sm text-[var(--text)]">{{ $novedad->detalle }}</p>
                     <p class="mt-1 text-xs text-[var(--muted)]">
                         {{ $novedad->componente->nombre }}{{ $novedad->marcacion?->nodo ? ' · '.$novedad->marcacion->nodo->nombre : '' }}
-                        · {{ $novedad->fecha ? 'del '.$novedad->fecha->format('d/m/Y').' · ' : '' }}{{ $novedad->created_at->format('d/m/Y H:i') }}
+                        · {{ $novedad->fecha ? 'del '.$novedad->fecha->format('d/m/Y').' · ' : '' }}{{ $novedad->created_at->fechaHora() }}
                     </p>
                 </div>
 
@@ -102,7 +102,7 @@
                         } }}">
                             {{ $novedad->estado->etiqueta() }}
                         </span>
-                        <span class="block text-[var(--muted)]">{{ $novedad->revisor?->name }} · {{ $novedad->revisada_at?->format('d/m/Y H:i') }}</span>
+                        <span class="block text-[var(--muted)]">{{ $novedad->revisor?->name }} · {{ $novedad->revisada_at?->fechaHora() }}</span>
                         @if($novedad->comentario)
                             <span class="mt-1 block max-w-64 text-[var(--text)]">«{{ $novedad->comentario }}»</span>
                         @endif

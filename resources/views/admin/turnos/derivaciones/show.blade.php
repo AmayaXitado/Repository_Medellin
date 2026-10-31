@@ -32,7 +32,7 @@
 
 <div class="grid gap-6 lg:grid-cols-3">
     <dl class="divide-y divide-[var(--border)] rounded-lg bg-[var(--card)] px-6 py-2 ring-1 ring-[var(--border)] lg:col-span-2">
-        <div class="{{ $fila }}"><dt class="{{ $dt }}">Marca temporal</dt><dd class="{{ $dd }}">{{ $derivacion->created_at->format('d/m/Y H:i:s') }}</dd></div>
+        <div class="{{ $fila }}"><dt class="{{ $dt }}">Marca temporal</dt><dd class="{{ $dd }}">{{ $derivacion->created_at->fechaHora(true) }}</dd></div>
         <div class="{{ $fila }}"><dt class="{{ $dt }}">Quién escala</dt><dd class="{{ $dd }}">{{ $derivacion->nombre }} · CC {{ $derivacion->cedula }}{{ $derivacion->cargo ? ' · '.$derivacion->cargo : '' }}</dd></div>
         <div class="{{ $fila }}"><dt class="{{ $dt }}">Nodo que atiende</dt><dd class="{{ $dd }}">{{ $derivacion->componente->nombre }} · {{ $derivacion->nodo?->nombre }}</dd></div>
         <div class="{{ $fila }}"><dt class="{{ $dt }}">Requerimiento</dt><dd class="{{ $dd }}">{{ $derivacion->fecha_requerimiento->format('d/m/Y') }} a las {{ substr($derivacion->hora_requerimiento, 0, 5) }}</dd></div>
@@ -67,7 +67,7 @@
                         <p class="text-sm font-semibold text-[var(--text)]">Dar respuesta</p>
                         <p class="text-xs text-[var(--muted)]">
                             Lleva <span class="font-semibold" data-contador-desde="{{ $derivacion->requeridaAt()->toIso8601String() }}" data-meta-minutos="{{ \App\Models\Derivacion::META_MINUTOS }}">{{ $derivacion->tiempoLegible() }}</span>.
-                            Meta: antes de las {{ $derivacion->requeridaAt()->addMinutes(\App\Models\Derivacion::META_MINUTOS)->format('h:i a') }}. Al guardar se detiene el tiempo.
+                            Meta: antes de las {{ $derivacion->requeridaAt()->addMinutes(\App\Models\Derivacion::META_MINUTOS)->hora() }}. Al guardar se detiene el tiempo.
                         </p>
                     </div>
                     @if($errors->any())

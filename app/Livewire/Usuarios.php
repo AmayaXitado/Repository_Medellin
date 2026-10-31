@@ -95,7 +95,7 @@ class Usuarios extends Component implements HasActions, HasSchemas, HasTable
                         ? 'Documenta no pudo crear esta cuenta en Authentik. Edítala y ponle una contraseña para reintentarlo.' : null),
                 TextColumn::make('ultimo_acceso_at')
                     ->label('Último acceso')
-                    ->dateTime('d/m/Y H:i')
+                    ->formatStateUsing(fn ($state) => $state?->fechaHora())
                     ->placeholder('Nunca')
                     ->sortable()
                     ->toggleable(),

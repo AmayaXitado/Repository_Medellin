@@ -129,7 +129,7 @@
                     </div>
                     <div class="flex justify-between gap-2">
                         <dt class="text-[var(--muted)]">Último acceso</dt>
-                        <dd class="text-[var(--text)]">{{ $u->ultimo_acceso_at?->format('d/m/Y H:i') ?? 'Nunca' }}</dd>
+                        <dd class="text-[var(--text)]">{{ $u->ultimo_acceso_at?->fechaHora() ?? 'Nunca' }}</dd>
                     </div>
                     <div class="flex justify-between gap-2">
                         <dt class="text-[var(--muted)]">Cuenta creada</dt>
