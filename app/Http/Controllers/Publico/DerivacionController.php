@@ -182,7 +182,7 @@ class DerivacionController extends Controller
             ->with('derivacion.registrada', [
                 'numero' => $derivacion->id,
                 'saludo' => $colaborador->saludo(),
-                'limite' => $derivacion->requeridaAt()->addMinutes(Derivacion::META_MINUTOS)->format('h:i a'),
+                'limite' => $derivacion->requeridaAt()->addMinutes(Derivacion::META_MINUTOS)->hora(),
             ]);
     }
 

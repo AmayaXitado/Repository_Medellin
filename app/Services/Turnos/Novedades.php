@@ -66,7 +66,7 @@ class Novedades
                 ->whereDate('fecha', '>=', $marcacion->marcada_at->copy()->subDay())
                 ->update([
                     'estado' => EstadoNovedad::Corregida->value,
-                    'comentario' => "Marcó entrada a las {$marcacion->marcada_at->format('H:i')}.",
+                    'comentario' => "Marcó entrada a las {$marcacion->marcada_at->hora()}.",
                     'revisada_at' => now(),
                 ]);
         }
@@ -117,7 +117,7 @@ class Novedades
             : "Estuvo {$this->horas($permanencia)}; con {$this->horas($permanencia - $minutos)} de descanso, trabajó {$duro}";
 
         if ($salida->origen === OrigenMarcacion::CierreAutomatico) {
-            return $this->anotar($salida, TipoNovedad::SinSalida, "No marcó salida. Entró el {$entrada->marcada_at->format('d/m H:i')} y el turno se cerró a las {$this->horas($permanencia)} en el sitio.", $minutos, $entrada);
+            return $this->anotar($salida, TipoNovedad::SinSalida, "No marcó salida. Entró el {$entrada->marcada_at->format('d/m')} a las {$entrada->marcada_at->hora()} y el turno se cerró a las {$this->horas($permanencia)} en el sitio.", $minutos, $entrada);
         }
 
         if ($minutos < $esperados - $tolerancia) {
@@ -175,7 +175,7 @@ class Novedades
             'colaborador_id' => $colaborador->id,
             'componente_id' => $colaborador->componente_id,
             'fecha' => $inicio->toDateString(),
-            'detalle' => "Tenía turno {$tipo->codigo} a las {$inicio->format('H:i')} ({$tipo->nombre}) y no marcó entrada.",
+            'detalle' => "Tenía turno {$tipo->codigo} a las {$inicio->hora()} ({$tipo->nombre}) y no marcó entrada.",
         ]);
 
         $this->avisar([$novedad], conLideres: true);

@@ -40,7 +40,7 @@
             <p class="mt-1">
                 Motivo: {{ $documento->motivo_inactivacion }} ·
                 {{ $documento->inactivador?->name }} ·
-                {{ $documento->inactivado_at?->format('d/m/Y H:i') }}
+                {{ $documento->inactivado_at?->fechaHora() }}
             </p>
             <p class="mt-1">Solo lo ve el rol de administración. El registro se conserva completo.</p>
         </div>
@@ -135,7 +135,7 @@
                     <li id="comentario-{{ $comentario->id }}" class="scroll-mt-4 px-4 py-3 target:bg-[var(--card-soft)]">
                         <div class="flex items-baseline gap-2">
                             <p class="text-sm font-medium text-[var(--text)]">{{ $comentario->autor?->name ?? 'Usuario retirado' }}</p>
-                            <p class="text-xs text-[var(--muted)]" title="{{ $comentario->created_at->format('d/m/Y H:i') }}">
+                            <p class="text-xs text-[var(--muted)]" title="{{ $comentario->created_at->fechaHora() }}">
                                 {{ $comentario->created_at->diffForHumans() }}
                             </p>
                             @if($comentario->user_id === auth()->id() || auth()->user()->puedeGestionarEn($documento->dependencia_id))
@@ -224,7 +224,7 @@
                                 <td class="px-4 py-3 text-[var(--muted)]">{{ $version->tamano_legible }}</td>
                                 <td class="px-4 py-3 text-[var(--muted)]">
                                     {{ $version->autor?->name ?? 'Usuario eliminado' }}<br>
-                                    <span class="text-xs">{{ $version->created_at->format('d/m/Y H:i') }}</span>
+                                    <span class="text-xs">{{ $version->created_at->fechaHora() }}</span>
                                 </td>
                                 <td class="px-4 py-3 text-right">
                                     <a href="{{ route('documentos.versiones.descargar', [$documento, $version]) }}"
@@ -283,7 +283,7 @@
                 </div>
                 <div class="flex justify-between gap-3">
                     <dt class="text-[var(--muted)]">Cargado el</dt>
-                    <dd class="text-right text-[var(--text)]">{{ $documento->created_at->format('d/m/Y H:i') }}</dd>
+                    <dd class="text-right text-[var(--text)]">{{ $documento->created_at->fechaHora() }}</dd>
                 </div>
             </dl>
         </div>
@@ -332,7 +332,7 @@
                     <div class="flex justify-between gap-3">
                         <dt class="text-[var(--muted)]">Recibido el</dt>
                         <dd class="text-right text-[var(--text)]">
-                            {{ $recepcion->created_at->format('d/m/Y H:i') }}
+                            {{ $recepcion->created_at->fechaHora() }}
 
                             {{--
                                 El juicio de horario es el que se hizo ese día,
@@ -369,7 +369,7 @@
                         <div class="flex justify-between gap-3">
                             <dt class="text-[var(--muted)]">Foto tomada el</dt>
                             <dd class="text-right text-[var(--text)]">
-                                {{ $recepcion->tomada_at->format('d/m/Y H:i:s') }}
+                                {{ $recepcion->tomada_at->fechaHora(true) }}
                                 <span class="mt-0.5 block text-xs text-[var(--muted)]">Según el reloj del teléfono</span>
                             </dd>
                         </div>

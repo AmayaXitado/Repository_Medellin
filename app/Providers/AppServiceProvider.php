@@ -9,6 +9,7 @@ use Filament\Support\Colors\Color;
 use Filament\Support\Facades\FilamentColor;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Vite;
@@ -29,6 +30,11 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Vite::prefetch(concurrency: 3);
+
+        // Horas en pantalla en 12 h, como se dicen aquí: «5:09 p. m.». Los
+        // Excel para Nómina siguen en 24 h (se ordenan y se calculan).
+        Carbon::macro('hora', fn (bool $segundos = false): string => $this->format($segundos ? 'g:i:s' : 'g:i').($this->format('A') === 'AM' ? ' a. m.' : ' p. m.'));
+        Carbon::macro('fechaHora', fn (bool $segundos = false): string => $this->format('d/m/Y').' '.$this->hora($segundos));
 
         // Cada clic de Livewire (filtrar, paginar, guardar en una tabla de
         // Filament) vuelve a pasar por estos: sin el de dependencia,

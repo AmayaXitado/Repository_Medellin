@@ -74,7 +74,7 @@
             @forelse($marcaciones as $marcacion)
                 <tr class="{{ $marcacion->estaAnulada() ? 'opacity-50' : '' }}">
                     <td class="px-4 py-3 whitespace-nowrap text-[var(--text)]">
-                        <span class="{{ $marcacion->estaAnulada() ? 'line-through' : '' }}">{{ $marcacion->marcada_at->format('d/m/Y H:i') }}</span>
+                        <span class="{{ $marcacion->estaAnulada() ? 'line-through' : '' }}">{{ $marcacion->marcada_at->fechaHora() }}</span>
                     </td>
                     <td class="px-4 py-3">
                         @can('view', $marcacion->colaborador)<a href="{{ route('admin.turnos.colaboradores.show', $marcacion->colaborador) }}" class="font-medium text-[var(--text)] hover:text-[var(--primary)]">{{ $marcacion->colaborador->nombre }}</a>@else<span class="font-medium text-[var(--text)]">{{ $marcacion->colaborador->nombre }}</span>@endcan

@@ -54,7 +54,7 @@ class DerivacionPendiente extends Notification
     public function toArray(object $notifiable): array
     {
         $d = $this->derivacion;
-        $limite = $d->requeridaAt()->addMinutes(Derivacion::META_MINUTOS)->format('h:i a');
+        $limite = $d->requeridaAt()->addMinutes(Derivacion::META_MINUTOS)->hora();
 
         $mensaje = match (true) {
             $this->nueva => "Nueva derivación #{$d->id} de {$d->nombre} ({$d->entidad}): respóndela antes de las {$limite}.",

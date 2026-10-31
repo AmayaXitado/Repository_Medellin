@@ -12,7 +12,7 @@
         <h1 class="text-lg font-semibold text-[var(--text)]">En turno ahora</h1>
         <p class="text-sm text-[var(--muted)]">
             {{ $abiertas->count() }} {{ $abiertas->count() === 1 ? 'persona marcó entrada' : 'personas marcaron entrada' }} y aún no su salida.
-            Actualizado a las {{ now()->format('H:i') }}.
+            Actualizado a las {{ now()->hora() }}.
         </p>
     </div>
 
@@ -87,7 +87,7 @@
                     </td>
                     <td class="px-4 py-3 text-[var(--text)]">
                         {{ $marcacion->marcada_at->isToday() ? 'Hoy' : $marcacion->marcada_at->format('d/m') }}
-                        {{ $marcacion->marcada_at->format('H:i') }}
+                        {{ $marcacion->marcada_at->hora() }}
                         @if($marcacion->sin_ubicacion)
                             <span class="ml-1 rounded bg-warning-soft px-1.5 py-0.5 text-xs text-[var(--warning)]">Sin ubicación</span>
                         @endif
